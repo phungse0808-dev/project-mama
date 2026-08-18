@@ -15,6 +15,7 @@ import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
 import { DiseasePanel } from "./components/DiseasePanel";
+import { HivRegionChart } from "./components/HivRegionChart";
 import { HivSearchPanel } from "./components/HivSearchPanel";
 import { HomePage } from "./components/HomePage";
 import { NavBar } from "./components/NavBar";
@@ -247,6 +248,7 @@ export default function App() {
 
         {active === "hiv" && (
           <>
+            <HivRegionChart />
             <HivSearchPanel />
             <VulnerabilityPanel />
           </>
