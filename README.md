@@ -54,6 +54,35 @@ project mama/
 ใช้ SQLite เพื่อความสะดวกในการพัฒนา ย้ายไป PostgreSQL ได้โดยแก้ `DATABASE_URL`
 ใน `app/config.py` บรรทัดเดียว
 
+
+## ติดตั้งบนเครื่องใหม่
+
+โปรเจคนี้ไม่ได้เก็บของหนักไว้ใน git คือไลบรารีของ Python และ Node
+กับไฟล์ฐานข้อมูล รวมกันราว 237 MB ทั้งหมดสร้างกลับได้จากสิ่งที่อยู่ใน git
+
+ต้องมี [Python](https://www.python.org/downloads/) (ตอนติดตั้งให้ติ๊ก Add Python to PATH)
+และ [Node.js](https://nodejs.org/) บนเครื่องก่อน จากนั้น
+
+```
+git clone https://github.com/phungse0808-dev/project-mama.git
+cd project-mama
+setup.bat
+```
+
+`setup.bat` จะติดตั้งไลบรารี สร้างหน้าเว็บ และสร้างฐานข้อมูลจากไฟล์ CSV ให้ครบ
+เสร็จแล้วเปิดใช้งานด้วย `start_web.bat`
+
+ข้อมูลทุกชุดกู้กลับได้จากไฟล์ใน git
+
+| ข้อมูล | กู้จาก |
+| --- | --- |
+| ข้อมูลอากาศย้อนหลัง | `backend/data/weather_daily.csv` |
+| ค่าฝุ่นรายชั่วโมง | `backend/data/hourly/*.csv` |
+| รายชื่อสถานี | `backend/data/stations.csv` |
+| ผู้ติดเชื้อเอชไอวีรายจังหวัด | `backend/data/hiv_by_province.csv` |
+| กลุ่มโรคจากฝุ่น | ดึงสดจาก API กรมควบคุมโรค |
+
+
 ## วิธีติดตั้งและใช้งาน
 
 **ติดตั้ง**
