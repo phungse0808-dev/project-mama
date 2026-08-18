@@ -131,6 +131,46 @@ def province_ranking(session: Session) -> list[dict]:
     return ranking
 
 
+def region_ranking(session: Session) -> list[dict]:
+    """ค่าฝุ่นเฉลี่ยรายภาค
+
+    ใช้ค่าเฉลี่ยของทุกสถานีในภาคนั้น ไม่ใช่ค่าเฉลี่ยของค่าเฉลี่ยรายจังหวัด
+    เพราะจังหวัดที่มีสถานีเดียวไม่ควรมีน้ำหนักเท่ากับจังหวัดที่มีสิบสถานี
+    การเฉลี่ยจากสถานีโดยตรงจึงสะท้อนพื้นที่ที่วัดได้จริงมากกว่า
+
+    หมายเหตุสำหรับการตีความ
+        สถานีตรวจวัดกระจายไม่เท่ากันในแต่ละภาค ภาคที่มีสถานีน้อย
+        ค่าเฉลี่ยจะอ่อนไหวต่อสถานีเดียวมาก จึงคืนจำนวนสถานีไปด้วยเสมอ
+        เพื่อให้หน้าเว็บบอกผู้อ่านได้ว่าตัวเลขนั้นมาจากกี่จุด
+    """
+    grouped: dict[str, list[float]] = {}
+    provinces: dict[str, set[str]] = {}
+
+    for station, reading in latest_readings(session):
+        if is_stale(reading) or reading.pm25 is None:
+            continue
+        region = region_of(station.province)
+        if region is None:
+            continue
+        grouped.setdefault(region, []).append(reading.pm25)
+        provinces.setdefault(region, set()).add(station.province)
+
+    ranking = [
+        {
+            "region": region,
+            "pm25_avg": round(statistics.fmean(values), 1),
+            "pm25_max": round(max(values), 1),
+            "pm25_min": round(min(values), 1),
+            "station_count": len(values),
+            "province_count": len(provinces[region]),
+            "level": describe(None, statistics.fmean(values)),
+        }
+        for region, values in grouped.items()
+    ]
+    ranking.sort(key=lambda item: item["pm25_avg"], reverse=True)
+    return ranking
+
+
 def station_history(session: Session, station_code: str, hours: int) -> dict:
     """ประวัติค่าตรวจวัดย้อนหลังของหนึ่งสถานี"""
     station = session.exec(

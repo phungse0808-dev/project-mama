@@ -28,6 +28,7 @@ from app.services import (
     national_summary,
     personal_summary,
     province_ranking,
+    region_ranking,
     sign_in,
     station_daily,
     station_history,
@@ -97,6 +98,16 @@ def get_stations(
 def get_province_ranking(session: Session = Depends(get_session)) -> list[dict]:
     """อันดับจังหวัดตามค่า PM2.5 เฉลี่ย"""
     return province_ranking(session)
+
+
+@app.get("/api/regions/ranking", tags=["แดชบอร์ด"])
+def get_region_ranking(session: Session = Depends(get_session)) -> list[dict]:
+    """ค่าฝุ่นเฉลี่ยรายภาค เรียงจากสูงไปต่ำ
+
+    คืนจำนวนสถานีไปด้วยเสมอ เพราะภาคที่มีสถานีน้อย
+    ค่าเฉลี่ยจะอ่อนไหวต่อสถานีเดียวมาก ผู้อ่านต้องรู้ว่ามาจากกี่จุด
+    """
+    return region_ranking(session)
 
 
 @app.get("/api/stations/{station_code}/history", tags=["แดชบอร์ด"])

@@ -22,6 +22,7 @@ import { NavBar } from "./components/NavBar";
 import type { SectionKey } from "./components/NavBar";
 import { PersonalPanel } from "./components/PersonalPanel";
 import { ProvinceRanking } from "./components/ProvinceRanking";
+import { RegionPanel } from "./components/RegionPanel";
 import { SignIn } from "./components/SignIn";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { StationMap } from "./components/StationMap";
@@ -226,6 +227,8 @@ export default function App() {
               <StationMap stations={stations} onSelect={selectStation} />
               <ProvinceRanking ranking={ranking} />
             </div>
+
+            <RegionPanel />
 
             <StationTrend
               history={history}

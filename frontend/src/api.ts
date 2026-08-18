@@ -55,6 +55,16 @@ export type Summary = {
   worst_station: StationReading | null;
 };
 
+export type RegionRank = {
+  region: string;
+  pm25_avg: number;
+  pm25_max: number;
+  pm25_min: number;
+  station_count: number;
+  province_count: number;
+  level: AqiLevel;
+};
+
 export type ProvinceRank = {
   province: string;
   pm25_avg: number;
@@ -265,6 +275,7 @@ export const api = {
   vulnerability: () => get<Vulnerability>("/api/vulnerability"),
   stations: () => get<StationReading[]>("/api/stations"),
   provinceRanking: () => get<ProvinceRank[]>("/api/provinces/ranking"),
+  regionRanking: () => get<RegionRank[]>("/api/regions/ranking"),
   stationDaily: (code: string, days = 30) =>
     get<StationDaily>(`/api/stations/${code}/daily?days=${days}`),
   stationHistory: (code: string, hours = 48) =>
