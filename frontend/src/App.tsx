@@ -54,7 +54,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   // หน้าแรกที่เห็นหลังกรอกชื่อ คือหน้าหลักเดียวกับที่ปุ่มกลับพากลับมา
-  const [active, setActive] = useState<SectionKey>("page3");
+  const [active, setActive] = useState<SectionKey>("home");
 
 
   const loadAll = useCallback(async () => {
@@ -107,7 +107,7 @@ export default function App() {
   }, []);
 
   // หน้าหลักที่ปุ่มกลับพากลับมา
-  const HOME: SectionKey = "page3";
+  const HOME: SectionKey = "home";
 
   const goTo = useCallback((key: SectionKey) => {
     setActive(key);
@@ -257,7 +257,7 @@ export default function App() {
 
         {active === "hiv" && <VulnerabilityPanel />}
 
-        {(active === "page3" || active === "page4" || active === "page5") && <EmptyPage />}
+        {active === "home" && <EmptyPage />}
 
         <footer className="footer">
           <p>
