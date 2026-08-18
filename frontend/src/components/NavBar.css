@@ -136,15 +136,3 @@
     font-size: 13.5px;
   }
 }
-
-/* ช่องเมนูที่กันที่ไว้แต่ยังไม่ได้กำหนดว่าเป็นหน้าอะไร
-   จางกว่าปุ่มปกติและกดไม่ลง เพื่อให้ต่างจากปุ่มที่ใช้งานได้อย่างชัดเจน */
-.navbar-item-empty {
-  min-width: 96px;
-  opacity: 0.45;
-  cursor: default;
-}
-
-.navbar-item-empty:hover {
-  background: none;
-}

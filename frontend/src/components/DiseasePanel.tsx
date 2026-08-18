@@ -104,124 +104,108 @@ export function DiseasePanel() {
   }
 
   return (
-    <div className="two-column">
-      {/* กราฟอยู่ฝั่งกว้าง เพราะต้องอ่านแนวโน้ม 8 เดือนพร้อมกัน
-          ส่วนตัวเลขสรุปอยู่ฝั่งแคบ เพราะอ่านทีละบรรทัดได้ ไม่ต้องการความกว้าง */}
-      <section className="panel">
-        <h2 className="panel-title">
-          ผู้ป่วยรายเดือนเทียบกับปริมาณฝน
-          <span className="panel-hint">
-            {data.provinces?.length} จังหวัด · ปี {Number(data.period?.start.slice(0, 4)) + 543}
-          </span>
-        </h2>
+    <section className="panel">
+      <h2 className="panel-title">
+        ผลกระทบทางสุขภาพจากฝุ่น
+        <span className="panel-hint">
+          {data.provinces?.length} จังหวัด · {data.period?.start.slice(0, 4)}
+        </span>
+      </h2>
 
-        <div className="chart">
-          <ResponsiveContainer width="100%" height={380}>
-            <ComposedChart data={points} margin={{ top: 8, right: 16, bottom: 8, left: -8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e6e9ef" />
-              <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-              <YAxis yAxisId="cases" tick={{ fontSize: 12 }} width={64} />
-              <YAxis
-                yAxisId="rain"
-                orientation="right"
-                tick={{ fontSize: 12 }}
-                unit=" mm"
-                width={64}
+      <div className="daily-summary">
+        <span>
+          ผู้ป่วยรวม <strong>{data.total_cases?.toLocaleString("th-TH")}</strong> ราย
+        </span>
+        <span>
+          กลุ่มโรค <strong>{data.groups?.length}</strong> กลุ่ม
+        </span>
+        <span>
+          ช่วงข้อมูล <strong>{data.monthly.length}</strong> เดือน
+        </span>
+      </div>
+
+      <div className="chart">
+        <ResponsiveContainer width="100%" height={320}>
+          <ComposedChart data={points} margin={{ top: 8, right: 16, bottom: 8, left: -8 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e6e9ef" />
+            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+            <YAxis yAxisId="cases" tick={{ fontSize: 12 }} width={64} />
+            <YAxis
+              yAxisId="rain"
+              orientation="right"
+              tick={{ fontSize: 12 }}
+              unit=" mm"
+              width={64}
+            />
+            <Tooltip
+              contentStyle={{ borderRadius: 8, borderColor: "#d8dde5", fontSize: 13 }}
+              labelFormatter={(label) => `เดือน ${label}`}
+            />
+            <Legend />
+            {/* ฝนเป็นพื้นหลัง เพราะเป็นบริบท ไม่ใช่ตัวเลขหลักที่ต้องอ่าน */}
+            <Bar
+              yAxisId="rain"
+              dataKey="rainfall"
+              name="ฝนเฉลี่ย"
+              fill="#dce6f5"
+              radius={[3, 3, 0, 0]}
+            />
+            {data.groups?.map((group) => (
+              <Line
+                key={group}
+                yAxisId="cases"
+                type="monotone"
+                dataKey={group}
+                name={group.replace("กลุ่มโรค", "")}
+                stroke={GROUP_COLORS[group] ?? "#888"}
+                strokeWidth={2}
+                dot={{ r: 3 }}
               />
-              <Tooltip
-                contentStyle={{ borderRadius: 8, borderColor: "#d8dde5", fontSize: 13 }}
-                labelFormatter={(label) => `เดือน ${label}`}
-              />
-              <Legend />
-              {/* ฝนเป็นแท่งพื้นหลัง เพราะเป็นบริบท ไม่ใช่ตัวเลขหลักที่ต้องอ่าน */}
-              <Bar
-                yAxisId="rain"
-                dataKey="rainfall"
-                name="ฝนเฉลี่ย"
-                fill="#dce6f5"
-                radius={[3, 3, 0, 0]}
-              />
-              {data.groups?.map((group) => (
-                <Line
-                  key={group}
-                  yAxisId="cases"
-                  type="monotone"
-                  dataKey={group}
-                  name={group.replace("กลุ่มโรค", "")}
-                  stroke={GROUP_COLORS[group] ?? "#888"}
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                />
-              ))}
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
+            ))}
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
 
-        <p className="weather-note">
-          ข้อมูลจาก {data.source} ครอบคลุมเฉพาะ {data.provinces?.join(" ")} ไม่ใช่ทั้งประเทศ
-          และเป็นจำนวนครั้งที่เข้ารับบริการ ไม่ใช่จำนวนคนที่ไม่ซ้ำกัน
-          <br />
-          ตัวเลขนี้ยังไม่ได้เทียบกับค่าฝุ่นโดยตรง เพราะเป็นข้อมูลคนละปีกับที่ระบบเก็บได้
-          จึงใช้ปริมาณฝนแทนสภาพที่ฝุ่นสะสม การเพิ่มขึ้นของผู้ป่วยจึงมีปัจจัยอื่นปนอยู่ด้วย
-          เช่นฤดูกาลของโรคติดเชื้อและจำนวนวันทำการของสถานพยาบาล
-        </p>
-      </section>
-
-      <section className="panel">
-        <h2 className="panel-title">
-          สรุป
-          <span className="panel-hint">เทียบหน้าแล้งกับหน้าฝน</span>
-        </h2>
-
-        <div className="daily-summary">
-          <span>
-            ผู้ป่วยรวม <strong>{data.total_cases?.toLocaleString("th-TH")}</strong> ราย
-          </span>
-          <span>
-            กลุ่มโรค <strong>{data.groups?.length}</strong> กลุ่ม
-          </span>
-          <span>
-            ช่วงข้อมูล <strong>{data.monthly.length}</strong> เดือน
-          </span>
-        </div>
-
-        {seasons.length > 0 && (
-          <table className="hiv-table">
-            <thead>
-              <tr>
-                <th>กลุ่มโรค</th>
-                <th>แล้ง</th>
-                <th>ฝน</th>
-                <th>ต่าง</th>
+      {seasons.length > 0 && (
+        <table className="hiv-table">
+          <thead>
+            <tr>
+              <th>กลุ่มโรค</th>
+              <th>หน้าแล้ง</th>
+              <th>หน้าฝน</th>
+              <th>ต่าง</th>
+            </tr>
+          </thead>
+          <tbody>
+            {seasons.map((row) => (
+              <tr key={row.group}>
+                <td>
+                  <span
+                    className="landing-result-dot"
+                    style={{ background: GROUP_COLORS[row.group] ?? "#888" }}
+                  />
+                  {row.group.replace("กลุ่มโรค", "")}
+                </td>
+                <td>{row.dry.toLocaleString("th-TH")}</td>
+                <td>{row.wet.toLocaleString("th-TH")}</td>
+                <td style={{ color: row.change > 0 ? "#b02020" : "#0a7a3d" }}>
+                  {row.change > 0 ? "+" : ""}
+                  {row.change}%
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {seasons.map((row) => (
-                <tr key={row.group}>
-                  <td>
-                    <span
-                      className="landing-result-dot"
-                      style={{ background: GROUP_COLORS[row.group] ?? "#888" }}
-                    />
-                    {row.group.replace("กลุ่มโรค", "")}
-                  </td>
-                  <td>{row.dry.toLocaleString("th-TH")}</td>
-                  <td>{row.wet.toLocaleString("th-TH")}</td>
-                  <td style={{ color: row.change > 0 ? "#b02020" : "#0a7a3d" }}>
-                    {row.change > 0 ? "+" : ""}
-                    {row.change}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
+      )}
 
-        <p className="weather-note">
-          หน้าแล้งคือค่าเฉลี่ยสามเดือนแรกของข้อมูล หน้าฝนคือสามเดือนสุดท้าย
-          เครื่องหมายบวกหมายถึงหน้าแล้งมีผู้ป่วยมากกว่า
-        </p>
-      </section>
-    </div>
+      <p className="weather-note">
+        ข้อมูลจาก {data.source} ครอบคลุมเฉพาะ {data.provinces?.join(" ")} ไม่ใช่ทั้งประเทศ
+        และเป็นจำนวนครั้งที่เข้ารับบริการ ไม่ใช่จำนวนคนที่ไม่ซ้ำกัน
+        <br />
+        ตัวเลขนี้ยังไม่ได้เทียบกับค่าฝุ่นโดยตรง เพราะเป็นข้อมูลคนละปีกับที่ระบบเก็บได้
+        จึงใช้ปริมาณฝนแทนสภาพที่ฝุ่นสะสม การเพิ่มขึ้นของผู้ป่วยจึงมีปัจจัยอื่นปนอยู่ด้วย
+        เช่นฤดูกาลของโรคติดเชื้อและจำนวนวันทำการของสถานพยาบาล
+      </p>
+    </section>
   );
 }
