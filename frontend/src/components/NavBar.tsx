@@ -21,10 +21,10 @@ type Props = {
   active: SectionKey;
   onGoTo: (key: SectionKey) => void;
   onSearch: () => void;
-  onSignOut: () => void;
+  onBack: () => void;
 };
 
-export function NavBar({ active, onGoTo, onSearch, onSignOut }: Props) {
+export function NavBar({ active, onGoTo, onSearch, onBack }: Props) {
   return (
     <header className="navbar">
       <div className="navbar-inner">
@@ -50,7 +50,7 @@ export function NavBar({ active, onGoTo, onSearch, onSignOut }: Props) {
           <button className="navbar-action" onClick={onSearch}>
             ค้นหา
           </button>
-          <button className="navbar-action" onClick={onSignOut}>
+          <button className="navbar-action" onClick={onBack}>
             กลับ
           </button>
         </div>

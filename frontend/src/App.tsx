@@ -105,6 +105,9 @@ export default function App() {
     setHistory(null);
   }, []);
 
+  // หน้าหลักที่ปุ่มกลับพากลับมา
+  const HOME: SectionKey = "page3";
+
   const goTo = useCallback((key: SectionKey) => {
     setActive(key);
     // เริ่มอ่านจากบนสุดเสมอเมื่อเปลี่ยนหน้า ไม่งั้นจะค้างอยู่ตำแหน่งเดิมของหน้าก่อน
@@ -131,6 +134,18 @@ export default function App() {
       cancelled = true;
     };
   }, [user, handleSignOut]);
+
+  // ปุ่มกลับพากลับหน้าหลักก่อน ถ้าอยู่ที่หน้าหลักอยู่แล้วจึงออกจากระบบ
+  // ทำสองจังหวะแบบนี้เพื่อไม่ให้กดพลาดแล้วหลุดออกจากระบบทันที
+  // ซึ่งเสียเวลากรอกชื่อใหม่โดยไม่ได้ตั้งใจ
+  const handleBack = useCallback(() => {
+    if (active === HOME) {
+      handleSignOut();
+      return;
+    }
+    setActive(HOME);
+    window.scrollTo({ top: 0 });
+  }, [active, handleSignOut]);
 
   const selectStation = useCallback(async (code: string) => {
     setHistoryLoading(true);
@@ -186,7 +201,7 @@ export default function App() {
         active={active}
         onGoTo={goTo}
         onSearch={() => setSearching(true)}
-        onSignOut={handleSignOut}
+        onBack={handleBack}
       />
 
       {searching && (
