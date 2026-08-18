@@ -110,6 +110,27 @@ export default function App() {
     window.scrollTo({ top: 0 });
   }, []);
 
+  // ตรวจว่าผู้ใช้ที่จำไว้ในเบราว์เซอร์ยังมีอยู่จริงในฐานข้อมูล
+  //
+  // จำเป็นเพราะระบบออกแบบให้สร้างฐานข้อมูลใหม่จากไฟล์ CSV ได้ตลอด
+  // เมื่อสร้างใหม่ ผู้ใช้ทุกคนจะหายไป แต่เบราว์เซอร์ยังจำชื่อเดิมไว้
+  // ถ้าไม่ตรวจ กล่องคำแนะนำจะหายไปเงียบๆ โดยผู้ใช้ไม่รู้ว่าเพราะอะไร
+  // และแก้เองไม่ได้เพราะดูเหมือนเข้าสู่ระบบอยู่แล้ว
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        await api.personalSummary(user.id);
+      } catch {
+        if (!cancelled) handleSignOut();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, handleSignOut]);
+
   const selectStation = useCallback(async (code: string) => {
     setHistoryLoading(true);
     try {
@@ -191,6 +212,8 @@ export default function App() {
             {summary && <SummaryCards summary={summary} />}
             {summary && <LevelBar summary={summary} />}
 
+            <PersonalPanel user={user} onProfileChange={handleProfileChange} />
+
             <div className="two-column">
               <StationMap stations={stations} onSelect={selectStation} />
               <ProvinceRanking ranking={ranking} />
@@ -202,8 +225,6 @@ export default function App() {
               stations={stations}
               onSelectStation={selectStation}
             />
-
-            <PersonalPanel user={user} onProfileChange={handleProfileChange} />
 
             {alertData && <AlertPanel alerts={alertData} />}
 
