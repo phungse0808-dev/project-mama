@@ -1094,6 +1094,22 @@ body {
   color: #a35400;
 }
 
+.vulnerability-row .ranking-name small {
+  font-size: 11px;
+}
+
+.hiv-table {
+  margin-top: 14px;
+}
+
+/* เว้นระยะระหว่างส่วนที่เมนูด้านบนเลื่อนไปหา และเผื่อที่ให้แถบเมนูไม่บังหัวข้อ */
+.app > section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  scroll-margin-top: 76px;
+}
+
 /* ---------- หน้าแรกก่อนเข้าระบบ ---------- */
 
 .landing {

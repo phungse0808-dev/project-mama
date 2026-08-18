@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import "./App.css";
 
@@ -14,14 +14,15 @@ import type {
 import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
-import { Landing } from "./components/Landing";
-import type { EnterOptions } from "./components/Landing";
 import { NavBar } from "./components/NavBar";
+import type { SectionKey } from "./components/NavBar";
 import { PersonalPanel } from "./components/PersonalPanel";
 import { ProvinceRanking } from "./components/ProvinceRanking";
 import { SignIn } from "./components/SignIn";
+import { SearchOverlay } from "./components/SearchOverlay";
 import { StationMap } from "./components/StationMap";
 import { StationTrend } from "./components/StationTrend";
+import { VulnerabilityPanel } from "./components/VulnerabilityPanel";
 import { LevelBar, SummaryCards } from "./components/SummaryCards";
 import { WeatherPanel } from "./components/WeatherPanel";
 
@@ -39,9 +40,6 @@ function loadSavedUser(): AppUser | null {
 
 export default function App() {
   const [user, setUser] = useState<AppUser | null>(loadSavedUser);
-  // หน้าแรกแสดงก่อนเสมอ ผู้ใช้ต้องกดเข้าใช้งานเองจึงจะเข้าสู่ระบบ
-  // หน้าแรกแสดงก่อนเสมอ ผู้ใช้ต้องกดเข้าใช้งานเองจึงจะเข้าแดชบอร์ด
-  const [entered, setEntered] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [stations, setStations] = useState<StationReading[]>([]);
   const [ranking, setRanking] = useState<ProvinceRank[]>([]);
@@ -52,6 +50,11 @@ export default function App() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [active, setActive] = useState<SectionKey | null>("air");
+
+  // เก็บตำแหน่งของแต่ละส่วนไว้ เพื่อให้เมนูเลื่อนไปหาได้
+  const sections = useRef<Partial<Record<SectionKey, HTMLElement | null>>>({});
 
   const loadAll = useCallback(async () => {
     try {
@@ -100,7 +103,11 @@ export default function App() {
     localStorage.removeItem(USER_KEY);
     setUser(null);
     setHistory(null);
-    setEntered(false);
+  }, []);
+
+  const goTo = useCallback((key: SectionKey) => {
+    setActive(key);
+    sections.current[key]?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
   const selectStation = useCallback(async (code: string) => {
@@ -114,16 +121,6 @@ export default function App() {
     }
   }, []);
 
-  const handleEnter = useCallback(
-    (options?: EnterOptions) => {
-      setEntered(true);
-      if (options?.stationCode) {
-        void selectStation(options.stationCode);
-      }
-    },
-    [selectStation],
-  );
-
   // เลือกสถานีที่ค่าฝุ่นสูงสุดให้อัตโนมัติ ผู้ใช้จะได้เห็นกราฟทันทีโดยไม่ต้องคลิก
   useEffect(() => {
     if (!history && stations.length > 0) {
@@ -131,14 +128,9 @@ export default function App() {
     }
   }, [stations, history, selectStation]);
 
-  // ขั้นที่ 1 กรอกชื่อเพื่อระบุตัวตนก่อน
+  // กรอกชื่อเพื่อระบุตัวตนก่อน จากนั้นเข้าหน้าข้อมูลทันที
   if (!user) {
     return <SignIn onSignedIn={handleSignedIn} />;
-  }
-
-  // ขั้นที่ 2 หน้าแรก บอกว่าระบบคืออะไรและมีข้อมูลเท่าไร ก่อนเข้าแดชบอร์ด
-  if (!entered) {
-    return <Landing user={user} onEnter={handleEnter} onSignOut={handleSignOut} />;
   }
 
   if (loading) {
@@ -168,35 +160,63 @@ export default function App() {
 
   return (
     <>
-      <NavBar onHome={() => setEntered(false)} />
+      <NavBar
+        active={active}
+        onGoTo={goTo}
+        onSearch={() => setSearching(true)}
+        onSignOut={handleSignOut}
+      />
+
+      {searching && (
+        <SearchOverlay
+          stations={stations}
+          onSelect={(code) => {
+            setSearching(false);
+            void selectStation(code);
+            goTo("air");
+          }}
+          onClose={() => setSearching(false)}
+        />
+      )}
 
       <main className="app">
-        {/* รวมทุกส่วนไว้ในหน้าเดียว เรียงจากภาพรวมปัจจุบันไปหาข้อมูลย้อนหลัง
-            และปิดท้ายด้วยคุณภาพของข้อมูล ตามลำดับที่ผู้ใช้ต้องการรู้ */}
-        {summary && <SummaryCards summary={summary} />}
-        {summary && <LevelBar summary={summary} />}
+        {/* แบ่งเป็นส่วนตามเมนูด้านบน แต่ยังอยู่หน้าเดียวกัน กดเมนูแล้วเลื่อนไปหา
+            ผู้ใช้จึงเลื่อนดูต่อเนื่องได้ด้วย ไม่ถูกบังคับให้เลือกทีละหน้า */}
+        <section ref={(el) => { sections.current.air = el; }}>
+          {summary && <SummaryCards summary={summary} />}
+          {summary && <LevelBar summary={summary} />}
 
-        <PersonalPanel user={user} onProfileChange={handleProfileChange} />
+          <div className="two-column">
+            <StationMap stations={stations} onSelect={selectStation} />
+            <ProvinceRanking ranking={ranking} />
+          </div>
 
-        {alertData && <AlertPanel alerts={alertData} />}
+          <StationTrend
+            history={history}
+            loading={historyLoading}
+            stations={stations}
+            onSelectStation={selectStation}
+          />
+        </section>
 
-        <div className="two-column">
-          <StationMap stations={stations} onSelect={selectStation} />
-          <ProvinceRanking ranking={ranking} />
-        </div>
+        <section ref={(el) => { sections.current.advice = el; }}>
+          <PersonalPanel user={user} onProfileChange={handleProfileChange} />
+          {alertData && <AlertPanel alerts={alertData} />}
+        </section>
 
-        <StationTrend
-          history={history}
-          loading={historyLoading}
-          stations={stations}
-          onSelectStation={selectStation}
-        />
+        <section ref={(el) => { sections.current.hiv = el; }}>
+          <VulnerabilityPanel />
+        </section>
 
-        {provinces.length > 0 && (
-          <WeatherPanel provinces={provinces} defaultProvince={user.province} />
-        )}
+        <section ref={(el) => { sections.current.weather = el; }}>
+          {provinces.length > 0 && (
+            <WeatherPanel provinces={provinces} defaultProvince={user.province} />
+          )}
+        </section>
 
-        {health && <DataHealth health={health} />}
+        <section ref={(el) => { sections.current.data = el; }}>
+          {health && <DataHealth health={health} />}
+        </section>
 
         <footer className="footer">
           <p>

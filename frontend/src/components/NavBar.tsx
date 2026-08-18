@@ -1,45 +1,52 @@
 import "./NavBar.css";
 
-export type SectionKey = "overview" | "data";
+export type SectionKey = "air" | "advice" | "hiv" | "weather" | "data";
 
-// รวมเนื้อหาทั้งหมดไว้เพียงสองหน้า แบ่งตามคำถามที่ผู้ใช้ต้องการคำตอบ
-//   ภาพรวม        ตอนนี้อากาศเป็นอย่างไร และฉันควรปฏิบัติตัวอย่างไร
-//   ข้อมูลเชิงลึก  ย้อนหลังเป็นอย่างไร และข้อมูลชุดนี้เชื่อถือได้แค่ไหน
-//
-// รายการนี้ยังใช้อยู่ที่หน้าแรก ซึ่งเป็นจุดที่ผู้ใช้เลือกว่าจะเข้าดูหน้าไหน
+// เมนูของหน้าเนื้อหา แต่ละอันเลื่อนไปยังส่วนที่เกี่ยวข้องในหน้าเดียวกัน
+// ไม่ได้เปลี่ยนหน้า เพราะข้อมูลทั้งหมดอยู่หน้าเดียวและผู้ใช้มักดูต่อเนื่องกัน
+// การเลื่อนจึงเร็วกว่าและไม่ต้องโหลดใหม่
 export const SECTIONS: { key: SectionKey; label: string }[] = [
-  { key: "overview", label: "ภาพรวม" },
-  { key: "data", label: "ข้อมูลเชิงลึก" },
+  { key: "air", label: "วัดคุณภาพอากาศ" },
+  { key: "advice", label: "คำแนะนำ" },
+  { key: "hiv", label: "HIV" },
+  { key: "weather", label: "ข้อมูลอากาศ" },
+  { key: "data", label: "คุณภาพข้อมูล" },
 ];
 
 type Props = {
-  onHome: () => void;
+  active: SectionKey | null;
+  onGoTo: (key: SectionKey) => void;
+  onSearch: () => void;
+  onSignOut: () => void;
 };
 
-/**
- * แถบด้านบนของหน้าเนื้อหา
- *
- * มีเพียงโลโก้กับปุ่มกลับ ไม่มีเมนูและไม่มีปุ่มอื่น เพื่อไม่ให้แย่งความสนใจ
- * ไปจากข้อมูลซึ่งเป็นสาระหลักของหน้า การเลือกว่าจะดูหน้าไหน
- * ทำที่หน้าแรกไปแล้วก่อนเข้ามา
- */
-export function NavBar({ onHome }: Props) {
+export function NavBar({ active, onGoTo, onSearch, onSignOut }: Props) {
   return (
     <header className="navbar">
       <div className="navbar-inner">
-        <button
-          className="navbar-logo"
-          onClick={onHome}
-          title="กลับหน้าแรก"
-          aria-label="กลับหน้าแรก"
-        >
+        <div className="navbar-logo" aria-hidden="true">
           <span />
           <span />
           <span />
-        </button>
+        </div>
+
+        <nav className="navbar-menu">
+          {SECTIONS.map((item) => (
+            <button
+              key={item.key}
+              className={item.key === active ? "navbar-item active" : "navbar-item"}
+              onClick={() => onGoTo(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
 
         <div className="navbar-right">
-          <button className="navbar-action" onClick={onHome}>
+          <button className="navbar-action" onClick={onSearch}>
+            ค้นหา
+          </button>
+          <button className="navbar-action" onClick={onSignOut}>
             กลับ
           </button>
         </div>

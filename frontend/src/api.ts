@@ -177,6 +177,34 @@ export type Alerts = {
   over_who_guideline: StationReading[];
 };
 
+export type HivProvince = {
+  province: string;
+  cases: number | null;
+  rate_per_100k: number | null;
+  note: string | null;
+};
+
+export type HivStatistics = {
+  year: number | null;
+  source: string | null;
+  provinces: HivProvince[];
+};
+
+export type Vulnerability = {
+  available: boolean;
+  reason: string | null;
+  year: number | null;
+  source?: string | null;
+  province_count?: number;
+  provinces: {
+    province: string;
+    pm25_avg: number;
+    hiv_rate_per_100k: number;
+    score: number;
+    level: AqiLevel;
+  }[];
+};
+
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`);
   if (!response.ok) {
@@ -207,6 +235,8 @@ export const api = {
   riskGroups: () => get<RiskGroup[]>("/api/risk-groups"),
   provinces: () => get<string[]>("/api/provinces"),
   alerts: () => get<Alerts>("/api/alerts"),
+  hiv: () => get<HivStatistics>("/api/hiv"),
+  vulnerability: () => get<Vulnerability>("/api/vulnerability"),
   stations: () => get<StationReading[]>("/api/stations"),
   provinceRanking: () => get<ProvinceRank[]>("/api/provinces/ranking"),
   stationDaily: (code: string, days = 30) =>
