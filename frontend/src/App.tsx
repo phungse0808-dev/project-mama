@@ -25,7 +25,7 @@ import { SearchOverlay } from "./components/SearchOverlay";
 import { StationMap } from "./components/StationMap";
 import { StationTrend } from "./components/StationTrend";
 import { VulnerabilityPanel } from "./components/VulnerabilityPanel";
-import { LevelBar, SummaryCards } from "./components/SummaryCards";
+import { LevelBar } from "./components/SummaryCards";
 import { WeatherPanel } from "./components/WeatherPanel";
 
 // เก็บผู้ใช้ไว้ในเบราว์เซอร์ เพื่อไม่ต้องกรอกชื่อใหม่ทุกครั้งที่เปิดโปรแกรม
@@ -210,7 +210,6 @@ export default function App() {
             คุณภาพของข้อมูลเอง ตามลำดับที่ผู้ใช้อยากรู้ */}
         {active === "air" && (
           <>
-            {summary && <SummaryCards summary={summary} />}
             {summary && <LevelBar summary={summary} />}
 
             <PersonalPanel user={user} onProfileChange={handleProfileChange} />
