@@ -1,6 +1,6 @@
 import "./NavBar.css";
 
-export type SectionKey = "air" | "hiv";
+export type SectionKey = "air" | "hiv" | "page3" | "page4" | "page5";
 
 // แบ่งเป็นสองหน้าตามเรื่องที่ต่างกันจริง
 //   วัดคุณภาพอากาศ  ทุกอย่างที่เกี่ยวกับฝุ่น ตั้งแต่ค่าปัจจุบัน คำแนะนำ ผลกระทบสุขภาพ
@@ -10,6 +10,11 @@ export type SectionKey = "air" | "hiv";
 export const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: "air", label: "วัดคุณภาพอากาศ" },
   { key: "hiv", label: "HIV" },
+  // สามช่องที่กันที่ไว้ ยังไม่ได้ตั้งชื่อและยังไม่มีข้อมูล
+  // เข้าไปได้จริงและเห็นโครงกล่องเปล่า เพื่อให้เห็นภาพรวมของระบบตั้งแต่ตอนนี้
+  { key: "page3", label: "" },
+  { key: "page4", label: "" },
+  { key: "page5", label: "" },
 ];
 
 type Props = {
@@ -36,7 +41,7 @@ export function NavBar({ active, onGoTo, onSearch, onSignOut }: Props) {
               className={item.key === active ? "navbar-item active" : "navbar-item"}
               onClick={() => onGoTo(item.key)}
             >
-              {item.label}
+              {item.label || " "}
             </button>
           ))}
         </nav>
