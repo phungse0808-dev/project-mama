@@ -179,12 +179,14 @@ export type Alerts = {
 
 export type HivProvince = {
   province: string;
+  region: string | null;
   cases: number | null;
   rate_per_100k: number | null;
   note: string | null;
 };
 
 export type HivStatistics = {
+  regions: { name: string; aliases: string[] }[];
   year: number | null;
   source: string | null;
   provinces: HivProvince[];

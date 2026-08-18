@@ -40,7 +40,29 @@ export function HivSearchPanel() {
   const rows = useMemo(() => {
     const all = data?.provinces ?? [];
     const text = keyword.trim();
-    const matched = text ? all.filter((item) => item.province.includes(text)) : all;
+
+    // ถ้าพิมพ์ตรงกับชื่อภาคหรือชื่อย่อพอดี ให้ถือเป็นการเลือกภาคนั้นภาคเดียว
+    //
+    // จำเป็นเพราะ "ภาคตะวันออก" เป็นส่วนหนึ่งของ "ภาคตะวันออกเฉียงเหนือ"
+    // ถ้าเทียบแบบมีคำนี้อยู่ในชื่อ จะได้สองภาคติดมาเสมอ
+    // แล้วจะไม่มีทางดูภาคตะวันออกอย่างเดียวได้เลย
+    const exactRegion = data?.regions?.find(
+      (item) => item.name === text || item.aliases.includes(text),
+    );
+
+    // ไม่ตรงพอดีจึงค่อยเทียบแบบมีคำนี้อยู่ในชื่อ เผื่อพิมพ์ไม่ครบ
+    const matchRegion = (region: string | null) => {
+      if (!region) return false;
+      if (region.includes(text)) return true;
+      const entry = data?.regions?.find((item) => item.name === region);
+      return entry?.aliases.some((word) => word.includes(text)) ?? false;
+    };
+
+    const matched = !text
+      ? all
+      : exactRegion
+        ? all.filter((item) => item.region === exactRegion.name)
+        : all.filter((item) => item.province.includes(text) || matchRegion(item.region));
 
     return [...matched].sort((a, b) => {
       const left = sortBy === "cases" ? a.cases : a.rate_per_100k;
@@ -86,12 +108,12 @@ export function HivSearchPanel() {
 
       <div className="weather-controls">
         <label>
-          จังหวัด
+          จังหวัดหรือภาค
           <input
             className="hiv-search-input"
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
-            placeholder="พิมพ์ชื่อจังหวัด เช่น เชียงใหม่"
+            placeholder="พิมพ์ชื่อจังหวัดหรือภาค เช่น เชียงใหม่ หรือ อีสาน"
             autoComplete="off"
           />
         </label>
@@ -115,7 +137,7 @@ export function HivSearchPanel() {
       {rows.length === 0 ? (
         <p className="empty">
           ไม่พบ "{keyword}" ในข้อมูลชุดนี้ ซึ่งมีเพียง {data.provinces.length} จังหวัด
-          ไม่ครบทั้งประเทศ
+          ไม่ครบทั้งประเทศ — ค้นได้ทั้งชื่อจังหวัดและชื่อภาค เช่น เหนือ อีสาน กลาง ตะวันออก ใต้
         </p>
       ) : (
         <ol className="ranking">
@@ -127,6 +149,7 @@ export function HivSearchPanel() {
                 <span className="ranking-name">
                   {item.province}
                   <small>
+                    {item.region ? `${item.region} · ` : ""}
                     ผู้ติดเชื้อ {item.cases?.toLocaleString("th-TH") ?? "-"} คน ·{" "}
                     {item.rate_per_100k ?? "-"} ต่อแสนคน
                   </small>

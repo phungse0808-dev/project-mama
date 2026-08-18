@@ -13,6 +13,7 @@ from app.health_advice import (
     advice_for,
     compare_standards,
 )
+from app.regions import ALIASES, region_of
 from app.models import AppUser, CollectionLog, DiseaseDaily, HivStatistic, Reading, Station, WeatherDaily
 
 # ถ้าสถานีไม่ส่งข้อมูลใหม่เกินจำนวนชั่วโมงนี้ ถือว่าข้อมูลค้าง ไม่นำมาคิดภาพรวม
@@ -346,6 +347,9 @@ def hiv_statistics(session: Session) -> dict:
     ).all()
 
     return {
+        "regions": [
+            {"name": name, "aliases": list(words)} for name, words in ALIASES.items()
+        ],
         "year": latest_year,
         "source": rows[0].source if rows else None,
         "provinces": [
@@ -354,6 +358,7 @@ def hiv_statistics(session: Session) -> dict:
                 "cases": row.cases,
                 "rate_per_100k": row.rate_per_100k,
                 "note": row.note,
+            "region": region_of(row.province),
             }
             for row in rows
         ],
