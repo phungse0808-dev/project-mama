@@ -3,7 +3,12 @@
 # ถ้าไม่กำหนดไว้ git จะเตือนทุกครั้งและ diff จะรกด้วยการเปลี่ยนบรรทัดที่ไม่ใช่สาระ
 * text=auto eol=lf
 
+# ยกเว้นสคริปต์ของ Windows ต้องเป็น CRLF เสมอ
+# ถ้าเป็น LF คำสั่ง goto จะหาป้ายไม่เจอ และ PowerShell อ่านภาษาไทยเพี้ยน
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
 # ไฟล์ไบนารี ห้ามแปลง
 *.png binary
-*.svg text
 *.db binary
