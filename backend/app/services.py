@@ -171,6 +171,126 @@ def region_ranking(session: Session) -> list[dict]:
     return ranking
 
 
+# เกณฑ์นับว่าเป็น "วันฝนตก" ใช้ 1.0 มิลลิเมตรตามนิยามของ WMO
+#
+# ต่ำกว่านี้คือฝนประปรายที่วัดได้แต่แทบไม่มีผลต่อการชะฝุ่นหรือการใช้ชีวิต
+# ถ้าใช้เกณฑ์ 0 จะได้ตัวเลขสูงเกินจริงเพราะนับวันที่มีละอองน้ำเล็กน้อยด้วย
+RAIN_DAY_MM = 1.0
+
+# ช่วงวันที่นำมาคิด นับจากวันเดียวกันของทุกปีบวกลบ 3 วัน
+#
+# ที่ต้องเผื่อช่วงเพราะถ้าใช้วันเดียวเป๊ะ จะได้ตัวอย่างแค่ปีละหนึ่งวัน
+# รวม 6 ปีก็เพียง 6 ตัวอย่าง ซึ่งน้อยเกินกว่าจะเชื่อถือได้
+# การเผื่อบวกลบ 3 วันทำให้ได้ราว 42 ตัวอย่าง โดยยังอยู่ในช่วงฤดูกาลเดียวกัน
+RAIN_WINDOW_DAYS = 3
+
+
+def rain_chance(session: Session, province: str) -> dict:
+    """โอกาสที่ฝนจะตกในจังหวัดนั้นสำหรับวันนี้ คิดจากสถิติย้อนหลัง
+
+    สำคัญมากสำหรับการตีความ
+        ตัวเลขนี้ไม่ใช่การพยากรณ์อากาศ เป็นความถี่ที่เคยเกิดขึ้นจริงในอดีต
+        ของช่วงวันเดียวกันในปีก่อนๆ ซึ่งเรียกว่าความน่าจะเป็นเชิงภูมิอากาศ
+
+        ต่างจากพยากรณ์ตรงที่ไม่ได้ดูสภาพบรรยากาศจริงในขณะนี้เลย
+        จึงบอกได้แค่ว่าช่วงนี้ของปีฝนมักตกบ่อยแค่ไหน ไม่ได้บอกว่าวันนี้จะตกหรือไม่
+
+        ระบบนี้ไม่มีข้อมูลพยากรณ์ เพราะ NASA POWER เผยแพร่เฉพาะข้อมูลย้อนหลัง
+        และตามหลังปัจจุบันอยู่ราวสามถึงห้าวัน
+    """
+    today = date.today()
+    target = today.timetuple().tm_yday
+
+    rows = session.exec(
+        select(WeatherDaily).where(WeatherDaily.province == province)
+    ).all()
+    if not rows:
+        return {"available": False, "reason": f"ไม่มีข้อมูลอากาศของจังหวัด{province}"}
+
+    def in_window(day: date) -> bool:
+        """อยู่ในช่วงวันเดียวกันของปีหรือไม่ เผื่อการข้ามปีตอนต้นและปลายปี"""
+        gap = abs(day.timetuple().tm_yday - target)
+        return min(gap, 365 - gap) <= RAIN_WINDOW_DAYS
+
+    same_season = [row for row in rows if row.rainfall_mm is not None and in_window(row.observed_on)]
+    if not same_season:
+        return {"available": False, "reason": "ไม่มีข้อมูลของช่วงวันนี้ในปีก่อนๆ"}
+
+    wet = [row for row in same_season if row.rainfall_mm >= RAIN_DAY_MM]
+    years = sorted({row.observed_on.year for row in same_season})
+
+    # ค่าเฉลี่ยรายเดือนไว้เทียบให้เห็นว่าเดือนนี้อยู่ตรงไหนของทั้งปี
+    per_month: dict[int, list[float]] = {}
+    for row in rows:
+        if row.rainfall_mm is not None:
+            per_month.setdefault(row.observed_on.month, []).append(row.rainfall_mm)
+
+    monthly = [
+        {
+            "month": month,
+            "label": THAI_MONTH_NAMES[month - 1],
+            "chance_pct": round(
+                len([v for v in values if v >= RAIN_DAY_MM]) / len(values) * 100, 1
+            ),
+            "rainfall_avg_mm": round(statistics.fmean(values), 1),
+        }
+        for month, values in sorted(per_month.items())
+    ]
+
+    # สภาพอากาศของวันล่าสุดที่มีข้อมูล พร้อมบอกวันที่กำกับเสมอ
+    #
+    # ต้องบอกวันที่เพราะ NASA POWER ตามหลังปัจจุบันราวสามถึงห้าวัน
+    # ถ้าแสดงเฉยๆ ผู้อ่านจะเข้าใจว่าเป็นสภาพอากาศของตอนนี้
+    # ต้องเลือกวันล่าสุดที่ "มีค่าจริง" ไม่ใช่วันล่าสุดเฉยๆ
+    #
+    # NASA POWER เผยแพร่วันล่าสุดแบบยังไม่ครบทุกพื้นที่ พบว่าวันล่าสุด
+    # มีถึง 43 จาก 74 จังหวัดที่ทุกค่ายังว่าง ถ้าหยิบวันล่าสุดตรงๆ
+    # หน้าเว็บจะขึ้นขีดกลางทุกช่องทั้งที่ข้อมูลของวันก่อนหน้ามีครบ
+    measured = [row for row in rows if row.temp_avg is not None]
+    newest = max(measured or rows, key=lambda row: row.observed_on)
+    latest = {
+        "observed_on": newest.observed_on.isoformat(),
+        "days_behind": (today - newest.observed_on).days,
+        "temp_avg": newest.temp_avg,
+        "temp_max": newest.temp_max,
+        "temp_min": newest.temp_min,
+        "rainfall_mm": newest.rainfall_mm,
+        "humidity": newest.humidity,
+        "wind_speed": newest.wind_speed,
+        "pressure": newest.pressure,
+    }
+
+    # ค่าปกติของช่วงนี้ในรอบหลายปี ไว้เทียบว่าวันล่าสุดผิดปกติหรือไม่
+    def season_mean(field: str) -> float | None:
+        values = [
+            getattr(row, field) for row in same_season if getattr(row, field) is not None
+        ]
+        return round(statistics.fmean(values), 1) if values else None
+
+    normal = {
+        "temp_avg": season_mean("temp_avg"),
+        "humidity": season_mean("humidity"),
+        "wind_speed": season_mean("wind_speed"),
+    }
+
+    return {
+        "available": True,
+        "province": province,
+        "for_date": today.isoformat(),
+        "latest": latest,
+        "normal": normal,
+        "chance_pct": round(len(wet) / len(same_season) * 100, 1),
+        "rain_days": len(wet),
+        "samples": len(same_season),
+        "years": years,
+        "window_days": RAIN_WINDOW_DAYS,
+        "threshold_mm": RAIN_DAY_MM,
+        "rainfall_avg_mm": round(statistics.fmean([r.rainfall_mm for r in same_season]), 1),
+        "monthly": monthly,
+        "this_month": today.month,
+    }
+
+
 def station_history(session: Session, station_code: str, hours: int) -> dict:
     """ประวัติค่าตรวจวัดย้อนหลังของหนึ่งสถานี"""
     station = session.exec(

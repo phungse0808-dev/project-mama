@@ -1196,6 +1196,106 @@ body {
   color: var(--accent);
 }
 
+
+/* ---------- โอกาสฝนตก ---------- */
+
+.rain-summary {
+  display: flex;
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 6px;
+}
+
+/* ตัวเลขเปอร์เซ็นต์ตัวใหญ่ เป็นคำตอบหลักของกล่องนี้ จึงให้เด่นที่สุด */
+.rain-figure {
+  flex: 0 0 auto;
+  min-width: 118px;
+  border-radius: 12px;
+  color: #fff;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  padding: 22px 18px;
+}
+
+.rain-figure strong {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+}
+
+.rain-figure small {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.rain-detail {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.rain-headline {
+  margin: 0;
+  font-size: 15px;
+}
+
+.rain-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-soft);
+}
+
+.rain-subtitle {
+  margin: 22px 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rain-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.rain-stats > div {
+  background: #f4f6fa;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.rain-stat-value {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.rain-stat-value small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-soft);
+}
+
+.rain-stat-label {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
+@media (max-width: 620px) {
+  .rain-summary {
+    flex-direction: column;
+  }
+}
+
 /* ---------- หน้าแรกก่อนเข้าระบบ ---------- */
 
 .landing {

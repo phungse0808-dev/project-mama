@@ -28,6 +28,7 @@ from app.services import (
     national_summary,
     personal_summary,
     province_ranking,
+    rain_chance,
     region_ranking,
     sign_in,
     station_daily,
@@ -169,6 +170,16 @@ class ProfileRequest(BaseModel):
 
     province: str | None = Field(default=None, max_length=60)
     risk_group: str | None = Field(default=None, max_length=40)
+
+
+@app.get("/api/rain-chance/{province}", tags=["ข้อมูลอากาศ"])
+def get_rain_chance(province: str, session: Session = Depends(get_session)) -> dict:
+    """โอกาสฝนตกของวันนี้ คิดจากสถิติย้อนหลังของช่วงวันเดียวกันในปีก่อนๆ
+
+    ไม่ใช่การพยากรณ์อากาศ เพราะไม่ได้ดูสภาพบรรยากาศจริงในขณะนี้
+    เป็นความถี่ที่เคยเกิดขึ้นในอดีต ซึ่งเรียกว่าความน่าจะเป็นเชิงภูมิอากาศ
+    """
+    return rain_chance(session, province)
 
 
 @app.post("/api/users/sign-in", tags=["ผู้ใช้งาน"])

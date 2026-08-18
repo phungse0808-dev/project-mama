@@ -240,6 +240,34 @@ export type DiseaseSummary = {
   by_group?: { group: string; cases: number }[];
 };
 
+export type RainChance = {
+  available: boolean;
+  reason?: string;
+  province?: string;
+  for_date?: string;
+  chance_pct?: number;
+  rain_days?: number;
+  samples?: number;
+  years?: number[];
+  window_days?: number;
+  threshold_mm?: number;
+  rainfall_avg_mm?: number;
+  this_month?: number;
+  latest?: {
+    observed_on: string;
+    days_behind: number;
+    temp_avg: number | null;
+    temp_max: number | null;
+    temp_min: number | null;
+    rainfall_mm: number | null;
+    humidity: number | null;
+    wind_speed: number | null;
+    pressure: number | null;
+  };
+  normal?: { temp_avg: number | null; humidity: number | null; wind_speed: number | null };
+  monthly?: { month: number; label: string; chance_pct: number; rainfall_avg_mm: number }[];
+};
+
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`);
   if (!response.ok) {
@@ -269,6 +297,8 @@ export const api = {
   personalSummary: (id: number) => get<PersonalSummary>(`/api/users/${id}/summary`),
   riskGroups: () => get<RiskGroup[]>("/api/risk-groups"),
   provinces: () => get<string[]>("/api/provinces"),
+  rainChance: (province: string) =>
+    get<RainChance>("/api/rain-chance/" + encodeURIComponent(province)),
   alerts: () => get<Alerts>("/api/alerts"),
   disease: () => get<DiseaseSummary>("/api/disease"),
   hiv: () => get<HivStatistics>("/api/hiv"),

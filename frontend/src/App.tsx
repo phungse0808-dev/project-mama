@@ -22,6 +22,7 @@ import { NavBar } from "./components/NavBar";
 import type { SectionKey } from "./components/NavBar";
 import { PersonalPanel } from "./components/PersonalPanel";
 import { ProvinceRanking } from "./components/ProvinceRanking";
+import { RainPanel } from "./components/RainPanel";
 import { RegionPanel } from "./components/RegionPanel";
 import { SignIn } from "./components/SignIn";
 import { SearchOverlay } from "./components/SearchOverlay";
@@ -240,6 +241,10 @@ export default function App() {
             {alertData && <AlertPanel alerts={alertData} />}
 
             <DiseasePanel />
+
+            {provinces.length > 0 && (
+              <RainPanel provinces={provinces} defaultProvince={user.province} />
+            )}
 
             {provinces.length > 0 && (
               <WeatherPanel provinces={provinces} defaultProvince={user.province} />
