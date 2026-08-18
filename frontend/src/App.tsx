@@ -53,7 +53,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
-  const [active, setActive] = useState<SectionKey>("air");
+  // หน้าแรกที่เห็นหลังกรอกชื่อ คือหน้าหลักเดียวกับที่ปุ่มกลับพากลับมา
+  const [active, setActive] = useState<SectionKey>("page3");
 
 
   const loadAll = useCallback(async () => {
