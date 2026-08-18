@@ -53,6 +53,16 @@ export type Summary = {
   level_counts: Record<string, number>;
   levels: { key: string; label_th: string; color: string }[];
   worst_station: StationReading | null;
+  weather: {
+    observed_on: string;
+    days_behind: number;
+    provinces: number;
+    temp_avg: number | null;
+    humidity: number | null;
+    wind_speed: number | null;
+    rainfall_mm: number | null;
+    rain_area_pct: number | null;
+  } | null;
 };
 
 export type RegionRank = {

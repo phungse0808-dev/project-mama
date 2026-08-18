@@ -98,6 +98,7 @@ def national_summary(session: Session) -> dict:
             {"key": lv.key, "label_th": lv.label_th, "color": lv.color} for lv in LEVELS
         ],
         "worst_station": station_payload(*worst) if worst else None,
+        "weather": national_weather(session),
     }
 
 
@@ -107,6 +108,52 @@ def all_stations_latest(session: Session, include_stale: bool = False) -> list[d
     payload = [station_payload(s, r) for s, r in rows if include_stale or not is_stale(r)]
     payload.sort(key=lambda item: item["pm25"] if item["pm25"] is not None else -1, reverse=True)
     return payload
+
+
+def national_weather(session: Session) -> dict | None:
+    """สภาพอากาศเฉลี่ยทั้งประเทศของวันล่าสุดที่มีข้อมูลครบ
+
+    ใช้วันล่าสุดที่มีค่าครบทุกจังหวัด ไม่ใช่วันล่าสุดเฉยๆ
+    เพราะ NASA POWER ทยอยเผยแพร่ วันล่าสุดจึงมักมีบางจังหวัดที่ค่ายังว่าง
+    ถ้าเฉลี่ยจากวันนั้นจะได้ค่าที่มาจากพื้นที่ไม่ครบ แล้วเทียบข้ามวันไม่ได้
+
+    โอกาสฝนตกคิดจากสัดส่วนจังหวัดที่วันนั้นวัดฝนได้ตั้งแต่เกณฑ์ขึ้นไป
+    ต่างจากโอกาสฝนตกรายจังหวัดซึ่งคิดจากสถิติย้อนหลังหลายปี
+    ตัวนี้บอกว่าวันนั้นฝนตกครอบคลุมพื้นที่แค่ไหน ไม่ใช่ความน่าจะเป็น
+    """
+    rows = session.exec(select(WeatherDaily)).all()
+    if not rows:
+        return None
+
+    per_day: dict[date, list[WeatherDaily]] = {}
+    for row in rows:
+        if row.temp_avg is not None:
+            per_day.setdefault(row.observed_on, []).append(row)
+    if not per_day:
+        return None
+
+    # จำนวนจังหวัดที่ระบบเก็บข้อมูลอากาศไว้ ใช้เป็นเกณฑ์ว่าวันไหนครบ
+    expected = len({row.province for row in rows})
+    complete = [day for day, items in per_day.items() if len(items) >= expected]
+    target = max(complete) if complete else max(per_day)
+    items = per_day[target]
+
+    def mean_of(field: str) -> float | None:
+        values = [getattr(i, field) for i in items if getattr(i, field) is not None]
+        return round(statistics.fmean(values), 1) if values else None
+
+    rained = [i for i in items if i.rainfall_mm is not None and i.rainfall_mm >= RAIN_DAY_MM]
+
+    return {
+        "observed_on": target.isoformat(),
+        "days_behind": (date.today() - target).days,
+        "provinces": len(items),
+        "temp_avg": mean_of("temp_avg"),
+        "humidity": mean_of("humidity"),
+        "wind_speed": mean_of("wind_speed"),
+        "rainfall_mm": mean_of("rainfall_mm"),
+        "rain_area_pct": round(len(rained) / len(items) * 100, 1) if items else None,
+    }
 
 
 def province_ranking(session: Session) -> list[dict]:

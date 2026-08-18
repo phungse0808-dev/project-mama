@@ -6,6 +6,7 @@ type Props = { summary: Summary };
 /** การ์ดสรุปภาพรวมด้านบนสุดของแดชบอร์ด */
 export function SummaryCards({ summary }: Props) {
   const worst = summary.worst_station;
+  const weather = summary.weather;
 
   return (
     <section className="cards">
@@ -48,6 +49,46 @@ export function SummaryCards({ summary }: Props) {
         </p>
         <p className="card-note">อัปเดตอัตโนมัติทุกชั่วโมง</p>
       </article>
+
+      {/* สภาพอากาศเฉลี่ยทั้งประเทศ วางต่อจากการ์ดค่าฝุ่นเพราะเป็นภาพรวมชุดเดียวกัน
+          และเป็นปัจจัยที่อธิบายว่าทำไมฝุ่นถึงสะสมหรือกระจายตัว
+
+          ต้องบอกวันที่กำกับทุกใบ เพราะข้อมูลอากาศตามหลังปัจจุบันหลายวัน
+          ต่างจากค่าฝุ่นที่เป็นรายชั่วโมง ถ้าไม่บอกจะเข้าใจว่าเป็นของตอนนี้ */}
+      {weather && (
+        <>
+          <article className="card">
+            <p className="card-label">อุณหภูมิเฉลี่ยทั้งประเทศ</p>
+            <p className="card-value">
+              {weather.temp_avg ?? "-"}
+              <span className="card-unit">°C</span>
+            </p>
+            <p className="card-note">
+              ความชื้น {weather.humidity ?? "-"}% · ลม {weather.wind_speed ?? "-"} m/s
+            </p>
+          </article>
+
+          <article className="card">
+            <p className="card-label">พื้นที่ที่ฝนตกวันล่าสุด</p>
+            <p className="card-value">
+              {weather.rain_area_pct ?? "-"}
+              <span className="card-unit">%</span>
+            </p>
+            <p className="card-note">
+              ของ {weather.provinces} จังหวัด · ฝนเฉลี่ย {weather.rainfall_mm ?? "-"} มม.
+            </p>
+          </article>
+
+          <article className="card">
+            <p className="card-label">ข้อมูลอากาศ ณ วันที่</p>
+            <p className="card-value card-value-sm">{weather.observed_on}</p>
+            <p className="card-note">
+              ตามหลังวันนี้ {weather.days_behind} วัน เพราะ NASA POWER
+              เผยแพร่ข้อมูลย้อนหลัง
+            </p>
+          </article>
+        </>
+      )}
     </section>
   );
 }
