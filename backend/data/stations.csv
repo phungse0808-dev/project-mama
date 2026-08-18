@@ -6,11 +6,11 @@ station_code,name_th,name_en,area_th,area_en,province,station_type,latitude,long
 100t,สถานีอุตุนิยมวิทยาจันทบุรี,Chanthaburi Meteorological Station,"ต.วัดใหม่ อ.เมือง, จันทบุรี","Wat Mai Subdistrict, Mueang District, Chanthaburi",จันทบุรี,GROUND,12.6095704,102.1040804
 101t,ศาลากลางจังหวัดบุรีรัมย์,Buriram City Hall,"ต.เสม็ด อ.เมือง, บุรีรัมย์","Samed Subdistrict, Mueang District, Buriram",บุรีรัมย์,GROUND,14.945452,103.105896
 102t,สนามกีฬากลางจังหวัดมุกดาหาร,Mukdahan Provincial Stadium,"ต.มุกดาหาร อ.เมือง, มุกดาหาร","Mukdaman Subdistrict, Mueang District, Mukdahan",มุกดาหาร,GROUND,16.54257,104.7192
-103t,สถานีตรวจอากาศหัวหิน สถานีอุตุนิยมวิทยาประจวบคีรีขันธ์,Hua Hin Weather Station Prachuap Khiri Khan Meteorological Station,"ต.หัวหิน อ.หัวหิน, ประจวบคิรีขันธ์","Hua Hin Subdistrict, Hua Hin District, Prachuap Khiri Khan",ประจวบคิรีขันธ์,GROUND,12.577835,99.953663
+103t,สถานีตรวจอากาศหัวหิน สถานีอุตุนิยมวิทยาประจวบคีรีขันธ์,Hua Hin Weather Station Prachuap Khiri Khan Meteorological Station,"ต.หัวหิน อ.หัวหิน, ประจวบคิรีขันธ์","Hua Hin Subdistrict, Hua Hin District, Prachuap Khiri Khan",ประจวบคีรีขันธ์,GROUND,12.577835,99.953663
 104t,โรงเรียนสิงห์บุรี,SINGBURI SCHOOL,"ต.บางมัญ อ.เมือง, สิงห์บุรี"," Bang Man Subdistrict, Mueang District, Sing Buri",สิงห์บุรี,GROUND,14.8933874,100.4130773
 105t,ศูนย์บริการสาธารณสุขเทศบาลเมืองนครนายก,Nakhon Nayok Municipality Public Health Service Center,"ต.บ้านใหญ่ อ.เมือง, นครนายก","Ban Yai Subdistrict, Mueang District, Nakhon Nayok",นครนายก,GROUND,14.20422,101.21509
 106t,สวนสาธารณะหนองบึงกาฬ,Nong Bueng Kan Park,"ต.บึงกาฬ อ.เมือง, จ.บึงกาฬ ","Mueang, Bueng Kan",บึงกาฬ,GROUND,18.362008,103.65977
-107t,สวนสาธารณะแก่งดอนกลาง,KAENG DON KLANG PARK,"ต.กาฬสินธุ์ อ.เมือง, กาฬสินธ์ุ","Kalasin Subdistrict, Mueang Kalasin District, Kalasin",กาฬสินธ์ุ,GROUND,16.4436,103.513
+107t,สวนสาธารณะแก่งดอนกลาง,KAENG DON KLANG PARK,"ต.กาฬสินธุ์ อ.เมือง, กาฬสินธ์ุ","Kalasin Subdistrict, Mueang Kalasin District, Kalasin",กาฬสินธุ์,GROUND,16.4436,103.513
 108t,สนามกีฬาเทศบาลเมืองชัยภูมิ,Mueang Chaiyaphum Municipality Stadium," ต.ในเมือง อ.เมืองชัยภูมิ, ชัยภูมิ"," Nai Mueang Subdistrict, Mueang Chaiyaphum District, Chaiyaphum",ชัยภูมิ,GROUND,15.81148,102.02281
 109t,สวนสาธารณะพญาแถน,Phaya Thaen Public Park,"ต.ในเมือง,อ.เมือง, ยโสธร","Mueang, Yasothon",ยโสธร,GROUND,15.783861,104.154639
 110t,สำนักงานเทศบาลเมืองอำนาจเจริญ,Amnat Charoen Municipality,"ต.บุ่ง, อ.เมือง, จ.อำนาจเจริญ","Bung, Mueang, Amnat Charoen",อำนาจเจริญ,GROUND,15.8758,104.6223
