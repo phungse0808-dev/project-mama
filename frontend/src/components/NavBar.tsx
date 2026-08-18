@@ -56,9 +56,19 @@ export function NavBar({ active, onGoTo, onSearch, onHome, onSignOut }: Props) {
           <button className="navbar-action" onClick={onSearch}>
             ค้นหา
           </button>
-          <button className="navbar-action" onClick={onSignOut}>
-            ออกจากระบบ
-          </button>
+          {/* ปุ่มขวาสุดเปลี่ยนตามหน้าที่อยู่
+              อยู่หน้าเนื้อหา ปุ่มพากลับหน้าหลัก
+              อยู่หน้าหลักแล้ว ไม่มีที่ให้กลับ ปุ่มจึงเป็นออกจากระบบ
+              เปลี่ยนชื่อไปด้วยเพื่อให้ตรงกับสิ่งที่กดแล้วจะเกิดขึ้นจริง */}
+          {active === "home" ? (
+            <button className="navbar-action" onClick={onSignOut}>
+              ออกจากระบบ
+            </button>
+          ) : (
+            <button className="navbar-action" onClick={onHome}>
+              กลับ
+            </button>
+          )}
         </div>
       </div>
     </header>
