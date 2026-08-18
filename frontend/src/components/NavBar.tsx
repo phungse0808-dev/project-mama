@@ -1,6 +1,6 @@
 import "./NavBar.css";
 
-export type SectionKey = "air" | "hiv";
+export type SectionKey = "air" | "disease" | "hiv" | "blank1" | "blank2";
 
 // แบ่งเป็นสองหน้าตามเรื่องที่ต่างกันจริง
 //   วัดคุณภาพอากาศ  ทุกอย่างที่เกี่ยวกับฝุ่น ตั้งแต่ค่าปัจจุบัน คำแนะนำ ผลกระทบสุขภาพ
@@ -9,15 +9,15 @@ export type SectionKey = "air" | "hiv";
 //   HIV             ข้อมูลคนละชุด คนละแหล่ง คนละคำถาม จึงแยกออกมา
 export const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: "air", label: "วัดคุณภาพอากาศ" },
+  { key: "disease", label: "ผลกระทบสุขภาพ" },
   { key: "hiv", label: "HIV" },
+  // หน้าที่กันที่ไว้ ยังไม่ได้กำหนดว่าจะใส่อะไร
+  // เข้าไปได้จริงและเป็นหน้าว่าง ไม่ใช่ปุ่มที่กดไม่ลง
+  // เพื่อให้เห็นโครงของระบบครบตั้งแต่ตอนนี้ แล้วค่อยเติมเนื้อหาทีหลัง
+  { key: "blank1", label: "หน้า 4" },
+  { key: "blank2", label: "หน้า 5" },
 ];
 
-// ช่องเมนูที่กันที่ไว้ตามแบบ ยังไม่ได้กำหนดว่าจะเป็นหน้าอะไร
-//
-// ทำเป็นปุ่มที่กดไม่ได้จริงๆ ไม่ใช่ปุ่มที่กดแล้วไม่เกิดอะไรขึ้น
-// เพราะปุ่มที่ดูกดได้แต่เงียบ ทำให้ผู้ใช้คิดว่าระบบพัง
-// ส่วนปุ่มที่จางและกดไม่ลง สื่อชัดว่ายังไม่เปิดใช้งาน
-const PLACEHOLDER_COUNT = 3;
 
 type Props = {
   active: SectionKey;
@@ -47,16 +47,6 @@ export function NavBar({ active, onGoTo, onSearch, onSignOut }: Props) {
             </button>
           ))}
 
-          {Array.from({ length: PLACEHOLDER_COUNT }, (_, index) => (
-            <button
-              key={`ยังไม่ได้กำหนด-${index}`}
-              className="navbar-item navbar-item-empty"
-              disabled
-              title="ยังไม่ได้กำหนดว่าเป็นหน้าอะไร"
-            >
-              &nbsp;
-            </button>
-          ))}
         </nav>
 
         <div className="navbar-right">

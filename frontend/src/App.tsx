@@ -13,6 +13,7 @@ import type {
 } from "./api";
 import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
+import { BlankPage } from "./components/BlankPage";
 import { DataHealth } from "./components/DataHealth";
 import { DiseasePanel } from "./components/DiseasePanel";
 import { NavBar } from "./components/NavBar";
@@ -228,8 +229,6 @@ export default function App() {
 
             {alertData && <AlertPanel alerts={alertData} />}
 
-            <DiseasePanel />
-
             {provinces.length > 0 && (
               <WeatherPanel provinces={provinces} defaultProvince={user.province} />
             )}
@@ -238,7 +237,13 @@ export default function App() {
           </>
         )}
 
+        {active === "disease" && <DiseasePanel />}
+
         {active === "hiv" && <VulnerabilityPanel />}
+
+        {active === "blank1" && <BlankPage title="หน้า 4" />}
+
+        {active === "blank2" && <BlankPage title="หน้า 5" />}
 
         <footer className="footer">
           <p>
