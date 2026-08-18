@@ -15,7 +15,7 @@ import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
 import { DiseasePanel } from "./components/DiseasePanel";
-import { EmptyPage } from "./components/EmptyPage";
+import { HomePage } from "./components/HomePage";
 import { NavBar } from "./components/NavBar";
 import type { SectionKey } from "./components/NavBar";
 import { PersonalPanel } from "./components/PersonalPanel";
@@ -257,7 +257,13 @@ export default function App() {
 
         {active === "hiv" && <VulnerabilityPanel />}
 
-        {active === "home" && <EmptyPage />}
+        {active === "home" && (
+          <HomePage
+            summary={summary}
+            onOpenAir={() => goTo("air")}
+            onOpenHiv={() => goTo("hiv")}
+          />
+        )}
 
         <footer className="footer">
           <p>
