@@ -21,18 +21,24 @@ type Props = {
   active: SectionKey;
   onGoTo: (key: SectionKey) => void;
   onSearch: () => void;
-  onBack: () => void;
+  onHome: () => void;
+  onSignOut: () => void;
 };
 
-export function NavBar({ active, onGoTo, onSearch, onBack }: Props) {
+export function NavBar({ active, onGoTo, onSearch, onHome, onSignOut }: Props) {
   return (
     <header className="navbar">
       <div className="navbar-inner">
-        <div className="navbar-logo" aria-hidden="true">
+        <button
+          className="navbar-logo"
+          onClick={onHome}
+          title="กลับหน้าหลัก"
+          aria-label="กลับหน้าหลัก"
+        >
           <span />
           <span />
           <span />
-        </div>
+        </button>
 
         <nav className="navbar-menu">
           {SECTIONS.map((item) => (
@@ -50,8 +56,8 @@ export function NavBar({ active, onGoTo, onSearch, onBack }: Props) {
           <button className="navbar-action" onClick={onSearch}>
             ค้นหา
           </button>
-          <button className="navbar-action" onClick={onBack}>
-            กลับ
+          <button className="navbar-action" onClick={onSignOut}>
+            ออกจากระบบ
           </button>
         </div>
       </div>

@@ -136,18 +136,6 @@ export default function App() {
     };
   }, [user, handleSignOut]);
 
-  // ปุ่มกลับพากลับหน้าหลักก่อน ถ้าอยู่ที่หน้าหลักอยู่แล้วจึงออกจากระบบ
-  // ทำสองจังหวะแบบนี้เพื่อไม่ให้กดพลาดแล้วหลุดออกจากระบบทันที
-  // ซึ่งเสียเวลากรอกชื่อใหม่โดยไม่ได้ตั้งใจ
-  const handleBack = useCallback(() => {
-    if (active === HOME) {
-      handleSignOut();
-      return;
-    }
-    setActive(HOME);
-    window.scrollTo({ top: 0 });
-  }, [active, handleSignOut]);
-
   const selectStation = useCallback(async (code: string) => {
     setHistoryLoading(true);
     try {
@@ -202,7 +190,8 @@ export default function App() {
         active={active}
         onGoTo={goTo}
         onSearch={() => setSearching(true)}
-        onBack={handleBack}
+        onHome={() => goTo(HOME)}
+        onSignOut={handleSignOut}
       />
 
       {searching && (
