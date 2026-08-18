@@ -22,6 +22,7 @@ from app.services import (
     alerts,
     all_stations_latest,
     collection_health,
+    disease_summary,
     health_guidance,
     hiv_statistics,
     national_summary,
@@ -253,6 +254,16 @@ def get_vulnerability(session: Session = Depends(get_session)) -> dict:
     รวมค่าฝุ่นปัจจุบันเข้ากับสัดส่วนประชากรที่มีภูมิคุ้มกันบกพร่องในพื้นที่
     """
     return vulnerability_index(session)
+
+
+@app.get("/api/disease", tags=["ผลกระทบสุขภาพ"])
+def get_disease_summary(session: Session = Depends(get_session)) -> dict:
+    """จำนวนผู้ป่วยกลุ่มโรคที่เกี่ยวข้องกับฝุ่น รายเดือน พร้อมสภาพอากาศเดือนเดียวกัน
+
+    เป็นยอดรวมระดับจังหวัดเท่านั้น ต้นทางเผยแพร่เป็นข้อมูลรายบุคคล
+    แต่ระบบนี้รวมยอดตั้งแต่ขั้นนำเข้าและไม่เก็บรายละเอียดบุคคลไว้เลย
+    """
+    return disease_summary(session)
 
 
 @app.get("/api/collection/health", tags=["คุณภาพข้อมูล"])

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import "./App.css";
 
@@ -14,6 +14,7 @@ import type {
 import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
+import { DiseasePanel } from "./components/DiseasePanel";
 import { NavBar } from "./components/NavBar";
 import type { SectionKey } from "./components/NavBar";
 import { PersonalPanel } from "./components/PersonalPanel";
@@ -51,10 +52,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
-  const [active, setActive] = useState<SectionKey | null>("air");
+  const [active, setActive] = useState<SectionKey>("air");
 
-  // เก็บตำแหน่งของแต่ละส่วนไว้ เพื่อให้เมนูเลื่อนไปหาได้
-  const sections = useRef<Partial<Record<SectionKey, HTMLElement | null>>>({});
 
   const loadAll = useCallback(async () => {
     try {
@@ -107,7 +106,8 @@ export default function App() {
 
   const goTo = useCallback((key: SectionKey) => {
     setActive(key);
-    sections.current[key]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // เริ่มอ่านจากบนสุดเสมอเมื่อเปลี่ยนหน้า ไม่งั้นจะค้างอยู่ตำแหน่งเดิมของหน้าก่อน
+    window.scrollTo({ top: 0 });
   }, []);
 
   const selectStation = useCallback(async (code: string) => {
@@ -182,41 +182,42 @@ export default function App() {
       <main className="app">
         {/* แบ่งเป็นส่วนตามเมนูด้านบน แต่ยังอยู่หน้าเดียวกัน กดเมนูแล้วเลื่อนไปหา
             ผู้ใช้จึงเลื่อนดูต่อเนื่องได้ด้วย ไม่ถูกบังคับให้เลือกทีละหน้า */}
-        <section ref={(el) => { sections.current.air = el; }}>
-          {summary && <SummaryCards summary={summary} />}
-          {summary && <LevelBar summary={summary} />}
+        {/* สองหน้าที่ตอบคนละคำถาม จึงไม่เอามาต่อกันในหน้าเดียว
+            หน้าฝุ่นรวมทุกอย่างที่เกี่ยวกับฝุ่นไว้ครบ เรียงจากสถานการณ์ตอนนี้
+            ไปหาสิ่งที่ควรทำ ผลกระทบที่ตามมา ปัจจัยแวดล้อม และปิดท้ายด้วย
+            คุณภาพของข้อมูลเอง ตามลำดับที่ผู้ใช้อยากรู้ */}
+        {active === "air" && (
+          <>
+            {summary && <SummaryCards summary={summary} />}
+            {summary && <LevelBar summary={summary} />}
 
-          <div className="two-column">
-            <StationMap stations={stations} onSelect={selectStation} />
-            <ProvinceRanking ranking={ranking} />
-          </div>
+            <div className="two-column">
+              <StationMap stations={stations} onSelect={selectStation} />
+              <ProvinceRanking ranking={ranking} />
+            </div>
 
-          <StationTrend
-            history={history}
-            loading={historyLoading}
-            stations={stations}
-            onSelectStation={selectStation}
-          />
-        </section>
+            <StationTrend
+              history={history}
+              loading={historyLoading}
+              stations={stations}
+              onSelectStation={selectStation}
+            />
 
-        <section ref={(el) => { sections.current.advice = el; }}>
-          <PersonalPanel user={user} onProfileChange={handleProfileChange} />
-          {alertData && <AlertPanel alerts={alertData} />}
-        </section>
+            <PersonalPanel user={user} onProfileChange={handleProfileChange} />
 
-        <section ref={(el) => { sections.current.hiv = el; }}>
-          <VulnerabilityPanel />
-        </section>
+            {alertData && <AlertPanel alerts={alertData} />}
 
-        <section ref={(el) => { sections.current.weather = el; }}>
-          {provinces.length > 0 && (
-            <WeatherPanel provinces={provinces} defaultProvince={user.province} />
-          )}
-        </section>
+            <DiseasePanel />
 
-        <section ref={(el) => { sections.current.data = el; }}>
-          {health && <DataHealth health={health} />}
-        </section>
+            {provinces.length > 0 && (
+              <WeatherPanel provinces={provinces} defaultProvince={user.province} />
+            )}
+
+            {health && <DataHealth health={health} />}
+          </>
+        )}
+
+        {active === "hiv" && <VulnerabilityPanel />}
 
         <footer className="footer">
           <p>

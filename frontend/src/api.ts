@@ -205,6 +205,29 @@ export type Vulnerability = {
   }[];
 };
 
+export type DiseaseMonth = {
+  month: string;
+  label: string;
+  groups: Record<string, number>;
+  total: number;
+  rainfall_mm: number | null;
+  wind_speed: number | null;
+  humidity: number | null;
+};
+
+export type DiseaseSummary = {
+  available: boolean;
+  reason?: string;
+  source?: string;
+  provinces?: string[];
+  groups?: string[];
+  period?: { start: string; end: string };
+  total_cases?: number;
+  monthly: DiseaseMonth[];
+  by_province?: { province: string; cases: number }[];
+  by_group?: { group: string; cases: number }[];
+};
+
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`);
   if (!response.ok) {
@@ -235,6 +258,7 @@ export const api = {
   riskGroups: () => get<RiskGroup[]>("/api/risk-groups"),
   provinces: () => get<string[]>("/api/provinces"),
   alerts: () => get<Alerts>("/api/alerts"),
+  disease: () => get<DiseaseSummary>("/api/disease"),
   hiv: () => get<HivStatistics>("/api/hiv"),
   vulnerability: () => get<Vulnerability>("/api/vulnerability"),
   stations: () => get<StationReading[]>("/api/stations"),

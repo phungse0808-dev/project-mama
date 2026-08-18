@@ -1,20 +1,19 @@
 import "./NavBar.css";
 
-export type SectionKey = "air" | "advice" | "hiv" | "weather" | "data";
+export type SectionKey = "air" | "hiv";
 
-// เมนูของหน้าเนื้อหา แต่ละอันเลื่อนไปยังส่วนที่เกี่ยวข้องในหน้าเดียวกัน
-// ไม่ได้เปลี่ยนหน้า เพราะข้อมูลทั้งหมดอยู่หน้าเดียวและผู้ใช้มักดูต่อเนื่องกัน
-// การเลื่อนจึงเร็วกว่าและไม่ต้องโหลดใหม่
+// แบ่งเป็นสองหน้าตามเรื่องที่ต่างกันจริง
+//   วัดคุณภาพอากาศ  ทุกอย่างที่เกี่ยวกับฝุ่น ตั้งแต่ค่าปัจจุบัน คำแนะนำ ผลกระทบสุขภาพ
+//                   สภาพอากาศ ไปจนถึงคุณภาพของข้อมูล เพราะทั้งหมดตอบคำถามเดียวกัน
+//                   คือฝุ่นตอนนี้เป็นอย่างไรและควรทำอย่างไร
+//   HIV             ข้อมูลคนละชุด คนละแหล่ง คนละคำถาม จึงแยกออกมา
 export const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: "air", label: "วัดคุณภาพอากาศ" },
-  { key: "advice", label: "คำแนะนำ" },
   { key: "hiv", label: "HIV" },
-  { key: "weather", label: "ข้อมูลอากาศ" },
-  { key: "data", label: "คุณภาพข้อมูล" },
 ];
 
 type Props = {
-  active: SectionKey | null;
+  active: SectionKey;
   onGoTo: (key: SectionKey) => void;
   onSearch: () => void;
   onSignOut: () => void;
