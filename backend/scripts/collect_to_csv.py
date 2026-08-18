@@ -17,11 +17,19 @@
 """
 
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from app.air4thai import POLLUTANTS, fetch_raw, parse_measured_at, parse_province, to_float, to_int
 from app.config import DATA_DIR
+
+# Air4Thai รายงานเวลาเป็นเวลาไทย และระบบเก็บ measured_at เป็นเวลาไทยทั้งหมด
+# ชื่อโฟลเดอร์กับชื่อไฟล์จึงต้องเป็นเวลาไทยด้วย ไม่งั้นจะอ่านสับสน
+#
+# เรื่องนี้สำคัญเพราะเครื่องของ GitHub ตั้งเป็น UTC ถ้าใช้เวลาเครื่องตรงๆ
+# ช่วงเที่ยงคืนถึง 6:59 น. เวลาไทย วันที่ UTC จะยังเป็นเมื่อวาน
+# ไฟล์ของวันใหม่จะไปตกอยู่ในโฟลเดอร์ของวันก่อนหน้า
+THAI_TIME = timezone(timedelta(hours=7))
 
 HOURLY_DIR = DATA_DIR / "hourly"
 STATIONS_FILE = DATA_DIR / "stations.csv"
@@ -87,8 +95,7 @@ def main() -> None:
     if not readings:
         raise SystemExit("ไม่ได้ค่าตรวจวัดเลยสักสถานี ต้นทางอาจมีปัญหา")
 
-    # ตั้งชื่อไฟล์ตามเวลาไทย ให้ตรงกับ measured_at ที่ต้นทางส่งมาเป็นเวลาไทย
-    now = datetime.now()
+    now = datetime.now(THAI_TIME)
     target = HOURLY_DIR / now.strftime("%Y-%m-%d") / f"{now.strftime('%H%M')}.csv"
     write_csv(target, READING_COLUMNS, readings)
 
