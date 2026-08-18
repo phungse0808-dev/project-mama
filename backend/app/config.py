@@ -2,13 +2,7 @@
 
 from pathlib import Path
 
-import truststore
-
-# เซิร์ฟเวอร์ Air4Thai ติดตั้งใบรับรองไม่ครบ (ขาด intermediate certificate)
-# ชุดใบรับรองที่ Python ใช้เป็นค่าเริ่มต้นจึงตรวจสอบไม่ผ่าน
-# แก้โดยให้ Python ใช้ที่เก็บใบรับรองของระบบปฏิบัติการแทน ซึ่งดึงใบที่ขาดมาเติมเองได้
-# วิธีนี้ยังคงตรวจสอบความปลอดภัยครบถ้วน ต่างจากการปิด verify ทิ้งซึ่งไม่ควรทำ
-truststore.inject_into_ssl()
+import certifi
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
@@ -16,6 +10,40 @@ RAW_DIR = DATA_DIR / "raw"
 
 DATA_DIR.mkdir(exist_ok=True)
 RAW_DIR.mkdir(exist_ok=True)
+
+# ---------- ชุดใบรับรองสำหรับตรวจสอบเซิร์ฟเวอร์ปลายทาง ----------
+#
+# เซิร์ฟเวอร์ Air4Thai ตั้งค่าใบรับรองไม่ครบ ใบของเว็บออกโดย Let's Encrypt
+# แต่ใบลูกโซ่ที่ส่งตามมาเป็นของ Sectigo ซึ่งเป็นของใบเก่าคนละสายกัน
+# เท่ากับไม่ได้ส่งใบเชื่อมที่ถูกต้องมาเลย
+#
+# Windows ยังเข้าได้เพราะไปดาวน์โหลดใบที่ขาดมาเติมเองอัตโนมัติ (AIA fetching)
+# แต่ Linux ไม่ทำแบบนั้น การรันบน GitHub Actions จึงล้มเหลว
+#
+# แก้โดยเตรียมใบที่ขาดไว้ในโปรเจคเอง แล้วต่อท้ายชุดใบรับรองมาตรฐาน
+# ได้สายเชื่อมครบคือ  ใบของเว็บ -> YR1 -> Root YR -> ISRG Root X1 (อยู่ใน certifi แล้ว)
+#
+# วิธีนี้ยังตรวจสอบความปลอดภัยครบถ้วน ต่างจากการปิด verify ทิ้งซึ่งไม่ควรทำ
+# และทำให้ทั้ง Windows กับ Linux ใช้เส้นทางเดียวกัน ผลจึงเหมือนกันทุกเครื่อง
+EXTRA_CERTS_DIR = DATA_DIR / "certs"
+CA_BUNDLE_FILE = DATA_DIR / "ca_bundle.pem"
+
+
+def _build_ca_bundle() -> str:
+    """รวมชุดใบรับรองมาตรฐานเข้ากับใบที่เตรียมไว้เอง แล้วคืนที่อยู่ไฟล์"""
+    parts = [Path(certifi.where()).read_text(encoding="utf-8")]
+    if EXTRA_CERTS_DIR.is_dir():
+        for pem in sorted(EXTRA_CERTS_DIR.glob("*.pem")):
+            parts.append(pem.read_text(encoding="utf-8"))
+
+    merged = chr(10).join(parts)
+    # เขียนใหม่เฉพาะเมื่อเนื้อหาเปลี่ยน จะได้ไม่เขียนดิสก์ทุกครั้งที่เปิดโปรแกรม
+    if not CA_BUNDLE_FILE.exists() or CA_BUNDLE_FILE.read_text(encoding="utf-8") != merged:
+        CA_BUNDLE_FILE.write_text(merged, encoding="utf-8")
+    return str(CA_BUNDLE_FILE)
+
+
+CA_BUNDLE = _build_ca_bundle()
 
 # ย้ายไป PostgreSQL ภายหลังได้โดยแก้บรรทัดนี้บรรทัดเดียว
 DATABASE_URL = f"sqlite:///{DATA_DIR / 'airquality.db'}"

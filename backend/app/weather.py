@@ -18,7 +18,7 @@ from datetime import date, datetime
 import requests
 from sqlmodel import Session, col, func, select
 
-from app.config import NASA_PARAMS, NASA_POWER_URL, REQUEST_TIMEOUT
+from app.config import CA_BUNDLE, NASA_PARAMS, NASA_POWER_URL, REQUEST_TIMEOUT
 from app.models import CollectionLog, Station, WeatherDaily
 
 # NASA POWER ใช้ -999 แทนค่าที่ไม่มีข้อมูล
@@ -68,6 +68,7 @@ def fetch_point(latitude: float, longitude: float, start: date, end: date) -> di
             "end": end.strftime("%Y%m%d"),
             "format": "JSON",
         },
+        verify=CA_BUNDLE,
         timeout=REQUEST_TIMEOUT,
     )
     response.raise_for_status()

@@ -13,6 +13,9 @@ backend/data/raw/
 
 backend/data/collector.log
 
+# ชุดใบรับรองที่รวมไว้ใช้งาน สร้างใหม่อัตโนมัติจาก certifi + backend/data/certs/
+backend/data/ca_bundle.pem
+
 # สภาพแวดล้อมและแพ็กเกจ ติดตั้งใหม่จาก requirements.txt และ package.json ได้
 backend/.venv/
 frontend/node_modules/

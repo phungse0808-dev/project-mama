@@ -12,7 +12,7 @@ from pathlib import Path
 import requests
 from sqlmodel import Session, col, select
 
-from app.config import AIR4THAI_URL, MISSING_VALUE, RAW_DIR, REQUEST_TIMEOUT
+from app.config import AIR4THAI_URL, CA_BUNDLE, MISSING_VALUE, RAW_DIR, REQUEST_TIMEOUT
 from app.models import CollectionLog, Reading, Station
 
 POLLUTANTS = ("PM25", "PM10", "O3", "CO", "NO2", "SO2")
@@ -22,7 +22,7 @@ BANGKOK = "กรุงเทพฯ"
 
 def fetch_raw() -> dict:
     """ดึงข้อมูลสดจาก Air4Thai"""
-    response = requests.get(AIR4THAI_URL, timeout=REQUEST_TIMEOUT)
+    response = requests.get(AIR4THAI_URL, timeout=REQUEST_TIMEOUT, verify=CA_BUNDLE)
     response.raise_for_status()
     return response.json()
 
