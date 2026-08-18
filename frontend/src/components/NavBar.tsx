@@ -40,17 +40,23 @@ export function NavBar({ active, onGoTo, onSearch, onHome, onSignOut }: Props) {
           <span />
         </button>
 
-        <nav className="navbar-menu">
-          {SECTIONS.map((item) => (
-            <button
-              key={item.key}
-              className={item.key === active ? "navbar-item active" : "navbar-item"}
-              onClick={() => onGoTo(item.key)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
+        {/* ปุ่มเลือกหน้าโชว์เฉพาะตอนอยู่หน้าหลัก
+            พอเข้าไปในหน้าเนื้อหาแล้วซ่อน เพื่อให้แถบด้านบนไม่แย่งความสนใจ
+            ไปจากข้อมูลซึ่งเป็นสาระของหน้า การสลับหน้าทำที่หน้าหลักที่เดียว
+            คือกดกลับออกมาแล้วเลือกใหม่ */}
+        {active === "home" && (
+          <nav className="navbar-menu">
+            {SECTIONS.map((item) => (
+              <button
+                key={item.key}
+                className="navbar-item"
+                onClick={() => onGoTo(item.key)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        )}
 
         <div className="navbar-right">
           <button className="navbar-action" onClick={onSearch}>
