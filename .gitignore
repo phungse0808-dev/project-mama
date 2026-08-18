@@ -1,0 +1,31 @@
+# ---------- ของหนักที่สร้างใหม่ได้ ห้ามขึ้น git ----------
+
+# ฐานข้อมูล 45 MB สร้างใหม่จากไฟล์ CSV ได้เสมอด้วย scripts/import_hourly.py
+# ไฟล์ฐานข้อมูลเป็นไบนารี git จึงเก็บสำเนาใหม่ทั้งก้อนทุกครั้งที่เปลี่ยน
+# ถ้าปล่อยขึ้นไปจะบวมเป็นหลาย GB ภายในไม่กี่สัปดาห์
+backend/data/airquality.db
+backend/data/airquality.db-journal
+backend/data/airquality.db-wal
+backend/data/airquality.db-shm
+
+# ข้อมูลดิบรายชั่วโมง ไฟล์ละ 140 KB เก็บไว้ตรวจสอบย้อนหลังในเครื่องพอ
+backend/data/raw/
+
+backend/data/collector.log
+
+# สภาพแวดล้อมและแพ็กเกจ ติดตั้งใหม่จาก requirements.txt และ package.json ได้
+backend/.venv/
+frontend/node_modules/
+
+# ไฟล์ที่ build ออกมา สร้างใหม่ด้วย npm run build ได้
+frontend/dist/
+
+__pycache__/
+*.pyc
+
+# ความลับ ห้ามขึ้น git เด็ดขาด
+.env
+*.key
+
+.DS_Store
+Thumbs.db

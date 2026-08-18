@@ -1,0 +1,234 @@
+/**
+ * ตัวเรียก REST API ของระบบเฝ้าระวังคุณภาพอากาศ
+ *
+ * รวมการเรียก API ไว้ที่เดียว เพื่อให้เวลาย้ายเซิร์ฟเวอร์ขึ้นออนไลน์
+ * แก้ที่ตัวแปร BASE_URL จุดเดียวพอ
+ */
+
+/**
+ * ที่อยู่ของ API
+ *
+ * ตอนพัฒนา หน้าเว็บรันที่พอร์ต 5173 แต่ API อยู่พอร์ต 8000 จึงต้องระบุที่อยู่เต็ม
+ * ตอน build เป็นของจริง หน้าเว็บถูกเสิร์ฟจากเซิร์ฟเวอร์ API ตัวเดียวกัน
+ * จึงใช้ที่อยู่ว่างเพื่อเรียกแบบ same-origin ทำให้ไม่ติดปัญหา CORS
+ * และย้ายขึ้นออนไลน์ได้โดยไม่ต้องแก้โค้ด
+ */
+const BASE_URL =
+  import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://127.0.0.1:8000" : "");
+
+export type AqiLevel = {
+  key: string | null;
+  label_th: string;
+  color: string;
+  advice_th: string;
+};
+
+export type StationReading = {
+  station_code: string;
+  name_th: string;
+  province: string;
+  latitude: number;
+  longitude: number;
+  measured_at: string;
+  is_stale: boolean;
+  pm25: number | null;
+  pm10: number | null;
+  o3: number | null;
+  co: number | null;
+  no2: number | null;
+  so2: number | null;
+  aqi: number | null;
+  aqi_param: string | null;
+  level: AqiLevel;
+};
+
+export type Summary = {
+  measured_at: string | null;
+  stations_total: number;
+  stations_reporting: number;
+  stations_stale: number;
+  pm25_avg: number | null;
+  pm25_max: number | null;
+  pm25_min: number | null;
+  level_counts: Record<string, number>;
+  levels: { key: string; label_th: string; color: string }[];
+  worst_station: StationReading | null;
+};
+
+export type ProvinceRank = {
+  province: string;
+  pm25_avg: number;
+  pm25_max: number;
+  station_count: number;
+  level: AqiLevel;
+};
+
+export type HistoryPoint = {
+  measured_at: string;
+  label: string;
+  pm25: number | null;
+  pm10: number | null;
+  aqi: number | null;
+};
+
+export type StationHistory = {
+  station_code: string;
+  name_th: string;
+  province: string;
+  points: HistoryPoint[];
+};
+
+export type DailyPoint = {
+  observed_on: string;
+  label: string;
+  pm25_avg: number;
+  pm25_min: number;
+  pm25_max: number;
+  hours: number;
+  complete: boolean;
+  over_thai_standard: boolean;
+};
+
+export type StationDaily = {
+  station_code: string;
+  name_th: string;
+  province: string;
+  thai_standard: number;
+  min_hours_per_day: number;
+  days_total: number;
+  days_complete: number;
+  days_over_standard: number;
+  points: DailyPoint[];
+};
+
+export type WeatherPoint = {
+  observed_on: string;
+  label: string;
+  temp_avg: number | null;
+  temp_max: number | null;
+  temp_min: number | null;
+  rainfall_mm: number | null;
+  humidity: number | null;
+  wind_speed: number | null;
+};
+
+export type CollectionHealth = {
+  readings_total: number;
+  stations_total: number;
+  weather_total: number;
+  collection_started: string | null;
+  first_reading: string | null;
+  last_reading: string | null;
+  expected_rows: number;
+  completeness_pct: number | null;
+  field_completeness: Record<string, number>;
+  recent_runs: {
+    source: string;
+    started_at: string;
+    success: boolean;
+    records_new: number;
+    records_duplicate: number;
+    error_message: string | null;
+  }[];
+};
+
+export type AppUser = {
+  id: number;
+  display_name: string;
+  province: string | null;
+  risk_group: string | null;
+};
+
+export type RiskGroup = {
+  key: string;
+  label_th: string;
+  detail_th: string;
+  sensitive: boolean;
+};
+
+export type GroupAdvice = RiskGroup & { advice_th: string };
+
+export type Standards = {
+  pm25: number | null;
+  thai_standard: number;
+  who_guideline: number;
+  over_thai_standard: boolean;
+  over_who_guideline: boolean;
+  times_who: number | null;
+};
+
+export type PersonalSummary = {
+  user: AppUser;
+  scope: string;
+  station_count: number;
+  pm25: number | null;
+  level: AqiLevel;
+  standards: Standards;
+  my_advice: GroupAdvice | null;
+  all_groups: GroupAdvice[];
+};
+
+export type Alerts = {
+  checked_at: string;
+  stations_checked: number;
+  thai_standard: number;
+  who_guideline: number;
+  over_thai_standard: StationReading[];
+  over_who_guideline: StationReading[];
+};
+
+async function get<T>(path: string): Promise<T> {
+  const response = await fetch(`${BASE_URL}${path}`);
+  if (!response.ok) {
+    throw new Error(`เรียก ${path} ไม่สำเร็จ (สถานะ ${response.status})`);
+  }
+  return response.json() as Promise<T>;
+}
+
+async function send<T>(path: string, method: string, body: unknown): Promise<T> {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const detail = await response.json().catch(() => null);
+    throw new Error(detail?.detail ?? `เรียก ${path} ไม่สำเร็จ (สถานะ ${response.status})`);
+  }
+  return response.json() as Promise<T>;
+}
+
+export const api = {
+  summary: () => get<Summary>("/api/summary"),
+  signIn: (name: string) => send<AppUser>("/api/users/sign-in", "POST", { name }),
+  updateProfile: (id: number, province: string | null, riskGroup: string | null) =>
+    send<AppUser>(`/api/users/${id}`, "PATCH", { province, risk_group: riskGroup }),
+  personalSummary: (id: number) => get<PersonalSummary>(`/api/users/${id}/summary`),
+  riskGroups: () => get<RiskGroup[]>("/api/risk-groups"),
+  provinces: () => get<string[]>("/api/provinces"),
+  alerts: () => get<Alerts>("/api/alerts"),
+  stations: () => get<StationReading[]>("/api/stations"),
+  provinceRanking: () => get<ProvinceRank[]>("/api/provinces/ranking"),
+  stationDaily: (code: string, days = 30) =>
+    get<StationDaily>(`/api/stations/${code}/daily?days=${days}`),
+  stationHistory: (code: string, hours = 48) =>
+    get<StationHistory>(`/api/stations/${code}/history?hours=${hours}`),
+  weather: (province: string, days = 30) =>
+    get<{ province: string; points: WeatherPoint[] }>(
+      `/api/weather/${encodeURIComponent(province)}?days=${days}`,
+    ),
+  collectionHealth: () => get<CollectionHealth>("/api/collection/health"),
+};
+
+/** จัดรูปแบบวันเวลาให้อ่านง่ายแบบไทย */
+export function formatThaiDateTime(iso: string | null): string {
+  if (!iso) return "ไม่มีข้อมูล";
+  const date = new Date(iso);
+  return date.toLocaleString("th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
