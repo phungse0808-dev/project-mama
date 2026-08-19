@@ -279,6 +279,24 @@ export type RainChance = {
   monthly?: { month: number; label: string; chance_pct: number; rainfall_avg_mm: number }[];
 };
 
+export type WeatherNow = {
+  available: boolean;
+  reason?: string;
+  province?: string;
+  source?: string;
+  observed_at?: string;
+  minutes_behind?: number | null;
+  temperature?: number | null;
+  humidity?: number | null;
+  precipitation?: number | null;
+  wind_speed?: number | null;
+  condition?: string;
+  rain_chance_pct?: number | null;
+  temp_max?: number | null;
+  temp_min?: number | null;
+  rain_today_mm?: number | null;
+};
+
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`);
   if (!response.ok) {
@@ -308,6 +326,8 @@ export const api = {
   personalSummary: (id: number) => get<PersonalSummary>(`/api/users/${id}/summary`),
   riskGroups: () => get<RiskGroup[]>("/api/risk-groups"),
   provinces: () => get<string[]>("/api/provinces"),
+  weatherNow: (province: string) =>
+    get<WeatherNow>("/api/weather-now/" + encodeURIComponent(province)),
   rainChance: (province: string) =>
     get<RainChance>("/api/rain-chance/" + encodeURIComponent(province)),
   alerts: () => get<Alerts>("/api/alerts"),

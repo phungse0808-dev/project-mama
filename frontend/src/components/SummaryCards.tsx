@@ -1,12 +1,22 @@
-import type { Summary } from "../api";
+import type { Summary, WeatherNow } from "../api";
 import { formatThaiDateTime } from "../api";
 
 type Props = { summary: Summary };
+type CardProps = Props & { weatherNow: WeatherNow | null };
+
+/** ตัดเอาเฉพาะเวลาจากค่าที่ต้นทางส่งมาเป็น 2026-08-19T08:30 ซึ่งเป็นเวลาไทยอยู่แล้ว */
+function formatClock(value: string | undefined): string {
+  if (!value) return "-";
+  const [date, time] = value.split("T");
+  if (!time) return value;
+  const [, month, day] = date.split("-");
+  return `${day}/${month} ${time} น.`;
+}
 
 /** การ์ดสรุปภาพรวมด้านบนสุดของแดชบอร์ด */
-export function SummaryCards({ summary }: Props) {
+export function SummaryCards({ summary, weatherNow }: CardProps) {
   const worst = summary.worst_station;
-  const weather = summary.weather;
+  const now = weatherNow?.available ? weatherNow : null;
 
   return (
     <section className="cards">
@@ -57,45 +67,52 @@ export function SummaryCards({ summary }: Props) {
         <p className="card-note">อัปเดตอัตโนมัติทุกชั่วโมง</p>
       </article>
 
-      {/* สภาพอากาศเฉลี่ยทั้งประเทศ วางต่อจากการ์ดค่าฝุ่นเพราะเป็นภาพรวมชุดเดียวกัน
-          และเป็นปัจจัยที่อธิบายว่าทำไมฝุ่นถึงสะสมหรือกระจายตัว
+      {/* สภาพอากาศ ณ ขณะนี้ ของจังหวัดที่ผู้ใช้ตั้งไว้
+          ไม่ใช่ค่าเฉลี่ยทั้งประเทศแบบเดิม เพราะสภาพอากาศต่างกันมากในแต่ละภาค
+          ค่าเฉลี่ยรวมทั้งประเทศจึงไม่ตรงกับที่ผู้ใช้เจอจริง
 
-          ต้องบอกวันที่กำกับทุกใบ เพราะข้อมูลอากาศตามหลังปัจจุบันหลายวัน
-          ต่างจากค่าฝุ่นที่เป็นรายชั่วโมง ถ้าไม่บอกจะเข้าใจว่าเป็นของตอนนี้ */}
-      {weather && (
+          ใช้คนละแหล่งกับข้อมูลอากาศย้อนหลังที่ระบบเก็บเอง
+          เพราะ NASA POWER เผยแพร่เฉพาะข้อมูลที่ผ่านมาแล้วและตามหลังหลายวัน
+          บอกสภาพอากาศตอนนี้ไม่ได้ */}
+      {now && (
         <>
           <article className="card">
-            <p className="card-label">อุณหภูมิเฉลี่ยทั้งประเทศ</p>
+            <p className="card-label">อากาศตอนนี้ · {now.province}</p>
             <p className="card-value">
-              {weather.temp_avg ?? "-"}
+              {now.temperature ?? "-"}
               <span className="card-unit">°C</span>
             </p>
             <p className="card-note">
-              ความชื้น {weather.humidity ?? "-"}% · ลม {weather.wind_speed ?? "-"} m/s
+              {now.condition} · สูงสุด {now.temp_max ?? "-"} · ต่ำสุด {now.temp_min ?? "-"} °C
             </p>
           </article>
 
           <article className="card">
-            <p className="card-label">พื้นที่ที่ฝนตกวันล่าสุด</p>
+            <p className="card-label">โอกาสฝนตกวันนี้</p>
             <p className="card-value">
-              {weather.rain_area_pct ?? "-"}
+              {now.rain_chance_pct ?? "-"}
               <span className="card-unit">%</span>
             </p>
             <p className="card-note">
-              ของ {weather.provinces} จังหวัด · ฝนเฉลี่ย {weather.rainfall_mm ?? "-"} มม.
+              ความชื้น {now.humidity ?? "-"}% · ลม {now.wind_speed ?? "-"} km/h
             </p>
           </article>
 
           <article className="card">
-            <p className="card-label">ข้อมูลอากาศ ณ วันที่</p>
-            <p className="card-value card-value-sm">{weather.observed_on}</p>
+            <p className="card-label">อากาศ ณ เวลา</p>
+            <p className="card-value card-value-sm">
+              {formatClock(now.observed_at)}
+            </p>
             <p className="card-note">
-              ตามหลังวันนี้ {weather.days_behind} วัน เพราะ NASA POWER
-              เผยแพร่ข้อมูลย้อนหลัง
+              {now.minutes_behind != null
+                ? `ข้อมูลเมื่อ ${now.minutes_behind} นาทีที่แล้ว · `
+                : ""}
+              จาก Open-Meteo
             </p>
           </article>
         </>
       )}
+
     </section>
   );
 }

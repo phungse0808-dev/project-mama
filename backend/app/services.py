@@ -13,6 +13,7 @@ from app.health_advice import (
     advice_for,
     compare_standards,
 )
+from app.forecast import fetch_now
 from app.regions import ALIASES, region_of
 from app.models import AppUser, CollectionLog, DiseaseDaily, HivStatistic, Reading, Station, WeatherDaily
 
@@ -157,6 +158,38 @@ def national_weather(session: Session) -> dict | None:
         "rainfall_mm": mean_of("rainfall_mm"),
         "rain_area_pct": round(len(rained) / len(items) * 100, 1) if items else None,
     }
+
+
+def province_coordinates(session: Session) -> dict[str, tuple[float, float]]:
+    """พิกัดตัวแทนของแต่ละจังหวัด เอามาจากข้อมูลอากาศที่เก็บไว้แล้ว
+
+    ใช้พิกัดชุดเดียวกับที่ใช้ดึงข้อมูลย้อนหลังจาก NASA POWER
+    เพื่อให้ค่าปัจจุบันกับค่าย้อนหลังอ้างถึงจุดเดียวกัน เทียบกันได้ตรงไปตรงมา
+    """
+    rows = session.exec(
+        select(WeatherDaily.province, WeatherDaily.latitude, WeatherDaily.longitude)
+    ).all()
+    return {province: (lat, lon) for province, lat, lon in rows}
+
+
+def weather_now(session: Session, province: str) -> dict:
+    """สภาพอากาศปัจจุบันของจังหวัดนั้น ดึงสดจาก Open-Meteo
+
+    ต่างจากข้อมูลอากาศย้อนหลังที่ระบบเก็บเอง ตรงที่อันนี้เป็นค่า ณ ขณะนี้จริง
+    อัปเดตทุก 15 นาที และมีพยากรณ์โอกาสฝนตกของวันนี้ด้วย
+    """
+    coords = province_coordinates(session).get(province)
+    if coords is None:
+        return {"available": False, "reason": f"ไม่มีพิกัดของจังหวัด{province}"}
+
+    data = fetch_now(*coords)
+    if data is None:
+        return {
+            "available": False,
+            "reason": "เรียกข้อมูลสภาพอากาศปัจจุบันไม่สำเร็จ อาจเป็นเพราะไม่มีอินเทอร์เน็ต",
+        }
+
+    return {"available": True, "province": province, **data}
 
 
 def province_ranking(session: Session) -> list[dict]:

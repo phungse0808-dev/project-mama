@@ -36,6 +36,7 @@ from app.services import (
     update_profile,
     vulnerability_index,
     weather_history,
+    weather_now,
 )
 
 
@@ -170,6 +171,17 @@ class ProfileRequest(BaseModel):
 
     province: str | None = Field(default=None, max_length=60)
     risk_group: str | None = Field(default=None, max_length=40)
+
+
+@app.get("/api/weather-now/{province}", tags=["ข้อมูลอากาศ"])
+def get_weather_now(province: str, session: Session = Depends(get_session)) -> dict:
+    """สภาพอากาศ ณ ขณะนี้ และพยากรณ์โอกาสฝนตกของวันนี้
+
+    ใช้แหล่งข้อมูลคนละตัวกับข้อมูลย้อนหลังที่ระบบเก็บเอง
+    เพราะ NASA POWER เผยแพร่เฉพาะข้อมูลที่ผ่านมาแล้วและตามหลังหลายวัน
+    จึงบอกสภาพอากาศปัจจุบันไม่ได้
+    """
+    return weather_now(session, province)
 
 
 @app.get("/api/rain-chance/{province}", tags=["ข้อมูลอากาศ"])

@@ -10,7 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import { api } from "../api";
-import type { RainChance } from "../api";
+import type { RainChance, WeatherNow } from "../api";
 
 type Props = {
   provinces: string[];
@@ -18,11 +18,14 @@ type Props = {
 };
 
 /**
- * โอกาสฝนตกและสภาพอากาศล่าสุด
+ * โอกาสฝนตกและสภาพอากาศ
  *
- * โอกาสฝนตกคิดจากสถิติย้อนหลัง ไม่ใช่การพยากรณ์ เพราะข้อมูลที่ระบบมี
- * เป็นข้อมูลย้อนหลังจาก NASA POWER เท่านั้น ไม่มีข้อมูลพยากรณ์
- * ตัวเลขจึงบอกได้แค่ว่าช่วงนี้ของปีฝนมักตกบ่อยแค่ไหน
+ * แสดงสองตัวเลขคู่กันโดยตั้งใจ เพราะเป็นคนละอย่างและตอบคนละคำถาม
+ *   พยากรณ์วันนี้    จาก Open-Meteo ดูสภาพบรรยากาศจริงตอนนี้ ตอบว่าวันนี้จะตกไหม
+ *   สถิติย้อนหลัง    คำนวณเองจากข้อมูล NASA POWER หกปี ตอบว่าช่วงนี้ของปีฝนตกบ่อยแค่ไหน
+ *
+ * ตัวหลังเป็นส่วนที่ระบบคำนวณเอง จึงเก็บไว้แม้จะมีพยากรณ์จริงแล้ว
+ * และเวลาสองค่าต่างกันมากก็เป็นข้อสังเกตที่มีความหมายในตัวมันเอง
  *
  * เกี่ยวกับฝุ่นตรงที่ฝนเป็นตัวชะฝุ่นออกจากอากาศ
  * ช่วงที่โอกาสฝนตกต่ำจึงเป็นช่วงที่ฝุ่นสะสมได้ง่าย
@@ -30,6 +33,7 @@ type Props = {
 export function RainPanel({ provinces, defaultProvince }: Props) {
   const [province, setProvince] = useState(defaultProvince ?? provinces[0] ?? "");
   const [data, setData] = useState<RainChance | null>(null);
+  const [now, setNow] = useState<WeatherNow | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,11 +55,29 @@ export function RainPanel({ provinces, defaultProvince }: Props) {
     };
   }, [province]);
 
+  // ดึงสภาพอากาศปัจจุบันแยกอีกชุด เพราะมาจากคนละแหล่ง
+  // ถ้าแหล่งใดแหล่งหนึ่งล่ม อีกส่วนต้องยังแสดงได้ตามปกติ
+  useEffect(() => {
+    if (!province) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await api.weatherNow(province);
+        if (!cancelled) setNow(result.available ? result : null);
+      } catch {
+        if (!cancelled) setNow(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [province]);
+
   const header = (
     <>
       <h2 className="panel-title">
-        โอกาสฝนตกวันนี้
-        <span className="panel-hint">คิดจากสถิติย้อนหลัง ไม่ใช่การพยากรณ์</span>
+        โอกาสฝนตกและสภาพอากาศ
+        <span className="panel-hint">พยากรณ์จริงคู่กับสถิติย้อนหลัง</span>
       </h2>
       <div className="weather-controls">
         <label>
@@ -102,6 +124,69 @@ export function RainPanel({ provinces, defaultProvince }: Props) {
     <section className="panel">
       {header}
 
+      {now && (
+        <div className="now-block">
+          <div className="now-head">
+            <div>
+              <p className="now-temp">
+                {now.temperature ?? "-"}
+                <small> °C</small>
+              </p>
+              <p className="now-condition">{now.condition}</p>
+            </div>
+            <div className="now-forecast" style={{ borderColor: chanceColor }}>
+              <p className="now-forecast-value" style={{ color: chanceColor }}>
+                {now.rain_chance_pct ?? "-"}
+                <small>%</small>
+              </p>
+              <p className="now-forecast-label">พยากรณ์โอกาสฝนวันนี้</p>
+            </div>
+          </div>
+
+          <div className="rain-stats">
+            <div>
+              <p className="rain-stat-value">
+                {now.humidity ?? "—"}
+                <small> %</small>
+              </p>
+              <p className="rain-stat-label">ความชื้น</p>
+            </div>
+            <div>
+              <p className="rain-stat-value">
+                {now.wind_speed ?? "—"}
+                <small> km/h</small>
+              </p>
+              <p className="rain-stat-label">ความเร็วลม</p>
+            </div>
+            <div>
+              <p className="rain-stat-value">
+                {now.temp_max ?? "—"}
+                <small> / {now.temp_min ?? "—"} °C</small>
+              </p>
+              <p className="rain-stat-label">สูงสุด / ต่ำสุดวันนี้</p>
+            </div>
+            <div>
+              <p className="rain-stat-value">
+                {now.rain_today_mm ?? "—"}
+                <small> มม.</small>
+              </p>
+              <p className="rain-stat-label">ฝนสะสมที่คาดวันนี้</p>
+            </div>
+          </div>
+
+          <p className="now-stamp">
+            วัดเมื่อ {now.observed_at?.replace("T", " เวลา ")} น.
+            {now.minutes_behind != null ? ` (${now.minutes_behind} นาทีที่แล้ว)` : ""} ·
+            แหล่งข้อมูล {now.source}
+          </p>
+        </div>
+      )}
+
+      <h3 className="rain-subtitle">
+        สถิติย้อนหลังของช่วงวันนี้
+        <span className="panel-hint">ระบบคำนวณเองจากข้อมูล {years.length} ปี</span>
+      </h3>
+
       <div className="rain-summary">
         <div className="rain-figure" style={{ background: chanceColor }}>
           <strong>{chance}</strong>
@@ -123,7 +208,7 @@ export function RainPanel({ provinces, defaultProvince }: Props) {
       {latest && (
         <>
           <h3 className="rain-subtitle">
-            สภาพอากาศล่าสุด
+            สภาพอากาศล่าสุดในชุดข้อมูลวิจัย
             <span className="panel-hint">
               วันที่ {latest.observed_on} · ตามหลังวันนี้ {latest.days_behind} วัน
             </span>
@@ -199,14 +284,16 @@ export function RainPanel({ provinces, defaultProvince }: Props) {
       </div>
 
       <p className="weather-note">
-        ตัวเลขนี้ <strong>ไม่ใช่การพยากรณ์อากาศ</strong> เพราะไม่ได้ดูสภาพบรรยากาศจริง
-        ในขณะนี้เลย เป็นความถี่ที่เคยเกิดขึ้นจริงในช่วงวันเดียวกันของปีก่อนๆ
-        ซึ่งทางวิชาการเรียกว่าความน่าจะเป็นเชิงภูมิอากาศ บอกได้ว่าช่วงนี้ของปี
-        ฝนมักตกบ่อยแค่ไหน แต่บอกไม่ได้ว่าวันนี้จะตกหรือไม่
+        หน้านี้ใช้ข้อมูลสองแหล่ง แยกหน้าที่กันชัดเจนและไม่นำมาปนกัน
         <br />
-        ระบบไม่มีข้อมูลพยากรณ์ เพราะ NASA POWER เผยแพร่เฉพาะข้อมูลย้อนหลัง
-        และตามหลังปัจจุบันอยู่ราวสามถึงห้าวัน สภาพอากาศที่แสดงจึงเป็นของวันล่าสุด
-        ที่มีข้อมูล ไม่ใช่ของวันนี้ และบอกวันที่กำกับไว้เสมอ
+        <strong>สภาพอากาศตอนนี้และพยากรณ์วันนี้</strong> มาจาก Open-Meteo
+        ซึ่งอัปเดตทุก 15 นาที เป็นค่า ณ ขณะนี้จริงและดูสภาพบรรยากาศปัจจุบัน
+        <br />
+        <strong>สถิติย้อนหลัง</strong> ระบบคำนวณเองจากข้อมูล NASA POWER ย้อนหลังหกปี
+        ไม่ใช่การพยากรณ์ แต่เป็นความถี่ที่เคยเกิดขึ้นจริงในช่วงวันเดียวกันของปีก่อนๆ
+        ซึ่งทางวิชาการเรียกว่าความน่าจะเป็นเชิงภูมิอากาศ ใช้เป็นฐานเปรียบเทียบว่า
+        วันนี้ผิดปกติไปจากช่วงเดียวกันของปีก่อนหรือไม่ ส่วนที่ NASA POWER ทำไม่ได้
+        คือบอกสภาพอากาศปัจจุบัน เพราะเผยแพร่เฉพาะข้อมูลย้อนหลังและตามหลังสามถึงห้าวันเสมอ
         <br />
         เรื่องนี้เกี่ยวกับฝุ่นตรงที่ฝนเป็นตัวชะฝุ่นออกจากอากาศ
         เดือนที่โอกาสฝนตกต่ำจึงเป็นเดือนที่ฝุ่นสะสมได้ง่ายกว่า

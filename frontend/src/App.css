@@ -1354,6 +1354,78 @@ body {
   }
 }
 
+/* ---------- สภาพอากาศ ณ ขณะนี้ ---------- */
+
+/* วางไว้บนสุดของแผงและใส่พื้นหลังต่างจากส่วนอื่น
+   เพื่อให้เห็นทันทีว่าส่วนนี้เป็นค่าปัจจุบัน แยกจากสถิติย้อนหลังที่อยู่ถัดลงไป */
+.now-block {
+  background: linear-gradient(135deg, #eaf2fd 0%, #f3f7fc 100%);
+  border: 1px solid #d6e3f4;
+  border-radius: 12px;
+  padding: 16px 18px 12px;
+  margin-bottom: 22px;
+}
+
+.now-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.now-temp {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+
+.now-temp small {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+.now-condition {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-soft);
+}
+
+.now-forecast {
+  text-align: center;
+  border: 2px solid;
+  border-radius: 10px;
+  padding: 8px 16px;
+  background: #fff;
+}
+
+.now-forecast-value {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.now-forecast-value small {
+  font-size: 15px;
+}
+
+.now-forecast-label {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
+.now-stamp {
+  margin: 12px 0 0;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
 /* ---------- หน้าแรกก่อนเข้าระบบ ---------- */
 
 .landing {

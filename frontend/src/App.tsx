@@ -10,6 +10,7 @@ import type {
   StationHistory,
   StationReading,
   Summary,
+  WeatherNow,
 } from "./api";
 import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
@@ -51,6 +52,7 @@ export default function App() {
   const [ranking, setRanking] = useState<ProvinceRank[]>([]);
   const [health, setHealth] = useState<CollectionHealth | null>(null);
   const [alertData, setAlertData] = useState<Alerts | null>(null);
+  const [weatherNow, setWeatherNow] = useState<WeatherNow | null>(null);
   const [provinces, setProvinces] = useState<string[]>([]);
   const [history, setHistory] = useState<StationHistory | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -93,6 +95,33 @@ export default function App() {
     const timer = setInterval(() => void loadAll(), 5 * 60 * 1000);
     return () => clearInterval(timer);
   }, [loadAll, user]);
+
+
+  // สภาพอากาศปัจจุบันของจังหวัดที่ผู้ใช้ตั้งไว้ ถ้ายังไม่ได้ตั้งใช้กรุงเทพฯ เป็นค่าตั้งต้น
+  //
+  // แยกออกมาจากการโหลดชุดใหญ่ เพราะมาจากคนละแหล่งและเปลี่ยนตามจังหวัดของผู้ใช้
+  // ต้นทางอัปเดตทุก 15 นาที จึงดึงซ้ำทุก 10 นาทีก็เพียงพอ
+  useEffect(() => {
+    if (!user) return;
+    const province = user.province ?? "กรุงเทพฯ";
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const result = await api.weatherNow(province);
+        if (!cancelled) setWeatherNow(result);
+      } catch {
+        if (!cancelled) setWeatherNow(null);
+      }
+    };
+
+    void load();
+    const timer = setInterval(() => void load(), 10 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [user]);
 
   const handleSignedIn = useCallback((signed: AppUser) => {
     localStorage.setItem(USER_KEY, JSON.stringify(signed));
@@ -219,7 +248,7 @@ export default function App() {
             คุณภาพของข้อมูลเอง ตามลำดับที่ผู้ใช้อยากรู้ */}
         {active === "air" && (
           <>
-            {summary && <SummaryCards summary={summary} />}
+            {summary && <SummaryCards summary={summary} weatherNow={weatherNow} />}
             {summary && <LevelBar summary={summary} />}
 
             <PersonalPanel user={user} onProfileChange={handleProfileChange} />
