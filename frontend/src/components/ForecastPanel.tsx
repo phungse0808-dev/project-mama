@@ -47,9 +47,6 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
   // ค่าภายในจังหวัดเดียวกันต่างกันได้หลายเท่า ค่าเฉลี่ยรวมจึงไม่ตรงกับที่ไหนเลย
   // การเลือกสถานีที่ใกล้ตัวที่สุดให้ค่าที่ใช้ตัดสินใจได้จริงมากกว่า
   const [station, setStation] = useState("");
-  // มุมมองรายวันบอกภาพรวมว่าวันไหนควรระวัง
-  // มุมมองรายชั่วโมงบอกว่าควรเลี่ยงช่วงไหนของวัน ซึ่งใช้วางแผนได้ตรงกว่า
-  const [view, setView] = useState<"day" | "hour">("day");
   const [data, setData] = useState<Pm25Forecast | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -132,24 +129,6 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
           </select>
         </label>
 
-        {/* ปุ่มสลับมุมมอง ใช้รูปแบบเดียวกับปุ่มช่วงเวลาในแผงอื่นของระบบ */}
-        <div className="range-buttons">
-          <button
-            type="button"
-            className={view === "day" ? "range active" : "range"}
-            onClick={() => setView("day")}
-          >
-            รายวัน
-          </button>
-          <button
-            type="button"
-            className={view === "hour" ? "range active" : "range"}
-            onClick={() => setView("hour")}
-          >
-            รายชั่วโมง
-          </button>
-        </div>
-
         {stations.length > 1 && (
           <label>
             สถานี
@@ -197,36 +176,6 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
     <section className="panel">
       {header}
 
-      {view === "hour" ? (
-        <div className="hour-grid">
-          {days.map((day, index) => (
-            <section key={day.day} className="hour-day">
-              <h3 className="hour-day-title">
-                {DAY_LABELS[index] ?? shortDate(day.day)}
-                <span className="panel-hint">{shortDate(day.day)}</span>
-              </h3>
-              <div className="hour-cells">
-                {day.hourly.map((hour) => (
-                  <div
-                    key={hour.clock}
-                    className={hour.is_measured ? "hour-cell real" : "hour-cell"}
-                    title={`${hour.clock} น. ${hour.pm25} µg/m³ ${
-                      hour.is_measured ? "วัดได้จริง" : "คาดการณ์"
-                    }`}
-                  >
-                    <span className="hour-clock">{hour.clock.slice(0, 2)}</span>
-                    <span className="hour-value">{hour.pm25}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-          <p className="hour-legend">
-            ช่องพื้นเขียวคือชั่วโมงที่สถานีวัดค่าได้จริงแล้ว พื้นเทาคือค่าที่ยังเป็นการคาดการณ์
-            ตัวเลขบนคือชั่วโมง ตัวเลขล่างคือค่าฝุ่นหน่วยไมโครกรัมต่อลูกบาศก์เมตร
-          </p>
-        </div>
-      ) : (
       <div className="forecast-list">
         {days.map((day, index) => (
           <article key={day.day} className={day.is_today ? "forecast-row today" : "forecast-row"}>
@@ -278,7 +227,43 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
           </article>
         ))}
       </div>
-      )}
+
+      {/* ตารางรายชั่วโมงต่อจากสรุปรายวัน
+          สรุปรายวันตอบว่าวันไหนควรระวัง ตารางนี้ตอบว่าควรเลี่ยงช่วงไหนของวัน
+          ต่อกันแทนที่จะให้สลับดู เพราะสองคำถามนี้มักอยากรู้พร้อมกัน */}
+      <h3 className="rain-subtitle">
+        รายชั่วโมง
+        <span className="panel-hint">ดูว่าควรเลี่ยงกิจกรรมกลางแจ้งช่วงไหน</span>
+      </h3>
+
+      <div className="hour-grid">
+        {days.map((day, index) => (
+          <section key={day.day} className="hour-day">
+            <h4 className="hour-day-title">
+              {DAY_LABELS[index] ?? shortDate(day.day)}
+              <span className="panel-hint">{shortDate(day.day)}</span>
+            </h4>
+            <div className="hour-cells">
+              {day.hourly.map((hour) => (
+                <div
+                  key={hour.clock}
+                  className={hour.is_measured ? "hour-cell real" : "hour-cell"}
+                  title={`${hour.clock} น. ${hour.pm25} µg/m³ ${
+                    hour.is_measured ? "วัดได้จริง" : "คาดการณ์"
+                  }`}
+                >
+                  <span className="hour-clock">{hour.clock.slice(0, 2)}</span>
+                  <span className="hour-value">{hour.pm25}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+        <p className="hour-legend">
+          ช่องพื้นเขียวคือชั่วโมงที่สถานีวัดค่าได้จริงแล้ว พื้นเทาคือค่าที่ยังเป็นการคาดการณ์
+          ตัวเลขบนคือชั่วโมง ตัวเลขล่างคือค่าฝุ่นหน่วยไมโครกรัมต่อลูกบาศก์เมตร
+        </p>
+      </div>
 
       <p className="weather-note">
         {overStandard
