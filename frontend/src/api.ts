@@ -291,6 +291,7 @@ export type WeatherNow = {
   humidity?: number | null;
   precipitation?: number | null;
   wind_speed?: number | null;
+  weather_code?: number | null;
   condition?: string;
   rain_chance_pct?: number | null;
   temp_max?: number | null;

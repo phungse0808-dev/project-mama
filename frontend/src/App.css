@@ -394,6 +394,48 @@ body {
   color: var(--text-soft);
 }
 
+/* ---------- การ์ดอากาศตอนนี้ ---------- */
+
+/* วางไอคอนคู่กับอุณหภูมิ ให้รู้สภาพอากาศตั้งแต่กวาดสายตา
+   ไม่ต้องอ่านคำอธิบายก่อนถึงจะรู้ว่าตอนนี้แดดออกหรือฝนตก */
+.weather-now-main {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 9px 0 11px;
+}
+
+/* ตัวเลขในบล็อกนี้ไม่ต้องเว้นระยะบนล่างเหมือนการ์ดใบอื่น
+   เพราะจัดกึ่งกลางกับไอคอนด้วย flex อยู่แล้ว */
+.weather-now-main .card-value {
+  margin: 0;
+}
+
+.weather-now-condition {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* แยกช่วงอุณหภูมิออกมาเป็นบรรทัดของตัวเองพร้อมคำกำกับ
+   ของเดิมเขียนติดกับคำอธิบายเป็น เมฆครึ้ม · 26.1–32.9 องศา
+   ซึ่งผู้อ่านต้องเดาเองว่าเป็นช่วงของอะไร */
+.weather-now-range {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 9px;
+  border-top: 1px solid #eef1f5;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.weather-now-range strong {
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- แถบระดับคุณภาพอากาศ ---------- */
 
 .level-bar {

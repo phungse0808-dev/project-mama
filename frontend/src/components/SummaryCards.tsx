@@ -1,5 +1,6 @@
 import type { Summary, WeatherNow } from "../api";
 import { formatThaiDateTime } from "../api";
+import { WeatherIcon } from "./WeatherIcon";
 
 type Props = { summary: Summary };
 type CardProps = Props & {
@@ -135,15 +136,34 @@ export function SummaryCards({
 
         {now ? (
           <div className="cards cards-weather">
-            <article className="card">
+            {/* ใบนี้กินเต็มความกว้าง เพราะมีทั้งไอคอน อุณหภูมิ คำอธิบาย
+                และช่วงต่ำสุดถึงสูงสุด ถ้าอยู่ครึ่งเดียวจะเบียดจนตัดบรรทัด */}
+            <article className="card card-wide card-weather-now">
               <p className="card-label">อากาศตอนนี้</p>
-              <p className="card-value card-value-md">
-                {now.temperature ?? "-"}
-                <span className="card-unit">°C</span>
-              </p>
-              <p className="card-note">
-                {now.condition} · {now.temp_min ?? "-"}–{now.temp_max ?? "-"} °C
-              </p>
+
+              <div className="weather-now-main">
+                <WeatherIcon code={now.weather_code} />
+                <div>
+                  <p className="card-value card-value-md">
+                    {now.temperature ?? "-"}
+                    <span className="card-unit">°C</span>
+                  </p>
+                  {/* คำอธิบายสภาพอากาศคือคำตอบว่าตอนนี้เป็นอย่างไร
+                      จึงให้เด่นพอกับตัวเลข ไม่ใช่ตัวเล็กปนกับข้อมูลอื่นเหมือนเดิม */}
+                  <p className="weather-now-condition">{now.condition}</p>
+                </div>
+              </div>
+
+              {/* เขียนกำกับว่าตัวเลขคู่นี้คืออะไร ของเดิมเขียนติดกันเป็นช่วง
+                  ผู้อ่านต้องเดาเองว่าเป็นช่วงของอะไร */}
+              <div className="weather-now-range">
+                <span>
+                  ต่ำสุดวันนี้ <strong>{now.temp_min ?? "-"}°</strong>
+                </span>
+                <span>
+                  สูงสุด <strong>{now.temp_max ?? "-"}°</strong>
+                </span>
+              </div>
             </article>
 
             <article className="card">
@@ -157,7 +177,7 @@ export function SummaryCards({
               </p>
             </article>
 
-            <article className="card card-wide">
+            <article className="card">
               <p className="card-label">อากาศ ณ เวลา</p>
               <p className="card-value card-value-sm">{formatClock(now.observed_at)}</p>
               <p className="card-note">
