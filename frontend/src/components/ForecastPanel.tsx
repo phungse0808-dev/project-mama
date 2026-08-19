@@ -166,90 +166,6 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
     <section className="panel">
       {header}
 
-      {data.adjusted && data.accuracy?.available && (
-        <div className="calibration">
-          <p className="calibration-title">
-            {data.station_code
-              ? "ปรับค่าด้วยข้อมูลที่สถานีนี้วัดได้จริงแล้ว"
-              : "ปรับค่าด้วยข้อมูลที่สถานีในจังหวัดนี้วัดได้จริงแล้ว"}
-          </p>
-          <div className="calibration-stats">
-            <div>
-              <p className="calibration-value">
-                {data.station_code ? 1 : data.accuracy.station_count}
-              </p>
-              <p className="calibration-label">สถานีที่ร่วมคำนวณ</p>
-            </div>
-            <div>
-              <p className="calibration-value">{data.accuracy.hours}</p>
-              <p className="calibration-label">ชั่วโมงที่นำมาเทียบ</p>
-            </div>
-            <div>
-              <p className="calibration-value">{data.accuracy.model_avg}</p>
-              <p className="calibration-label">แบบจำลองเคยทำนาย</p>
-            </div>
-            <div>
-              <p className="calibration-value">{data.accuracy.measured_avg}</p>
-              <p className="calibration-label">สถานีวัดได้จริง</p>
-            </div>
-            <div>
-              <p className="calibration-value">
-                {data.accuracy.bias != null && data.accuracy.bias > 0 ? "+" : ""}
-                {data.accuracy.bias}
-              </p>
-              <p className="calibration-label">ค่าคลาดเคลื่อนเฉลี่ย</p>
-            </div>
-          </div>
-          <p className="calibration-note">
-            {data.accuracy.bias != null && data.accuracy.bias < 0
-              ? `แบบจำลองทำนายต่ำกว่าที่วัดได้จริงเฉลี่ย ${Math.abs(data.accuracy.bias)} µg/m³ อย่างสม่ำเสมอ`
-              : `แบบจำลองทำนายสูงกว่าที่วัดได้จริงเฉลี่ย ${data.accuracy.bias} µg/m³ อย่างสม่ำเสมอ`}
-            {" "}ระบบจึงชดเชยค่านี้คืนให้ทุกตัวเลขด้านล่าง ตัวเลขที่แสดงจึงเป็นค่าที่ปรับ
-            ด้วยข้อมูลของพื้นที่นี้แล้ว ไม่ใช่ค่าดิบจากแบบจำลอง
-          </p>
-
-          {data.accuracy.stations && data.accuracy.stations.length > 0 && (
-            <details className="station-list">
-              <summary>
-                ดูค่าเฉลี่ยรายสถานีทั้ง {data.accuracy.station_count} แห่ง
-                {data.accuracy.stations.length > 1 && (
-                  <span className="station-spread">
-                    {" "}· ต่างกัน {data.accuracy.stations[0].pm25_avg} ถึง{" "}
-                    {data.accuracy.stations[data.accuracy.stations.length - 1].pm25_avg} µg/m³
-                  </span>
-                )}
-              </summary>
-              <table className="runs-table">
-                <thead>
-                  <tr>
-                    <th>สถานี</th>
-                    <th style={{ textAlign: "right" }}>เฉลี่ย</th>
-                    <th style={{ textAlign: "right" }}>ชั่วโมง</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.accuracy.stations.map((station) => (
-                    <tr key={station.name_th}>
-                      <td>{station.name_th}</td>
-                      <td style={{ textAlign: "right" }}>{station.pm25_avg}</td>
-                      <td style={{ textAlign: "right" }}>{station.hours}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {/* ความต่างภายในจังหวัดเดียวกันเป็นข้อจำกัดที่ต้องบอก
-                  เพราะแบบจำลองให้ค่าเดียวต่อจังหวัด แต่ของจริงไม่เท่ากันทั้งจังหวัด */}
-              <p className="station-note">
-                ค่าที่ใช้เทียบเป็นค่าเฉลี่ยของทุกสถานีข้างต้น
-                ความต่างระหว่างสถานีในจังหวัดเดียวกันเป็นข้อจำกัดที่แก้ไม่ได้
-                เพราะแบบจำลองให้ค่าเดียวต่อหนึ่งพิกัด แต่ของจริงไม่เท่ากันทั้งจังหวัด
-              </p>
-            </details>
-          )}
-
-        </div>
-      )}
-
       <div className="forecast-list">
         {days.map((day, index) => (
           <article key={day.day} className={day.is_today ? "forecast-row today" : "forecast-row"}>
@@ -315,8 +231,10 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
         และวันข้างหน้าที่ยังต้องใช้การคาดการณ์
         <br />
         ค่าคาดการณ์ตั้งต้นมาจาก{data.source} ซึ่ง<strong>ระบบไม่ได้คำนวณเอง</strong>
-        {data.adjusted
-          ? " แต่ระบบนำค่าที่สถานีในจังหวัดนี้วัดได้จริงมาเทียบแล้วชดเชยความคลาดเคลื่อนให้"
+        {data.adjusted && data.accuracy?.available
+          ? ` แล้วชดเชยด้วยค่าคลาดเคลื่อนที่วัดได้จริง ${data.accuracy.bias! < 0 ? "+" : "−"}${Math.abs(data.accuracy.bias!)} µg/m³ ` +
+            `จากการเทียบ ${data.accuracy.hours} ชั่วโมงย้อนหลังกับ` +
+            (data.station_code ? "สถานีนี้" : `${data.accuracy.station_count} สถานีในจังหวัดนี้`)
           : ""}
         <br />
         ต่างจากค่าฝุ่นในหน้าหลักซึ่งวัดได้จริงจากสถานีของกรมควบคุมมลพิษ
