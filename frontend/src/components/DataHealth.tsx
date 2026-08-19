@@ -44,7 +44,7 @@ export function DataHealth({ health }: Props) {
           <ul className="field-list">
             {Object.entries(health.field_completeness).map(([field, pct]) => (
               <li key={field}>
-                <span className="field-name">{field}</span>
+                <span>{field}</span>
                 <span className="field-track">
                   <span
                     className="field-fill"

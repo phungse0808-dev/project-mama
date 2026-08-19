@@ -72,7 +72,7 @@ export function PersonalPanel({ user, onProfileChange }: Props) {
           <p className="personal-level">{level.label_th}</p>
         </div>
 
-        <div className="personal-advice">
+        <div>
           {my_advice && (
             <>
               <p className="personal-group">
