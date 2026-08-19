@@ -291,6 +291,8 @@ export type ForecastAccuracy = {
   mae?: number;
   bias?: number;
   can_adjust?: boolean;
+  station_count?: number;
+  stations?: { name_th: string; hours: number; pm25_avg: number }[];
 };
 
 export type Pm25Forecast = {

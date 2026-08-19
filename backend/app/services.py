@@ -351,6 +351,32 @@ def measured_hourly(session: Session, province: str) -> dict[str, float]:
     return {moment.strftime("%Y-%m-%dT%H:00"): value for moment, value in rows}
 
 
+def measuring_stations(session: Session, province: str) -> list[dict]:
+    """สถานีที่ส่งค่ามาร่วมคำนวณ พร้อมจำนวนชั่วโมงและค่าเฉลี่ยของแต่ละแห่ง
+
+    จำเป็นเพราะค่าที่แสดงเป็นค่าเฉลี่ยข้ามสถานี ผู้อ่านควรรู้ว่าเฉลี่ยจากกี่แห่ง
+    ค่าเฉลี่ยจากสถานีเดียวกับค่าเฉลี่ยจากเจ็ดสิบกว่าสถานีเชื่อถือได้ไม่เท่ากัน
+
+    ค่าเฉลี่ยรายสถานีทำให้เห็นด้วยว่าภายในจังหวัดเดียวกันต่างกันมากแค่ไหน
+    ซึ่งเป็นข้อจำกัดสำคัญของการใช้พิกัดจุดเดียวแทนทั้งจังหวัด
+    """
+    rows = session.exec(
+        select(
+            Station.name_th,
+            func.count(col(Reading.id)),
+            func.avg(Reading.pm25),
+        )
+        .join(Reading, col(Reading.station_id) == col(Station.id))
+        .where(Station.province == province, col(Reading.pm25).is_not(None))
+        .group_by(col(Station.id))
+        .order_by(desc(func.avg(Reading.pm25)))
+    ).all()
+    return [
+        {"name_th": name, "hours": hours, "pm25_avg": round(average, 1)}
+        for name, hours, average in rows
+    ]
+
+
 def forecast_accuracy(session: Session, province: str) -> dict:
     """ความแม่นยำของแบบจำลอง เทียบกับค่าที่สถานีของเราวัดได้จริง
 
@@ -398,11 +424,14 @@ def forecast_accuracy(session: Session, province: str) -> dict:
 
     differences = [model - measured for model, measured in pairs]
     bias = statistics.fmean(differences)
+    stations = measuring_stations(session, province)
 
     return {
         "available": True,
         "province": province,
         "hours": len(pairs),
+        "station_count": len(stations),
+        "stations": stations,
         "model_avg": round(statistics.fmean(m for m, _ in pairs), 1),
         "measured_avg": round(statistics.fmean(a for _, a in pairs), 1),
         "mae": round(statistics.fmean(abs(d) for d in differences), 2),

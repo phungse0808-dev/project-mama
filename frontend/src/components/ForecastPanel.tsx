@@ -133,6 +133,10 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
           </p>
           <div className="calibration-stats">
             <div>
+              <p className="calibration-value">{data.accuracy.station_count}</p>
+              <p className="calibration-label">สถานีที่ร่วมคำนวณ</p>
+            </div>
+            <div>
               <p className="calibration-value">{data.accuracy.hours}</p>
               <p className="calibration-label">ชั่วโมงที่นำมาเทียบ</p>
             </div>
@@ -159,6 +163,46 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
             {" "}ระบบจึงชดเชยค่านี้คืนให้ทุกตัวเลขด้านล่าง ตัวเลขที่แสดงจึงเป็นค่าที่ปรับ
             ด้วยข้อมูลของพื้นที่นี้แล้ว ไม่ใช่ค่าดิบจากแบบจำลอง
           </p>
+
+          {data.accuracy.stations && data.accuracy.stations.length > 0 && (
+            <details className="station-list">
+              <summary>
+                ดูค่าเฉลี่ยรายสถานีทั้ง {data.accuracy.station_count} แห่ง
+                {data.accuracy.stations.length > 1 && (
+                  <span className="station-spread">
+                    {" "}· ต่างกัน {data.accuracy.stations[0].pm25_avg} ถึง{" "}
+                    {data.accuracy.stations[data.accuracy.stations.length - 1].pm25_avg} µg/m³
+                  </span>
+                )}
+              </summary>
+              <table className="runs-table">
+                <thead>
+                  <tr>
+                    <th>สถานี</th>
+                    <th style={{ textAlign: "right" }}>เฉลี่ย</th>
+                    <th style={{ textAlign: "right" }}>ชั่วโมง</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.accuracy.stations.map((station) => (
+                    <tr key={station.name_th}>
+                      <td>{station.name_th}</td>
+                      <td style={{ textAlign: "right" }}>{station.pm25_avg}</td>
+                      <td style={{ textAlign: "right" }}>{station.hours}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {/* ความต่างภายในจังหวัดเดียวกันเป็นข้อจำกัดที่ต้องบอก
+                  เพราะแบบจำลองให้ค่าเดียวต่อจังหวัด แต่ของจริงไม่เท่ากันทั้งจังหวัด */}
+              <p className="station-note">
+                ค่าที่ใช้เทียบเป็นค่าเฉลี่ยของทุกสถานีข้างต้น
+                ความต่างระหว่างสถานีในจังหวัดเดียวกันเป็นข้อจำกัดที่แก้ไม่ได้
+                เพราะแบบจำลองให้ค่าเดียวต่อหนึ่งพิกัด แต่ของจริงไม่เท่ากันทั้งจังหวัด
+              </p>
+            </details>
+          )}
+
         </div>
       )}
 
