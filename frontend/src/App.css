@@ -1665,6 +1665,24 @@ body {
   color: var(--text-soft);
 }
 
+/* ป้ายบอกว่าตัวเลขวันนั้นมาจากของจริงหรือการคาดการณ์
+   สองอย่างนี้เชื่อถือได้ไม่เท่ากัน จึงต้องแยกให้เห็นตั้งแต่กวาดสายตา */
+.forecast-tag {
+  margin: 5px 0 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  display: inline-block;
+  background: #eef1f5;
+  color: var(--text-soft);
+}
+
+.forecast-tag.real {
+  background: #e6f5ec;
+  color: #14713f;
+}
+
 .forecast-value {
   min-width: 104px;
 }

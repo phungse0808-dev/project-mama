@@ -304,6 +304,8 @@ export type Pm25Forecast = {
   accuracy?: ForecastAccuracy;
   days?: {
     pm25_avg_raw: number;
+    measured_hours: number;
+    is_measured: boolean;
     day: string;
     is_today: boolean;
     pm25_avg: number;

@@ -260,18 +260,33 @@ def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
         """ค่าติดลบไม่มีความหมายทางกายภาพ จึงตัดที่ศูนย์"""
         return max(0.0, value - bias) if bias is not None else value
 
-    per_day: dict[str, list[tuple[str, float]]] = {}
+    # ชั่วโมงไหนที่สถานีวัดได้จริงแล้ว ให้ใช้ค่าจริงแทนค่าพยากรณ์
+    #
+    # ค่าที่วัดได้จริงย่อมแม่นกว่าค่าที่แบบจำลองคาดการณ์เสมอ
+    # การเอาค่าพยากรณ์มาแสดงทับชั่วโมงที่รู้คำตอบแล้วเป็นการทิ้งข้อมูลที่ดีกว่า
+    #
+    # ผลคือวันนี้จะเป็นค่าจริงเกือบทั้งหมด เหลือเฉพาะชั่วโมงที่ยังไม่ถึง
+    # ส่วนพรุ่งนี้กับมะรืนนี้ยังเป็นค่าพยากรณ์ทั้งวัน เพราะยังไม่มีอะไรให้วัด
+    measured = measured_hourly(session, province)
+
+    per_day: dict[str, list[tuple[str, float, float, bool]]] = {}
     for item in hourly:
         day, _, clock = item["time"].partition("T")
-        per_day.setdefault(day, []).append((clock, item["pm25"]))
+        forecast_value = adjust(item["pm25"])
+        actual = measured.get(item["time"])
+        used = actual if actual is not None else forecast_value
+        per_day.setdefault(day, []).append(
+            (clock, used, item["pm25"], actual is not None)
+        )
 
     today = date.today().isoformat()
     result = []
     for day in sorted(per_day):
         entries = per_day[day]
-        raw_values = [v for _, v in entries]
-        values = [adjust(v) for v in raw_values]
-        peak_time, _ = max(entries, key=lambda pair: pair[1])
+        values = [used for _, used, _, _ in entries]
+        raw_values = [raw for _, _, raw, _ in entries]
+        measured_hours = sum(1 for _, _, _, is_real in entries if is_real)
+        peak_time = max(entries, key=lambda row: row[1])[0]
         average = round(statistics.fmean(values), 1)
         result.append(
             {
@@ -285,6 +300,10 @@ def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
                 "pm25_avg_raw": round(statistics.fmean(raw_values), 1),
                 "peak_at": peak_time,
                 "hours": len(entries),
+                # จำนวนชั่วโมงที่ใช้ค่าวัดจริง บอกผู้ใช้ได้ว่าตัวเลขวันนั้น
+                # มาจากของจริงมากแค่ไหน เทียบกับที่ยังเป็นการคาดการณ์
+                "measured_hours": measured_hours,
+                "is_measured": measured_hours == len(entries),
                 # ใช้ค่าเฉลี่ยทั้งวันตัดสินระดับ ให้ตรงกับวิธีที่มาตรฐานไทยใช้
                 # ซึ่งกำหนดเป็นค่าเฉลี่ย 24 ชั่วโมง ไม่ใช่ค่าสูงสุดรายชั่วโมง
                 "level": describe(None, average),

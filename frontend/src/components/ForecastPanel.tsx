@@ -170,6 +170,15 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
             <div className="forecast-when">
               <p className="forecast-day">{DAY_LABELS[index] ?? shortDate(day.day)}</p>
               <p className="forecast-date">{shortDate(day.day)}</p>
+              {/* บอกให้ชัดว่าตัวเลขวันนั้นมาจากของจริงหรือการคาดการณ์
+                  เพราะสองอย่างนี้เชื่อถือได้ไม่เท่ากัน */}
+              <p className={day.measured_hours > 0 ? "forecast-tag real" : "forecast-tag"}>
+                {day.measured_hours === 0
+                  ? "คาดการณ์"
+                  : day.is_measured
+                    ? "วัดจริง"
+                    : `วัดจริง ${day.measured_hours}/${day.hours} ชม.`}
+              </p>
             </div>
 
             <div className="forecast-value">
@@ -179,7 +188,11 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
               </p>
               <p className="forecast-caption">
                 เฉลี่ยทั้งวัน
-                {data.adjusted ? ` · ก่อนปรับ ${day.pm25_avg_raw}` : ""}
+                {/* ค่าก่อนปรับมีความหมายเฉพาะวันที่ยังเป็นการคาดการณ์ล้วน
+                    วันที่ใช้ค่าวัดจริงแล้วไม่ได้ผ่านการชดเชย จะเทียบกันไม่ได้ */}
+                {data.adjusted && day.measured_hours === 0
+                  ? ` · ก่อนปรับ ${day.pm25_avg_raw}`
+                  : ""}
               </p>
             </div>
 
@@ -209,7 +222,11 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
           ? ` แต่ยังเกินค่าแนะนำขององค์การอนามัยโลก ${data.guideline_who} µg/m³`
           : ` และต่ำกว่าค่าแนะนำขององค์การอนามัยโลก ${data.guideline_who} µg/m³`}
         <br />
-        ค่าตั้งต้นมาจาก{data.source} ซึ่ง<strong>ระบบไม่ได้คำนวณเอง</strong>
+        วันที่สถานีวัดค่าได้แล้วจะใช้ค่าที่วัดได้จริง ไม่ใช้ค่าคาดการณ์
+        เพราะค่าที่วัดได้จริงแม่นกว่าเสมอ เหลือเฉพาะชั่วโมงที่ยังไม่ถึง
+        และวันข้างหน้าที่ยังต้องใช้การคาดการณ์
+        <br />
+        ค่าคาดการณ์ตั้งต้นมาจาก{data.source} ซึ่ง<strong>ระบบไม่ได้คำนวณเอง</strong>
         {data.adjusted
           ? " แต่ระบบนำค่าที่สถานีในจังหวัดนี้วัดได้จริงมาเทียบแล้วชดเชยความคลาดเคลื่อนให้"
           : ""}
