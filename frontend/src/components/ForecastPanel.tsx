@@ -228,43 +228,6 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
         ))}
       </div>
 
-      {/* ตารางรายชั่วโมงต่อจากสรุปรายวัน
-          สรุปรายวันตอบว่าวันไหนควรระวัง ตารางนี้ตอบว่าควรเลี่ยงช่วงไหนของวัน
-          ต่อกันแทนที่จะให้สลับดู เพราะสองคำถามนี้มักอยากรู้พร้อมกัน */}
-      <h3 className="rain-subtitle">
-        รายชั่วโมง
-        <span className="panel-hint">ดูว่าควรเลี่ยงกิจกรรมกลางแจ้งช่วงไหน</span>
-      </h3>
-
-      <div className="hour-grid">
-        {days.map((day, index) => (
-          <section key={day.day} className="hour-day">
-            <h4 className="hour-day-title">
-              {DAY_LABELS[index] ?? shortDate(day.day)}
-              <span className="panel-hint">{shortDate(day.day)}</span>
-            </h4>
-            <div className="hour-cells">
-              {day.hourly.map((hour) => (
-                <div
-                  key={hour.clock}
-                  className={hour.is_measured ? "hour-cell real" : "hour-cell"}
-                  title={`${hour.clock} น. ${hour.pm25} µg/m³ ${
-                    hour.is_measured ? "วัดได้จริง" : "คาดการณ์"
-                  }`}
-                >
-                  <span className="hour-clock">{hour.clock.slice(0, 2)}</span>
-                  <span className="hour-value">{hour.pm25}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
-        <p className="hour-legend">
-          ช่องพื้นเขียวคือชั่วโมงที่สถานีวัดค่าได้จริงแล้ว พื้นเทาคือค่าที่ยังเป็นการคาดการณ์
-          ตัวเลขบนคือชั่วโมง ตัวเลขล่างคือค่าฝุ่นหน่วยไมโครกรัมต่อลูกบาศก์เมตร
-        </p>
-      </div>
-
       <p className="weather-note">
         {overStandard
           ? `มีวันที่ค่าเฉลี่ยเกินมาตรฐานไทย ${data.standard_th} µg/m³`

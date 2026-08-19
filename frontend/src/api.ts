@@ -300,7 +300,6 @@ export type Pm25Forecast = {
     pm25_avg_raw: number;
     measured_hours: number;
     is_measured: boolean;
-    hourly: { clock: string; pm25: number; is_measured: boolean }[];
     day: string;
     is_today: boolean;
     pm25_avg: number;
