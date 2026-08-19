@@ -66,7 +66,7 @@ export function PersonalPanel({ user, onProfileChange }: Props) {
       </h2>
 
       <div className="personal-top">
-        <div className="personal-reading" style={{ background: level.color }}>
+        <div className="personal-reading" style={{ backgroundColor: level.color }}>
           <p className="personal-value">{summary.pm25 ?? "-"}</p>
           <p className="personal-unit">µg/m³</p>
           <p className="personal-level">{level.label_th}</p>

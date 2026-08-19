@@ -8,17 +8,30 @@
   --text: #1c2430;
   --text-soft: #67717f;
   --accent: #1d6fd0;
+  --accent-deep: #12508f;
+  --accent-soft: #e8f0fb;
   --radius: 14px;
   --shadow: 0 1px 3px rgba(20, 30, 45, 0.06), 0 6px 20px rgba(20, 30, 45, 0.05);
+
+  /* เงาตอนชี้เมาส์ ยกกล่องขึ้นมากกว่าปกติเล็กน้อย
+     ให้รู้ว่ากล่องไหนกำลังถูกอ่านอยู่ โดยไม่ต้องเปลี่ยนสีจนรบกวนสายตา */
+  --shadow-lift: 0 2px 6px rgba(20, 30, 45, 0.07), 0 14px 34px rgba(20, 30, 45, 0.1);
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* พื้นหลังไล่สีอ่อนๆ แทนสีเทาเรียบ ทำให้กล่องสีขาวลอยเด่นขึ้น
+   ไล่จากฟ้าจางมุมบนซ้ายไปครีมจางมุมล่างขวา ให้หน้ายาวๆ ไม่ดูจืด
+   fixed ไว้เพื่อไม่ให้ไล่สีเลื่อนตามตอนสกรอลล์ */
 body {
   margin: 0;
   background: var(--bg);
+  background-image:
+    radial-gradient(1200px 600px at 12% -8%, #e6eefb 0%, rgba(230, 238, 251, 0) 60%),
+    radial-gradient(900px 500px at 100% 8%, #f3ece2 0%, rgba(243, 236, 226, 0) 55%);
+  background-attachment: fixed;
   color: var(--text);
   font-family: "Sarabun", "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -31,6 +44,51 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+/* ---------- อนิเมชันตอนเปิดหน้า ---------- */
+
+/* กล่องค่อยๆ ลอยขึ้นมาทีละใบ ทำให้หน้าที่มีข้อมูลเยอะไม่โผล่มาพร้อมกันจนตาลาย
+   และช่วยให้ผู้อ่านไล่สายตาจากบนลงล่างตามลำดับที่ตั้งใจไว้
+
+   ใช้เวลาสั้นและระยะขยับน้อย เพราะถ้านานกว่านี้จะรู้สึกว่าเว็บช้า
+   ทั้งที่ข้อมูลมาถึงแล้ว */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.app > * {
+  animation: rise 0.34s ease-out both;
+}
+
+.app > *:nth-child(1) { animation-delay: 0s; }
+.app > *:nth-child(2) { animation-delay: 0.04s; }
+.app > *:nth-child(3) { animation-delay: 0.08s; }
+.app > *:nth-child(4) { animation-delay: 0.12s; }
+.app > *:nth-child(5) { animation-delay: 0.16s; }
+.app > *:nth-child(n + 6) { animation-delay: 0.2s; }
+
+/* ผู้ใช้บางคนตั้งค่าระบบให้ลดการเคลื่อนไหว เพราะเวียนหัวหรือคลื่นไส้
+   ต้องเคารพค่านั้น ปิดอนิเมชันทั้งหมดแต่ยังแสดงข้อมูลครบเหมือนเดิม */
+@media (prefers-reduced-motion: reduce) {
+  .app > *,
+  .card,
+  .card::before,
+  .panel {
+    animation: none;
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
 }
 
 /* ---------- ส่วนหัว ---------- */
@@ -81,11 +139,36 @@ body {
 }
 
 .card {
+  position: relative;
+  overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 20px 22px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* ขีดสีบางๆ ที่ขอบบน ปกติซ่อนไว้และค่อยไหลออกมาตอนชี้เมาส์
+   เป็นสัญญาณว่ากล่องนี้กดหรืออ่านอยู่ ไม่ได้เปลี่ยนความหมายของข้อมูล */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #4da3f5);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+.card:hover::before {
+  transform: scaleX(1);
 }
 
 .card-label {
@@ -131,8 +214,15 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 22px 24px;
+  transition: box-shadow 0.18s ease;
 }
 
+.panel:hover {
+  box-shadow: var(--shadow-lift);
+}
+
+/* ขีดสั้นๆ หน้าหัวข้อทุกแผง ช่วยให้กวาดสายตาหาหัวข้อได้เร็ว
+   ในหน้าที่ยาวมากและมีกล่องขาวเรียงต่อกันหลายสิบกล่อง */
 .panel-title {
   margin: 0 0 18px;
   font-size: 17px;
@@ -141,6 +231,16 @@ body {
   align-items: baseline;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.panel-title::before {
+  content: "";
+  align-self: center;
+  width: 4px;
+  height: 17px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent), #6bb3f7);
+  flex: none;
 }
 
 .panel-hint {
@@ -153,9 +253,10 @@ body {
 
 .level-bar {
   display: flex;
-  height: 34px;
-  border-radius: 8px;
+  height: 38px;
+  border-radius: 10px;
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(20, 30, 45, 0.12);
 }
 
 .level-segment {
@@ -166,7 +267,15 @@ body {
   font-size: 13px;
   font-weight: 700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  transition: width 0.4s;
+  transition: width 0.4s, filter 0.15s;
+  /* ไล่ความสว่างในช่วงเดียวกัน ทำให้แถบดูนูนแทนที่จะเป็นสีแบนๆ
+     ทับบนสีของระดับที่กำหนดมาจากข้อมูล จึงยังสื่อระดับได้ถูกต้อง */
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(0, 0, 0, 0.08));
+}
+
+/* ชี้ช่วงไหนช่วงนั้นสว่างขึ้น ช่วยแยกช่วงที่แคบมากออกจากช่วงข้างเคียง */
+.level-segment:hover {
+  filter: brightness(1.1);
 }
 
 .legend {
@@ -184,6 +293,9 @@ body {
   display: flex;
   align-items: center;
   gap: 7px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  background: #f5f7fa;
 }
 
 .legend strong {
@@ -288,7 +400,7 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 3px;
 }
 
 .ranking-row {
@@ -317,7 +429,7 @@ body {
 }
 
 .ranking-bar-track {
-  background: #eef1f5;
+  background: #e9edf3;
   border-radius: 999px;
   height: 9px;
   overflow: hidden;
@@ -328,6 +440,22 @@ body {
   height: 100%;
   border-radius: 999px;
   transition: width 0.4s;
+  /* ไล่ความสว่างในแท่งเดียวกัน ทำให้แท่งดูนูนขึ้นเล็กน้อย
+     ใช้ทับสีเดิมที่กำหนดมาจากระดับคุณภาพอากาศ จึงไม่ทำให้สื่อความหมายผิด */
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(0, 0, 0, 0.06));
+}
+
+.ranking-row {
+  transition: background 0.15s ease;
+  border-radius: 8px;
+  /* ดึงขอบไฮไลต์ออกด้านข้างเท่ากับ padding ที่เพิ่ม
+     พื้นที่ไฮไลต์จึงกว้างขึ้นโดยความกว้างของแท่งกราฟไม่เปลี่ยน */
+  padding: 5px 8px;
+  margin: -5px -8px;
+}
+
+.ranking-row:hover {
+  background: var(--accent-soft);
 }
 
 .ranking-value {
@@ -451,14 +579,35 @@ body {
   font-size: 11px;
   color: var(--text-soft);
   font-weight: 600;
-  padding-bottom: 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border);
+  /* หัวตารางค้างไว้ตอนเลื่อน เพราะบางตารางยาวหลายสิบแถว
+     ถ้าหัวเลื่อนหายไปจะจำไม่ได้ว่าคอลัมน์ไหนคืออะไร */
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+  letter-spacing: 0.3px;
+  text-transform: none;
 }
 
 .runs-table td {
-  padding: 7px 0;
+  padding: 8px 10px;
   border-bottom: 1px solid #f1f3f7;
   font-variant-numeric: tabular-nums;
+}
+
+/* แถบสีสลับแถว ช่วยให้สายตาไม่หลุดบรรทัดเวลาไล่อ่านตัวเลขข้ามคอลัมน์ */
+.runs-table tbody tr:nth-child(even) {
+  background: #fafbfd;
+}
+
+.runs-table tbody tr {
+  transition: background 0.12s ease;
+}
+
+.runs-table tbody tr:hover {
+  background: var(--accent-soft);
 }
 
 .badge-ok,
@@ -658,6 +807,9 @@ body {
   text-align: center;
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  /* ไล่สีทับสีที่กำหนดมาจากระดับ ทำให้วงดูมีมิติแทนที่จะเป็นสีแบน
+     ใช้ backgroundColor ในโค้ดจึงไม่ไปลบไล่สีนี้ทิ้ง */
+  background-image: linear-gradient(150deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.1));
 }
 
 .personal-value {
@@ -988,6 +1140,11 @@ body {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-soft);
+  /* จำกัดไม่ให้กว้างเกินกล่องที่อยู่ข้างใน
+     ถ้าไม่ใส่ min-width: 0 ตัวเลือกที่ชื่อยาวจะดันช่องให้กว้างจนล้นขอบจอ
+     เพราะค่าตั้งต้นของสมาชิกใน flex คือห้ามหดเล็กกว่าเนื้อหา */
+  min-width: 0;
+  max-width: 100%;
 }
 
 .weather-controls select {
@@ -999,6 +1156,19 @@ body {
   border-radius: 9px;
   background: #fbfcfe;
   min-width: 175px;
+  max-width: 100%;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.weather-controls select:hover {
+  border-color: var(--accent);
+}
+
+.weather-controls select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(29, 111, 208, 0.16);
 }
 
 .range-buttons {
@@ -1117,6 +1287,8 @@ body {
 
 .hiv-table {
   margin-top: 14px;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 /* ---------- หน้าหลัก: กล่องทางเข้าสองใบ ---------- */
@@ -1135,9 +1307,19 @@ body {
 }
 
 .home-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: var(--accent);
-  box-shadow: 0 10px 26px rgba(21, 96, 196, 0.14);
+  box-shadow: 0 12px 32px rgba(21, 96, 196, 0.16);
+}
+
+/* ลูกศรขยับตามตอนชี้เมาส์ บอกว่ากล่องนี้กดเข้าไปได้ ไม่ใช่แค่กล่องแสดงผล */
+.home-card-go {
+  transition: transform 0.16s ease, color 0.16s ease;
+}
+
+.home-card:hover .home-card-go {
+  transform: translateX(4px);
+  color: var(--accent-deep);
 }
 
 .home-card-title {
@@ -1211,6 +1393,25 @@ body {
   justify-content: center;
 }
 
+/* วงกลมแสงจางๆ มุมขวาบน ทำให้การ์ดที่ระบายสีทึบดูมีมิติขึ้น
+   ใช้สีขาวโปร่งจึงเข้ากับสีระดับคุณภาพอากาศได้ทุกสี ไม่ต้องกำหนดแยกทีละระดับ */
+.card-hero::after {
+  content: "";
+  position: absolute;
+  top: -70px;
+  right: -50px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+/* การ์ดใบนี้ระบายสีอยู่แล้ว ขีดสีขอบบนจะมองไม่เห็นและรบกวนสายตาเปล่าๆ */
+.card-hero::before {
+  display: none;
+}
+
 .card-hero .card-label,
 .card-hero .card-note,
 .card-hero .card-unit {
@@ -1244,8 +1445,9 @@ body {
   align-items: baseline;
   gap: 12px;
   flex-wrap: wrap;
-  padding-left: 14px;
-  border-left: 4px solid var(--accent);
+  padding-left: 16px;
+  border-left: 4px solid transparent;
+  border-image: linear-gradient(180deg, var(--accent), #7cc0f8) 1;
   line-height: 1.4;
 }
 
@@ -1275,6 +1477,9 @@ body {
   justify-content: center;
   gap: 3px;
   padding: 22px 18px;
+  /* ไล่สีทับสีที่กำหนดมาจากระดับ ทำให้วงดูมีมิติแทนที่จะเป็นสีแบน
+     ใช้ backgroundColor ในโค้ดจึงไม่ไปลบไล่สีนี้ทิ้ง */
+  background-image: linear-gradient(150deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.1));
 }
 
 .rain-figure strong {

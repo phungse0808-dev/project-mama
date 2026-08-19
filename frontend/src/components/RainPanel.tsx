@@ -188,7 +188,7 @@ export function RainPanel({ provinces, defaultProvince }: Props) {
       </h3>
 
       <div className="rain-summary">
-        <div className="rain-figure" style={{ background: chanceColor }}>
+        <div className="rain-figure" style={{ backgroundColor: chanceColor }}>
           <strong>{chance}</strong>
           <small>%</small>
         </div>

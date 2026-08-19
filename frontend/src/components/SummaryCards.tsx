@@ -135,7 +135,7 @@ export function LevelBar({ summary }: Props) {
               className="level-segment"
               style={{
                 width: `${(count / total) * 100}%`,
-                background: level.color,
+                backgroundColor: level.color,
               }}
               title={`${level.label_th} ${count} สถานี`}
             >

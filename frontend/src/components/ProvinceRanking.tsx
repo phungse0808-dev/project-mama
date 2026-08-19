@@ -29,7 +29,7 @@ export function ProvinceRanking({ ranking, limit = 15 }: Props) {
                 className="ranking-bar"
                 style={{
                   width: `${(item.pm25_avg / highest) * 100}%`,
-                  background: item.level.color,
+                  backgroundColor: item.level.color,
                 }}
               />
             </span>

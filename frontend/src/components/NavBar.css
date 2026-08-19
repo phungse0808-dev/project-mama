@@ -7,9 +7,12 @@
   position: sticky;
   top: 0;
   z-index: 500;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid #e2e6ed;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(14px) saturate(1.4);
+  border-bottom: 1px solid rgba(226, 230, 237, 0.9);
+  /* เงาบางๆ ใต้แถบ ทำให้แยกออกจากเนื้อหาที่เลื่อนผ่านข้างใต้
+     จำเป็นเพราะพื้นหลังแถบโปร่งแสง ถ้าไม่มีเงาจะกลืนกับกล่องขาวที่เลื่อนมา */
+  box-shadow: 0 1px 12px rgba(20, 30, 45, 0.05);
 }
 
 .navbar-inner {
