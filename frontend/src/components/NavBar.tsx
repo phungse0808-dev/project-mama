@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 import "./NavBar.css";
 
 // "home" ไม่มีปุ่มในเมนู เพราะเข้าถึงได้จากการเข้าระบบและปุ่มกลับอยู่แล้ว
@@ -35,9 +36,7 @@ export function NavBar({ active, onGoTo, onSearch, onHome, onSignOut }: Props) {
           title="กลับหน้าหลัก"
           aria-label="กลับหน้าหลัก"
         >
-          <span />
-          <span />
-          <span />
+          <AppIcon size={44} />
         </button>
 
         {/* ปุ่มเลือกหน้าโชว์เฉพาะตอนอยู่หน้าหลัก

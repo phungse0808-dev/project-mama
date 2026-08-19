@@ -36,30 +36,19 @@
 }
 
 /* โลโก้วงกลมตามแบบที่กำหนด ต่างจากหน้าอื่นที่เป็นสี่เหลี่ยมมนเพื่อให้เข้ากับไอคอน */
+/* ไอคอนวาดพื้นหลังมาเองแล้ว กล่องนี้จึงมีหน้าที่แค่จัดตำแหน่งกับใส่เงา */
 .signin-logo {
   width: 74px;
   height: 74px;
   margin: 0 auto 30px;
-  border-radius: 50%;
-  background: linear-gradient(140deg, #00b050 0%, #ffd400 52%, #e2574c 100%);
-  box-shadow: 0 10px 26px rgba(226, 87, 76, 0.3);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
+  border-radius: 18px;
+  box-shadow: 0 10px 26px rgba(22, 35, 58, 0.26);
 }
 
-.signin-logo span {
+.signin-logo svg {
   display: block;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.96);
+  border-radius: 18px;
 }
-
-.signin-logo span:nth-child(1) { width: 34px; }
-.signin-logo span:nth-child(2) { width: 26px; }
-.signin-logo span:nth-child(3) { width: 38px; }
 
 .signin-label {
   display: block;

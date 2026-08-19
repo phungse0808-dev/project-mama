@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 import { useState } from "react";
 import { api } from "../api";
 import "./SignIn.css";
@@ -38,10 +39,8 @@ export function SignIn({ onSignedIn }: Props) {
   return (
     <main className="signin-page">
       <form className="signin-card" onSubmit={handleSubmit}>
-        <div className="signin-logo" aria-hidden="true">
-          <span />
-          <span />
-          <span />
+        <div className="signin-logo">
+          <AppIcon size={74} />
         </div>
 
         <label className="signin-label" htmlFor="name">

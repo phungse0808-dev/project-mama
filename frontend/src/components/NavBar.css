@@ -26,38 +26,32 @@
 }
 
 /* โลโก้วงกลม กดเพื่อกลับหน้าแรก */
+/* ตัวปุ่มไม่มีสีพื้นและไม่มีขอบ เพราะไอคอนข้างในวาดพื้นหลังมาเองแล้ว
+   ถ้าใส่สีทับจะเห็นขอบสองชั้นซ้อนกัน */
 .navbar-logo {
   width: 44px;
   height: 44px;
   flex: none;
+  padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: 12px;
   cursor: pointer;
-  background: linear-gradient(140deg, #00b050 0%, #ffd400 52%, #e2574c 100%);
-  box-shadow: 0 4px 12px rgba(226, 87, 76, 0.28);
+  background: none;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3.5px;
+  box-shadow: 0 4px 12px rgba(22, 35, 58, 0.24);
   transition: transform 0.14s, box-shadow 0.14s;
 }
 
 .navbar-logo:hover {
   transform: scale(1.06);
-  box-shadow: 0 6px 16px rgba(226, 87, 76, 0.36);
+  box-shadow: 0 6px 16px rgba(22, 35, 58, 0.32);
 }
 
-.navbar-logo span {
+/* ให้มุมของภาพโค้งเท่าปุ่ม ไม่งั้นเงาจะโผล่เป็นสี่เหลี่ยมรอบมุมมน */
+.navbar-logo svg {
   display: block;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.96);
+  border-radius: 12px;
 }
-
-.navbar-logo span:nth-child(1) { width: 22px; }
-.navbar-logo span:nth-child(2) { width: 16px; }
-.navbar-logo span:nth-child(3) { width: 25px; }
 
 /* ---------- เมนูหลัก ---------- */
 
