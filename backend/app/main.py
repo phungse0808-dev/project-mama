@@ -182,7 +182,11 @@ class ProfileRequest(BaseModel):
 
 
 @app.get("/api/forecast-accuracy/{province}", tags=["ข้อมูลอากาศ"])
-def get_forecast_accuracy(province: str, session: Session = Depends(get_session)) -> dict:
+def get_forecast_accuracy(
+    province: str,
+    station: str | None = Query(None, description="รหัสสถานี ถ้าไม่ระบุจะเฉลี่ยทั้งจังหวัด"),
+    session: Session = Depends(get_session),
+) -> dict:
     """ความแม่นยำของแบบจำลองพยากรณ์ เทียบกับค่าที่สถานีตรวจวัดของระบบวัดได้จริง
 
     เป็นการตรวจสอบว่าแบบจำลองบรรยากาศระดับโลกใช้กับพื้นที่ไทยได้ดีเพียงใด
@@ -192,11 +196,15 @@ def get_forecast_accuracy(province: str, session: Session = Depends(get_session)
     ค่าที่วัดได้จริง ถ้าฐานข้อมูลค้างอยู่ที่ชั่วโมงเก่า ค่าที่ได้จะไม่สะท้อนของล่าสุด
     """
     refresh_if_stale(session)
-    return forecast_accuracy(session, province)
+    return forecast_accuracy(session, province, station)
 
 
 @app.get("/api/pm25-forecast/{province}", tags=["ข้อมูลอากาศ"])
-def get_pm25_forecast(province: str, session: Session = Depends(get_session)) -> dict:
+def get_pm25_forecast(
+    province: str,
+    station: str | None = Query(None, description="รหัสสถานี ถ้าไม่ระบุจะเฉลี่ยทั้งจังหวัด"),
+    session: Session = Depends(get_session),
+) -> dict:
     """ค่าฝุ่นที่คาดว่าจะเกิดขึ้นล่วงหน้าสามวัน สรุปเป็นรายวัน
 
     ค่าตั้งต้นมาจากแบบจำลองบรรยากาศภายนอก แล้วชดเชยด้วยค่าคลาดเคลื่อน
@@ -207,7 +215,7 @@ def get_pm25_forecast(province: str, session: Session = Depends(get_session)) ->
     ไม่ใช่คิดครั้งเดียวแล้วใช้ค่าเดิมตลอด
     """
     refresh_if_stale(session)
-    return pm25_forecast(session, province)
+    return pm25_forecast(session, province, station_code=station)
 
 
 @app.get("/api/weather-now/{province}", tags=["ข้อมูลอากาศ"])

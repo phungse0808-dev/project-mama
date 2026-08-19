@@ -221,7 +221,9 @@ def weather_now(session: Session, province: str) -> dict:
     return {"available": True, "province": province, **data}
 
 
-def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
+def pm25_forecast(
+    session: Session, province: str, days: int = 3, station_code: str | None = None
+) -> dict:
     """ค่าฝุ่นที่คาดว่าจะเกิดขึ้น สรุปเป็นรายวันพร้อมระดับคุณภาพอากาศ
 
     สรุปเป็นรายวันแทนการส่งค่ารายชั่วโมงทั้งหมดไปให้หน้าเว็บ
@@ -234,9 +236,15 @@ def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
     ค่าทั้งหมดมาจากแบบจำลองภายนอก ไม่ใช่ค่าที่ระบบคำนวณเองและยังไม่เกิดขึ้นจริง
     ผู้เรียกต้องแสดงที่มาให้ผู้ใช้เห็นเสมอ
     """
-    coords = province_coordinates(session).get(province)
+    # เมื่อเจาะจงสถานี ใช้พิกัดของสถานีนั้นถามแบบจำลอง
+    # ตรงกว่าพิกัดกลางจังหวัดซึ่งอาจห่างจากสถานีหลายสิบกิโลเมตร
+    coords = (
+        station_coordinates(session, station_code)
+        if station_code
+        else province_coordinates(session).get(province)
+    )
     if coords is None:
-        return {"available": False, "reason": f"ไม่มีพิกัดของจังหวัด{province}"}
+        return {"available": False, "reason": f"ไม่มีพิกัดของ{station_code or province}"}
 
     hourly = fetch_pm25_forecast(*coords, days=days)
     if hourly is None:
@@ -253,7 +261,7 @@ def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
     #
     # ชดเชยเฉพาะความคลาดที่ไปทางเดียวกันสม่ำเสมอ ไม่ได้แก้ความคลาดแบบสุ่ม
     # ค่าที่ปรับแล้วจึงยังคลาดเคลื่อนได้ แต่คลาดน้อยกว่าค่าดิบ
-    accuracy = forecast_accuracy(session, province)
+    accuracy = forecast_accuracy(session, province, station_code)
     bias = accuracy["bias"] if accuracy.get("can_adjust") else None
 
     def adjust(value: float) -> float:
@@ -267,7 +275,7 @@ def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
     #
     # ผลคือวันนี้จะเป็นค่าจริงเกือบทั้งหมด เหลือเฉพาะชั่วโมงที่ยังไม่ถึง
     # ส่วนพรุ่งนี้กับมะรืนนี้ยังเป็นค่าพยากรณ์ทั้งวัน เพราะยังไม่มีอะไรให้วัด
-    measured = measured_hourly(session, province)
+    measured = measured_hourly(session, province, station_code)
 
     per_day: dict[str, list[tuple[str, float, float, bool]]] = {}
     for item in hourly:
@@ -313,6 +321,7 @@ def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
     return {
         "available": True,
         "province": province,
+        "station_code": station_code,
         "source": FORECAST_SOURCE,
         "standard_th": THAI_STANDARD_PM25,
         "guideline_who": WHO_GUIDELINE_PM25,
@@ -335,16 +344,23 @@ MIN_HOURS_FOR_ACCURACY = 24
 MIN_HOURS_FOR_ADJUST = 24
 
 
-def measured_hourly(session: Session, province: str) -> dict[str, float]:
-    """ค่าฝุ่นรายชั่วโมงที่สถานีในจังหวัดนั้นวัดได้จริง เฉลี่ยข้ามสถานี
+def measured_hourly(
+    session: Session, province: str, station_code: str | None = None
+) -> dict[str, float]:
+    """ค่าฝุ่นรายชั่วโมงที่วัดได้จริง เฉลี่ยข้ามสถานีเมื่อไม่ได้เจาะจงสถานี
 
-    เฉลี่ยข้ามสถานีเพราะแบบจำลองให้ค่าเดียวต่อหนึ่งพิกัด
-    ขณะที่บางจังหวัดมีหลายสิบสถานี ถ้าไม่เฉลี่ยจะเทียบกันไม่ได้
+    เมื่อไม่ระบุสถานี จะเฉลี่ยทุกสถานีในจังหวัด เพราะแบบจำลองให้ค่าเดียวต่อพิกัด
+    เมื่อระบุสถานี จะใช้เฉพาะค่าของสถานีนั้น ซึ่งตรงกับพื้นที่จริงมากกว่า
+    เพราะภายในจังหวัดเดียวกันค่าต่างกันได้หลายเท่า
     """
+    conditions = [Station.province == province, col(Reading.pm25).is_not(None)]
+    if station_code:
+        conditions.append(Station.station_code == station_code)
+
     rows = session.exec(
         select(Reading.measured_at, func.avg(Reading.pm25))
         .join(Station, col(Reading.station_id) == col(Station.id))
-        .where(Station.province == province, col(Reading.pm25).is_not(None))
+        .where(*conditions)
         .group_by(col(Reading.measured_at))
     ).all()
     # ปรับรูปเวลาให้ตรงกับที่ต้นทางส่งมา คือ 2026-08-19T14:00
@@ -362,6 +378,7 @@ def measuring_stations(session: Session, province: str) -> list[dict]:
     """
     rows = session.exec(
         select(
+            Station.station_code,
             Station.name_th,
             func.count(col(Reading.id)),
             func.avg(Reading.pm25),
@@ -372,12 +389,32 @@ def measuring_stations(session: Session, province: str) -> list[dict]:
         .order_by(desc(func.avg(Reading.pm25)))
     ).all()
     return [
-        {"name_th": name, "hours": hours, "pm25_avg": round(average, 1)}
-        for name, hours, average in rows
+        {
+            "station_code": code,
+            "name_th": name,
+            "hours": hours,
+            "pm25_avg": round(average, 1),
+        }
+        for code, name, hours, average in rows
     ]
 
 
-def forecast_accuracy(session: Session, province: str) -> dict:
+def station_coordinates(session: Session, station_code: str) -> tuple[float, float] | None:
+    """พิกัดของสถานีตรวจวัด ใช้ถามแบบจำลองให้ตรงจุดที่วัดจริง
+
+    ตรงกว่าการใช้พิกัดกลางจังหวัด ซึ่งอาจห่างจากสถานีหลายสิบกิโลเมตร
+    """
+    row = session.exec(
+        select(Station.latitude, Station.longitude).where(
+            Station.station_code == station_code
+        )
+    ).first()
+    return (row[0], row[1]) if row else None
+
+
+def forecast_accuracy(
+    session: Session, province: str, station_code: str | None = None
+) -> dict:
     """ความแม่นยำของแบบจำลอง เทียบกับค่าที่สถานีของเราวัดได้จริง
 
     ทำไมถึงมีค่าทางวิชาการ
@@ -393,13 +430,20 @@ def forecast_accuracy(session: Session, province: str) -> dict:
     ใช้ bias ไปชดเชยค่าพยากรณ์ได้ เพราะเป็นความคลาดที่ไปทางเดียวกันสม่ำเสมอ
     ต่างจาก MAE ที่รวมความคลาดแบบสุ่มไว้ด้วยและชดเชยไม่ได้
     """
-    coords = province_coordinates(session).get(province)
+    coords = (
+        station_coordinates(session, station_code)
+        if station_code
+        else province_coordinates(session).get(province)
+    )
     if coords is None:
-        return {"available": False, "reason": f"ไม่มีพิกัดของจังหวัด{province}"}
+        return {"available": False, "reason": f"ไม่มีพิกัดของ{station_code or province}"}
 
-    actual = measured_hourly(session, province)
+    actual = measured_hourly(session, province, station_code)
     if not actual:
-        return {"available": False, "reason": f"ยังไม่มีค่าที่วัดได้จริงของจังหวัด{province}"}
+        return {
+            "available": False,
+            "reason": f"ยังไม่มีค่าที่วัดได้จริงของ{station_code or province}",
+        }
 
     # ต้นทางย้อนหลังได้สูงสุดเจ็ดวัน ขอมาให้เต็มเพื่อให้จับคู่ได้มากที่สุด
     modelled = fetch_pm25_forecast(*coords, days=1, past_days=7)
@@ -429,6 +473,7 @@ def forecast_accuracy(session: Session, province: str) -> dict:
     return {
         "available": True,
         "province": province,
+        "station_code": station_code,
         "hours": len(pairs),
         "station_count": len(stations),
         "stations": stations,

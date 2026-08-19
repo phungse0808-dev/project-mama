@@ -7,6 +7,11 @@ type Props = {
   defaultProvince: string | null;
 };
 
+type StationOption = { station_code: string; name_th: string; hours: number; pm25_avg: number };
+
+/** รายชื่อสถานีของจังหวัดล่าสุดที่โหลดสำเร็จ กันช่องเลือกว่างจนกดกลับไม่ได้ */
+let knownStations: StationOption[] = [];
+
 /** ชื่อเรียกวันแบบที่คนพูดกันจริง ใช้กับสามวันแรกเท่านั้น */
 const DAY_LABELS = ["วันนี้", "พรุ่งนี้", "มะรืนนี้"];
 
@@ -37,6 +42,11 @@ function shortDate(iso: string): string {
  */
 export function ForecastPanel({ provinces, defaultProvince }: Props) {
   const [province, setProvince] = useState(defaultProvince ?? provinces[0] ?? "");
+  // รหัสสถานีที่เจาะจง ค่าว่างแปลว่าเฉลี่ยทุกสถานีในจังหวัด
+  //
+  // ค่าภายในจังหวัดเดียวกันต่างกันได้หลายเท่า ค่าเฉลี่ยรวมจึงไม่ตรงกับที่ไหนเลย
+  // การเลือกสถานีที่ใกล้ตัวที่สุดให้ค่าที่ใช้ตัดสินใจได้จริงมากกว่า
+  const [station, setStation] = useState("");
   const [data, setData] = useState<Pm25Forecast | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +65,7 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
     const load = async (showLoading: boolean) => {
       if (showLoading) setLoading(true);
       try {
-        const result = await api.pm25Forecast(province);
+        const result = await api.pm25Forecast(province, station || null);
         if (!cancelled) setData(result);
       } catch {
         if (!cancelled) setData(null);
@@ -73,7 +83,16 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [province]);
+  }, [province, station]);
+
+  // เก็บรายชื่อสถานีไว้แยกจากผลลัพธ์
+  //
+  // เพราะเมื่อเจาะจงสถานีแล้ว คำตอบที่ได้กลับมายังมีรายชื่อครบเหมือนเดิม
+  // แต่ถ้าสถานีนั้นข้อมูลไม่พอจนคำตอบว่าง ช่องเลือกจะว่างตามไปด้วย
+  // ผู้ใช้จะเลือกกลับไปสถานีอื่นไม่ได้ กลายเป็นทางตัน
+  const fresh = data?.accuracy?.stations;
+  if (fresh && fresh.length > 0) knownStations = fresh;
+  const stations: StationOption[] = fresh && fresh.length > 0 ? fresh : knownStations;
 
   const header = (
     <>
@@ -84,7 +103,14 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
       <div className="weather-controls">
         <label>
           จังหวัด
-          <select value={province} onChange={(event) => setProvince(event.target.value)}>
+          <select
+            value={province}
+            onChange={(event) => {
+              setProvince(event.target.value);
+              // ล้างสถานีที่เลือกไว้ เพราะเป็นสถานีของจังหวัดเดิม
+              setStation("");
+            }}
+          >
             {provinces.map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -92,6 +118,20 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
             ))}
           </select>
         </label>
+
+        {stations.length > 1 && (
+          <label>
+            สถานี
+            <select value={station} onChange={(event) => setStation(event.target.value)}>
+              <option value="">ทุกสถานีในจังหวัด (ค่าเฉลี่ย)</option>
+              {stations.map((item) => (
+                <option key={item.station_code} value={item.station_code}>
+                  {item.name_th}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
     </>
   );
@@ -129,11 +169,15 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
       {data.adjusted && data.accuracy?.available && (
         <div className="calibration">
           <p className="calibration-title">
-            ปรับค่าด้วยข้อมูลที่สถานีในจังหวัดนี้วัดได้จริงแล้ว
+            {data.station_code
+              ? "ปรับค่าด้วยข้อมูลที่สถานีนี้วัดได้จริงแล้ว"
+              : "ปรับค่าด้วยข้อมูลที่สถานีในจังหวัดนี้วัดได้จริงแล้ว"}
           </p>
           <div className="calibration-stats">
             <div>
-              <p className="calibration-value">{data.accuracy.station_count}</p>
+              <p className="calibration-value">
+                {data.station_code ? 1 : data.accuracy.station_count}
+              </p>
               <p className="calibration-label">สถานีที่ร่วมคำนวณ</p>
             </div>
             <div>

@@ -292,13 +292,14 @@ export type ForecastAccuracy = {
   bias?: number;
   can_adjust?: boolean;
   station_count?: number;
-  stations?: { name_th: string; hours: number; pm25_avg: number }[];
+  stations?: { station_code: string; name_th: string; hours: number; pm25_avg: number }[];
 };
 
 export type Pm25Forecast = {
   available: boolean;
   reason?: string;
   province?: string;
+  station_code?: string | null;
   source?: string;
   standard_th?: number;
   guideline_who?: number;
@@ -403,8 +404,12 @@ export const api = {
   personalSummary: (id: number) => get<PersonalSummary>(`/api/users/${id}/summary`),
   riskGroups: () => get<RiskGroup[]>("/api/risk-groups"),
   provinces: () => get<string[]>("/api/provinces"),
-  pm25Forecast: (province: string) =>
-    get<Pm25Forecast>("/api/pm25-forecast/" + encodeURIComponent(province)),
+  pm25Forecast: (province: string, station?: string | null) =>
+    get<Pm25Forecast>(
+      "/api/pm25-forecast/" +
+        encodeURIComponent(province) +
+        (station ? "?station=" + encodeURIComponent(station) : ""),
+    ),
   weatherNow: (province: string) =>
     get<WeatherNow>("/api/weather-now/" + encodeURIComponent(province)),
   rainChance: (province: string) =>
