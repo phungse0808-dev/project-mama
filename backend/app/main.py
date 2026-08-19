@@ -4,6 +4,7 @@
 เอกสาร API อัตโนมัติ: http://127.0.0.1:8000/docs
 """
 
+import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -14,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlmodel import Session, col, desc, func, select
 
+from app import collector
 from app.config import CORS_ORIGINS
 from app.db import create_db_and_tables, get_session
 from app.health_advice import RISK_GROUPS
@@ -44,8 +46,19 @@ from app.services import (
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
+    """เตรียมฐานข้อมูลและเริ่มตัวเก็บข้อมูลอัตโนมัติตอนเซิร์ฟเวอร์ขึ้น
+
+    ตัวเก็บทำงานทุกชั่วโมงตราบใดที่เซิร์ฟเวอร์เปิดอยู่ ทำให้ข้อมูลใหม่
+    เข้าฐานข้อมูลเองโดยไม่ต้องรอให้ใครสั่งนำเข้าหรือเปิดหน้าเว็บ
+    ค่าที่คำนวณต่อจากข้อมูล เช่น ค่าชดเชยของแบบจำลอง จึงเป็นค่าล่าสุดเสมอ
+    """
     create_db_and_tables()
-    yield
+    background: list[asyncio.Task] = []
+    collector.start(background)
+    try:
+        yield
+    finally:
+        await collector.stop(background)
 
 
 app = FastAPI(
