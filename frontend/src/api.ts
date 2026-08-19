@@ -44,6 +44,7 @@ export type StationReading = {
 
 export type Summary = {
   measured_at: string | null;
+  minutes_behind: number | null;
   stations_total: number;
   stations_reporting: number;
   stations_stale: number;

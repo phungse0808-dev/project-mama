@@ -13,6 +13,20 @@ function formatClock(value: string | undefined): string {
   return `${day}/${month} ${time} น.`;
 }
 
+/** บอกอายุของข้อมูลเป็นภาษาคน แทนที่จะให้ผู้ใช้เอาเวลาไปลบกันเอง
+ *
+ * ต้นทางเผยแพร่ค่าเป็นรายชั่วโมงและออกช้ากว่าเวลาที่ระบุเสมอ
+ * ตัวเลขจึงเก่ากว่าปัจจุบันอยู่หลายสิบนาทีเป็นเรื่องปกติ ไม่ใช่ความผิดพลาด
+ * แต่ต้องบอกให้เห็น ไม่ใช่ปล่อยให้เข้าใจว่าเป็นค่า ณ วินาทีนี้
+ */
+function describeAge(minutes: number | null): string {
+  if (minutes == null) return "ไม่มีข้อมูลเวลา";
+  if (minutes < 90) return `ข้อมูลเมื่อ ${minutes} นาทีที่แล้ว`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `ข้อมูลเมื่อ ${hours} ชั่วโมงที่แล้ว`;
+  return `ข้อมูลเมื่อ ${Math.floor(hours / 24)} วันที่แล้ว`;
+}
+
 /** การ์ดสรุปภาพรวมด้านบนสุดของแดชบอร์ด */
 export function SummaryCards({ summary, weatherNow }: CardProps) {
   const worst = summary.worst_station;
@@ -64,7 +78,7 @@ export function SummaryCards({ summary, weatherNow }: CardProps) {
         <p className="card-value card-value-sm">
           {formatThaiDateTime(summary.measured_at)}
         </p>
-        <p className="card-note">อัปเดตอัตโนมัติทุกชั่วโมง</p>
+        <p className="card-note">{describeAge(summary.minutes_behind)}</p>
       </article>
 
       {/* สภาพอากาศ ณ ขณะนี้ ของจังหวัดที่ผู้ใช้ตั้งไว้

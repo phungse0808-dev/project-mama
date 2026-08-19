@@ -17,6 +17,7 @@ from sqlmodel import Session, col, desc, func, select
 from app.config import CORS_ORIGINS
 from app.db import create_db_and_tables, get_session
 from app.health_advice import RISK_GROUPS
+from app.live import refresh_if_stale
 from app.models import Station
 from app.services import (
     alerts,
@@ -83,7 +84,12 @@ def mount_frontend() -> None:
 
 @app.get("/api/summary", tags=["แดชบอร์ด"])
 def get_summary(session: Session = Depends(get_session)) -> dict:
-    """ภาพรวมคุณภาพอากาศทั้งประเทศ ณ ชั่วโมงล่าสุด"""
+    """ภาพรวมคุณภาพอากาศทั้งประเทศ ณ ชั่วโมงล่าสุด
+
+    ถ้าข้อมูลในฐานข้อมูลเก่าเกินกำหนด จะไปดึงจาก Air4Thai ให้ก่อนหนึ่งครั้ง
+    ผู้ใช้จึงไม่ต้องสั่งนำเข้าข้อมูลเองเพื่อให้หน้าเว็บเป็นปัจจุบัน
+    """
+    refresh_if_stale(session)
     return national_summary(session)
 
 

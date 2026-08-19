@@ -14,6 +14,7 @@ from app.health_advice import (
     compare_standards,
 )
 from app.forecast import fetch_now
+from app.live import minutes_behind
 from app.regions import ALIASES, region_of
 from app.models import AppUser, CollectionLog, DiseaseDaily, HivStatistic, Reading, Station, WeatherDaily
 
@@ -88,6 +89,9 @@ def national_summary(session: Session) -> dict:
 
     return {
         "measured_at": latest_time.isoformat() if latest_time else None,
+        # อายุของข้อมูลชุดนี้ ให้หน้าเว็บบอกผู้ใช้ได้ว่าตัวเลขที่เห็นเก่าแค่ไหน
+        # จำเป็นเพราะต้นทางออกข้อมูลรายชั่วโมงและออกช้ากว่าเวลาที่ระบุเสมอ
+        "minutes_behind": minutes_behind(latest_time),
         "stations_total": len(rows),
         "stations_reporting": len(fresh),
         "stations_stale": len(rows) - len(fresh),
@@ -125,22 +129,41 @@ def national_weather(session: Session) -> dict | None:
     ต่างจากโอกาสฝนตกรายจังหวัดซึ่งคิดจากสถิติย้อนหลังหลายปี
     ตัวนี้บอกว่าวันนั้นฝนตกครอบคลุมพื้นที่แค่ไหน ไม่ใช่ความน่าจะเป็น
     """
-    rows = session.exec(select(WeatherDaily)).all()
-    if not rows:
+    # ให้ฐานข้อมูลนับและคัดวันให้ แทนที่จะโหลดทั้งตารางเข้ามานับในโปรแกรม
+    #
+    # ตารางนี้มีข้อมูลย้อนหลังถึงปี 2563 ของ 74 จังหวัด เกือบสองแสนแถว
+    # การอ่านทั้งหมดเข้ามาเพื่อหาวันเดียวกินเวลาราวสามวินาทีต่อการเปิดหน้าหนึ่งครั้ง
+    # ทั้งที่สุดท้ายใช้จริงแค่ 74 แถว และตารางมีดัชนีของทั้งจังหวัดและวันที่อยู่แล้ว
+    expected = session.exec(
+        select(func.count(func.distinct(WeatherDaily.province)))
+    ).one()
+    if not expected:
         return None
 
-    per_day: dict[date, list[WeatherDaily]] = {}
-    for row in rows:
-        if row.temp_avg is not None:
-            per_day.setdefault(row.observed_on, []).append(row)
-    if not per_day:
+    has_temp = col(WeatherDaily.temp_avg).is_not(None)
+    newest_first = col(WeatherDaily.observed_on).desc()
+
+    # วันล่าสุดที่มีค่าครบทุกจังหวัด
+    target = session.exec(
+        select(WeatherDaily.observed_on)
+        .where(has_temp)
+        .group_by(col(WeatherDaily.observed_on))
+        .having(func.count() >= expected)
+        .order_by(newest_first)
+        .limit(1)
+    ).first()
+
+    # ไม่มีวันไหนครบเลย ถอยไปใช้วันล่าสุดที่พอมีค่า ดีกว่าไม่แสดงอะไรเลย
+    if target is None:
+        target = session.exec(
+            select(WeatherDaily.observed_on).where(has_temp).order_by(newest_first).limit(1)
+        ).first()
+    if target is None:
         return None
 
-    # จำนวนจังหวัดที่ระบบเก็บข้อมูลอากาศไว้ ใช้เป็นเกณฑ์ว่าวันไหนครบ
-    expected = len({row.province for row in rows})
-    complete = [day for day, items in per_day.items() if len(items) >= expected]
-    target = max(complete) if complete else max(per_day)
-    items = per_day[target]
+    items = session.exec(
+        select(WeatherDaily).where(WeatherDaily.observed_on == target, has_temp)
+    ).all()
 
     def mean_of(field: str) -> float | None:
         values = [getattr(i, field) for i in items if getattr(i, field) is not None]
