@@ -50,6 +50,7 @@ export type Summary = {
   pm25_avg: number | null;
   pm25_max: number | null;
   pm25_min: number | null;
+  level: AqiLevel | null;
   level_counts: Record<string, number>;
   levels: { key: string; label_th: string; color: string }[];
   worst_station: StationReading | null;

@@ -91,6 +91,9 @@ def national_summary(session: Session) -> dict:
         "stations_reporting": len(fresh),
         "stations_stale": len(rows) - len(fresh),
         "pm25_avg": round(statistics.fmean(values), 1) if values else None,
+        # ระดับคุณภาพอากาศของค่าเฉลี่ยทั้งประเทศ ใช้ให้การ์ดสรุปเปลี่ยนสีตามระดับ
+        # เพื่อให้อ่านสถานการณ์ได้จากสีก่อนอ่านตัวเลข
+        "level": describe(None, statistics.fmean(values)) if values else None,
         "pm25_max": round(max(values), 1) if values else None,
         "pm25_min": round(min(values), 1) if values else None,
         "level_counts": counts,

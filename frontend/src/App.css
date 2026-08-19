@@ -1197,6 +1197,64 @@ body {
 }
 
 
+
+/* ---------- การ์ดใบเด่นและหัวข้อแบ่งช่วง ---------- */
+
+/* การ์ดใบแรกกว้างสองช่อง เพราะเป็นคำตอบหลักของทั้งหน้า
+   ระบายสีตามระดับคุณภาพอากาศ ทำให้อ่านสถานการณ์ได้จากสีก่อนอ่านตัวเลข */
+.card-hero {
+  grid-column: span 2;
+  border: none;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card-hero .card-label,
+.card-hero .card-note,
+.card-hero .card-unit {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.card-hero .card-value {
+  font-size: 52px;
+  letter-spacing: -2px;
+}
+
+/* จอแคบไม่มีที่ให้กว้างสองช่อง ให้กลับไปเท่าใบอื่น */
+@media (max-width: 700px) {
+  .card-hero {
+    grid-column: span 1;
+  }
+
+  .card-hero .card-value {
+    font-size: 40px;
+  }
+}
+
+/* หัวข้อแบ่งช่วงของหน้า ใช้กับหน้าที่ยาวมากเพื่อให้อ่านเป็นเรื่องๆ
+   ไม่ใช่กล่องข้อมูลเรียงต่อกันจนแยกไม่ออกว่าส่วนไหนตอบคำถามอะไร */
+.section-heading {
+  margin: 18px 0 -4px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-left: 14px;
+  border-left: 4px solid var(--accent);
+  line-height: 1.4;
+}
+
+.section-heading span {
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--text-soft);
+}
+
 /* ---------- โอกาสฝนตก ---------- */
 
 .rain-summary {

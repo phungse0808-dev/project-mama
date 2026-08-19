@@ -224,12 +224,22 @@ export default function App() {
 
             <PersonalPanel user={user} onProfileChange={handleProfileChange} />
 
+            <h2 className="section-heading">
+              สถานการณ์ตอนนี้
+              <span>ค่าฝุ่นล่าสุดและพื้นที่ที่ควรระวัง</span>
+            </h2>
+
             <div className="two-column">
               <StationMap stations={stations} onSelect={selectStation} />
               <ProvinceRanking ranking={ranking} />
             </div>
 
             <RegionPanel />
+
+            <h2 className="section-heading">
+              ย้อนหลังและปัจจัยแวดล้อม
+              <span>แนวโน้ม สภาพอากาศ และผลกระทบต่อสุขภาพ</span>
+            </h2>
 
             <StationTrend
               history={history}
@@ -249,6 +259,11 @@ export default function App() {
             {provinces.length > 0 && (
               <WeatherPanel provinces={provinces} defaultProvince={user.province} />
             )}
+
+            <h2 className="section-heading">
+              คุณภาพของข้อมูลเอง
+              <span>ตรวจสอบย้อนกลับได้ว่าข้อมูลมาจากไหนและขาดช่วงใด</span>
+            </h2>
 
             {health && <DataHealth health={health} />}
           </>

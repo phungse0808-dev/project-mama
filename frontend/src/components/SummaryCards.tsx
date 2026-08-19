@@ -10,13 +10,20 @@ export function SummaryCards({ summary }: Props) {
 
   return (
     <section className="cards">
-      <article className="card">
+      {/* การ์ดใบแรกเป็นคำตอบหลักของทั้งหน้า จึงให้กว้างเป็นสองเท่าและระบายสีตามระดับ
+          ผู้ใช้อ่านสถานการณ์ได้จากสีก่อนอ่านตัวเลข ซึ่งเร็วกว่าและเห็นได้จากระยะไกล
+          ตอนนำเสนอด้วยโปรเจกเตอร์ */}
+      <article
+        className="card card-hero"
+        style={summary.level ? { background: summary.level.color } : undefined}
+      >
         <p className="card-label">PM2.5 เฉลี่ยทั้งประเทศ</p>
         <p className="card-value">
           {summary.pm25_avg ?? "-"}
           <span className="card-unit">µg/m³</span>
         </p>
         <p className="card-note">
+          {summary.level ? `คุณภาพอากาศ${summary.level.label_th} · ` : ""}
           ต่ำสุด {summary.pm25_min ?? "-"} · สูงสุด {summary.pm25_max ?? "-"}
         </p>
       </article>
