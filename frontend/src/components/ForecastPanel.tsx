@@ -40,22 +40,38 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
   const [data, setData] = useState<Pm25Forecast | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // ดึงใหม่เป็นระยะ ไม่ใช่ครั้งเดียวตอนเปิดหน้า
+  //
+  // ค่าชดเชยคำนวณจากค่าที่สถานีวัดได้จริง ซึ่งเพิ่มขึ้นทุกชั่วโมง
+  // ทุกชั่วโมงที่เก็บได้เพิ่มทำให้ค่าชดเชยแม่นขึ้น ถ้าดึงครั้งเดียวแล้วทิ้งไว้
+  // ผู้ใช้ที่เปิดหน้าค้างจะเห็นค่าที่คำนวณจากข้อมูลเก่าตลอด
+  //
+  // ตั้งสิบนาทีให้เท่ากับอายุของข้อมูลที่ฝั่งเซิร์ฟเวอร์เก็บไว้ใช้ซ้ำ
+  // ถี่กว่านี้จะได้คำตอบเดิมกลับมาโดยไม่ได้อะไรเพิ่ม
   useEffect(() => {
     if (!province) return;
     let cancelled = false;
-    setLoading(true);
-    void (async () => {
+
+    const load = async (showLoading: boolean) => {
+      if (showLoading) setLoading(true);
       try {
         const result = await api.pm25Forecast(province);
         if (!cancelled) setData(result);
       } catch {
         if (!cancelled) setData(null);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && showLoading) setLoading(false);
       }
-    })();
+    };
+
+    void load(true);
+    // ดึงรอบต่อไปไม่ต้องขึ้นข้อความกำลังโหลด เพราะมีข้อมูลเดิมแสดงอยู่แล้ว
+    // การล้างหน้าจอทิ้งทุกสิบนาทีรบกวนคนที่กำลังอ่านอยู่
+    const timer = setInterval(() => void load(false), 10 * 60 * 1000);
+
     return () => {
       cancelled = true;
+      clearInterval(timer);
     };
   }, [province]);
 
