@@ -138,7 +138,7 @@ export function SummaryCards({
           <div className="cards cards-weather">
             {/* ใบนี้กินเต็มความกว้าง เพราะมีทั้งไอคอน อุณหภูมิ คำอธิบาย
                 และช่วงต่ำสุดถึงสูงสุด ถ้าอยู่ครึ่งเดียวจะเบียดจนตัดบรรทัด */}
-            <article className="card card-wide card-weather-now">
+            <article className="card card-wide">
               <p className="card-label">อากาศตอนนี้</p>
 
               <div className="weather-now-main">
