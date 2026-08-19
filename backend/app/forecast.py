@@ -36,7 +36,7 @@ SOURCE = "Open-Meteo (open-meteo.com)"
 CACHE_SECONDS = 600
 
 _cache: dict[tuple[float, float], tuple[float, dict]] = {}
-_pm25_cache: dict[tuple[float, float, int], tuple[float, list[dict]]] = {}
+_pm25_cache: dict[tuple[float, float, int, int], tuple[float, list[dict]]] = {}
 
 # รหัสสภาพอากาศตามมาตรฐาน WMO แปลเป็นคำอธิบายภาษาไทย
 # ต้นทางส่งมาเป็นตัวเลข ถ้าไม่แปลผู้ใช้จะเห็นแค่เลขที่ไม่มีความหมาย
@@ -150,7 +150,9 @@ def _minutes_since(observed: str | None) -> int | None:
     return max(0, int((datetime.now() - moment).total_seconds() // 60))
 
 
-def fetch_pm25_forecast(latitude: float, longitude: float, days: int = 3) -> list[dict] | None:
+def fetch_pm25_forecast(
+    latitude: float, longitude: float, days: int = 3, past_days: int = 0
+) -> list[dict] | None:
     """ค่าฝุ่น PM2.5 ที่คาดว่าจะเกิดขึ้นรายชั่วโมง ล่วงหน้าตามจำนวนวันที่ขอ
 
     ทำไมต้องดึงจากที่อื่น ไม่คำนวณเอง
@@ -164,7 +166,7 @@ def fetch_pm25_forecast(latitude: float, longitude: float, days: int = 3) -> lis
 
     คืน None เมื่อเรียกไม่สำเร็จ เพราะเป็นส่วนเสริม ไม่ควรทำให้ทั้งหน้าใช้ไม่ได้
     """
-    key = (round(latitude, 2), round(longitude, 2), days)
+    key = (round(latitude, 2), round(longitude, 2), days, past_days)
     cached = _pm25_cache.get(key)
     if cached and time.time() - cached[0] < CACHE_SECONDS:
         return cached[1]
@@ -177,6 +179,9 @@ def fetch_pm25_forecast(latitude: float, longitude: float, days: int = 3) -> lis
                 "longitude": longitude,
                 "hourly": "pm2_5",
                 "forecast_days": days,
+                # ขอค่าที่แบบจำลองเคยทำนายไว้ย้อนหลังด้วย เพื่อนำมาเทียบกับ
+                # ค่าที่สถานีตรวจวัดของเราวัดได้จริงในช่วงเดียวกัน
+                "past_days": past_days,
                 "timezone": "Asia/Bangkok",
             },
             timeout=REQUEST_TIMEOUT,

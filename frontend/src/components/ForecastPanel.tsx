@@ -110,6 +110,42 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
     <section className="panel">
       {header}
 
+      {data.adjusted && data.accuracy?.available && (
+        <div className="calibration">
+          <p className="calibration-title">
+            ปรับค่าด้วยข้อมูลที่สถานีในจังหวัดนี้วัดได้จริงแล้ว
+          </p>
+          <div className="calibration-stats">
+            <div>
+              <p className="calibration-value">{data.accuracy.hours}</p>
+              <p className="calibration-label">ชั่วโมงที่นำมาเทียบ</p>
+            </div>
+            <div>
+              <p className="calibration-value">{data.accuracy.model_avg}</p>
+              <p className="calibration-label">แบบจำลองเคยทำนาย</p>
+            </div>
+            <div>
+              <p className="calibration-value">{data.accuracy.measured_avg}</p>
+              <p className="calibration-label">สถานีวัดได้จริง</p>
+            </div>
+            <div>
+              <p className="calibration-value">
+                {data.accuracy.bias != null && data.accuracy.bias > 0 ? "+" : ""}
+                {data.accuracy.bias}
+              </p>
+              <p className="calibration-label">ค่าคลาดเคลื่อนเฉลี่ย</p>
+            </div>
+          </div>
+          <p className="calibration-note">
+            {data.accuracy.bias != null && data.accuracy.bias < 0
+              ? `แบบจำลองทำนายต่ำกว่าที่วัดได้จริงเฉลี่ย ${Math.abs(data.accuracy.bias)} µg/m³ อย่างสม่ำเสมอ`
+              : `แบบจำลองทำนายสูงกว่าที่วัดได้จริงเฉลี่ย ${data.accuracy.bias} µg/m³ อย่างสม่ำเสมอ`}
+            {" "}ระบบจึงชดเชยค่านี้คืนให้ทุกตัวเลขด้านล่าง ตัวเลขที่แสดงจึงเป็นค่าที่ปรับ
+            ด้วยข้อมูลของพื้นที่นี้แล้ว ไม่ใช่ค่าดิบจากแบบจำลอง
+          </p>
+        </div>
+      )}
+
       <div className="forecast-list">
         {days.map((day, index) => (
           <article key={day.day} className={day.is_today ? "forecast-row today" : "forecast-row"}>
@@ -125,7 +161,10 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
                 {day.pm25_avg}
                 <small> µg/m³</small>
               </p>
-              <p className="forecast-caption">เฉลี่ยทั้งวัน</p>
+              <p className="forecast-caption">
+                เฉลี่ยทั้งวัน
+                {data.adjusted ? ` · ก่อนปรับ ${day.pm25_avg_raw}` : ""}
+              </p>
             </div>
 
             <div className="forecast-detail">
@@ -154,13 +193,18 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
           ? ` แต่ยังเกินค่าแนะนำขององค์การอนามัยโลก ${data.guideline_who} µg/m³`
           : ` และต่ำกว่าค่าแนะนำขององค์การอนามัยโลก ${data.guideline_who} µg/m³`}
         <br />
-        ค่าพยากรณ์นี้ <strong>ระบบไม่ได้คำนวณเอง</strong> มาจาก{data.source}
+        ค่าตั้งต้นมาจาก{data.source} ซึ่ง<strong>ระบบไม่ได้คำนวณเอง</strong>
+        {data.adjusted
+          ? " แต่ระบบนำค่าที่สถานีในจังหวัดนี้วัดได้จริงมาเทียบแล้วชดเชยความคลาดเคลื่อนให้"
+          : ""}
         <br />
         ต่างจากค่าฝุ่นในหน้าหลักซึ่งวัดได้จริงจากสถานีของกรมควบคุมมลพิษ
         ค่าในตารางนี้ยังไม่เกิดขึ้นจริงและคลาดเคลื่อนได้
         <br />
-        ระบบยังสร้างแบบจำลองพยากรณ์เองไม่ได้ เพราะฝุ่นในไทยขึ้นกับฤดูกาลอย่างชัดเจน
+        ระบบยังสร้างแบบจำลองพยากรณ์เองทั้งหมดไม่ได้ เพราะฝุ่นในไทยขึ้นกับฤดูกาลอย่างชัดเจน
         ต้องมีข้อมูลย้อนหลังอย่างน้อยหนึ่งปีเต็ม แต่ระบบเพิ่งเริ่มเก็บได้ราวหนึ่งเดือน
+        การชดเชยด้วยค่าที่วัดได้จริงจึงเป็นวิธีที่ใช้ข้อมูลเท่าที่มีให้เกิดประโยชน์ที่สุด
+        ยิ่งเก็บข้อมูลนานขึ้น การชดเชยจะยิ่งน่าเชื่อถือ
       </p>
     </section>
   );

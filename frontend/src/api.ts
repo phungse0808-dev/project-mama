@@ -280,6 +280,19 @@ export type RainChance = {
   monthly?: { month: number; label: string; chance_pct: number; rainfall_avg_mm: number }[];
 };
 
+export type ForecastAccuracy = {
+  available: boolean;
+  reason?: string;
+  hours?: number;
+  hours_needed?: number;
+  province?: string;
+  model_avg?: number;
+  measured_avg?: number;
+  mae?: number;
+  bias?: number;
+  can_adjust?: boolean;
+};
+
 export type Pm25Forecast = {
   available: boolean;
   reason?: string;
@@ -287,7 +300,10 @@ export type Pm25Forecast = {
   source?: string;
   standard_th?: number;
   guideline_who?: number;
+  adjusted?: boolean;
+  accuracy?: ForecastAccuracy;
   days?: {
+    pm25_avg_raw: number;
     day: string;
     is_today: boolean;
     pm25_avg: number;

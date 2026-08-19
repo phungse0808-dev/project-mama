@@ -24,6 +24,7 @@ from app.services import (
     all_stations_latest,
     collection_health,
     disease_summary,
+    forecast_accuracy,
     health_guidance,
     hiv_statistics,
     national_summary,
@@ -178,6 +179,16 @@ class ProfileRequest(BaseModel):
 
     province: str | None = Field(default=None, max_length=60)
     risk_group: str | None = Field(default=None, max_length=40)
+
+
+@app.get("/api/forecast-accuracy/{province}", tags=["ข้อมูลอากาศ"])
+def get_forecast_accuracy(province: str, session: Session = Depends(get_session)) -> dict:
+    """ความแม่นยำของแบบจำลองพยากรณ์ เทียบกับค่าที่สถานีตรวจวัดของระบบวัดได้จริง
+
+    เป็นการตรวจสอบว่าแบบจำลองบรรยากาศระดับโลกใช้กับพื้นที่ไทยได้ดีเพียงใด
+    ซึ่งทำได้เพราะระบบเก็บค่าที่วัดได้จริงรายชั่วโมงไว้เอง
+    """
+    return forecast_accuracy(session, province)
 
 
 @app.get("/api/pm25-forecast/{province}", tags=["ข้อมูลอากาศ"])

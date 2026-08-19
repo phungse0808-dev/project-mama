@@ -1563,6 +1563,53 @@ body {
   color: var(--text-soft);
 }
 
+/* ---------- กล่องอธิบายการชดเชยค่าพยากรณ์ ---------- */
+
+/* ใช้พื้นเขียวอ่อนเพราะเป็นการบอกว่าค่าถูกปรับให้ดีขึ้นแล้ว
+   ไม่ใช่คำเตือนแบบกล่องข้อจำกัดที่ใช้สีเหลือง */
+.calibration {
+  background: #f2f9f4;
+  border: 1px solid #cfe6d6;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.calibration-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.calibration-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 12px;
+}
+
+.calibration-value {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.calibration-label {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
+.calibration-note {
+  margin: 13px 0 0;
+  padding-top: 11px;
+  border-top: 1px solid #cfe6d6;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--text-soft);
+}
+
 /* ---------- พยากรณ์ฝุ่นล่วงหน้า ---------- */
 
 /* แสดงเป็นแถวรายวันแทนกราฟ เพราะสิ่งที่ต้องตัดสินใจคือวันไหนควรระวัง

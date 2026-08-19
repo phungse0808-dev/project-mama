@@ -245,6 +245,21 @@ def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
             "reason": "เรียกข้อมูลพยากรณ์ฝุ่นไม่สำเร็จ อาจเป็นเพราะไม่มีอินเทอร์เน็ต",
         }
 
+    # นำค่าคลาดเคลื่อนที่วัดได้จริงในจังหวัดนี้มาชดเชยค่าพยากรณ์
+    #
+    # แบบจำลองเป็นแบบจำลองระดับโลก ไม่ได้ปรับจูนสำหรับพื้นที่ไทยโดยเฉพาะ
+    # เมื่อเทียบกับสถานีตรวจวัดจริงพบว่าทำนายต่ำกว่าค่าจริงอย่างเป็นระบบ
+    # การลบค่าคลาดเคลื่อนเฉลี่ยออกจึงดึงค่าให้เข้าใกล้ของจริงมากขึ้น
+    #
+    # ชดเชยเฉพาะความคลาดที่ไปทางเดียวกันสม่ำเสมอ ไม่ได้แก้ความคลาดแบบสุ่ม
+    # ค่าที่ปรับแล้วจึงยังคลาดเคลื่อนได้ แต่คลาดน้อยกว่าค่าดิบ
+    accuracy = forecast_accuracy(session, province)
+    bias = accuracy["bias"] if accuracy.get("can_adjust") else None
+
+    def adjust(value: float) -> float:
+        """ค่าติดลบไม่มีความหมายทางกายภาพ จึงตัดที่ศูนย์"""
+        return max(0.0, value - bias) if bias is not None else value
+
     per_day: dict[str, list[tuple[str, float]]] = {}
     for item in hourly:
         day, _, clock = item["time"].partition("T")
@@ -254,16 +269,20 @@ def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
     result = []
     for day in sorted(per_day):
         entries = per_day[day]
-        values = [v for _, v in entries]
-        peak_time, peak = max(entries, key=lambda pair: pair[1])
+        raw_values = [v for _, v in entries]
+        values = [adjust(v) for v in raw_values]
+        peak_time, _ = max(entries, key=lambda pair: pair[1])
         average = round(statistics.fmean(values), 1)
         result.append(
             {
                 "day": day,
                 "is_today": day == today,
                 "pm25_avg": average,
-                "pm25_max": round(peak, 1),
+                "pm25_max": round(max(values), 1),
                 "pm25_min": round(min(values), 1),
+                # เก็บค่าก่อนชดเชยไว้ด้วย ให้ผู้ใช้เทียบได้ว่าชดเชยไปเท่าไร
+                # และให้ตรวจสอบย้อนกลับไปยังต้นทางได้
+                "pm25_avg_raw": round(statistics.fmean(raw_values), 1),
                 "peak_at": peak_time,
                 "hours": len(entries),
                 # ใช้ค่าเฉลี่ยทั้งวันตัดสินระดับ ให้ตรงกับวิธีที่มาตรฐานไทยใช้
@@ -278,7 +297,98 @@ def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
         "source": FORECAST_SOURCE,
         "standard_th": THAI_STANDARD_PM25,
         "guideline_who": WHO_GUIDELINE_PM25,
+        "adjusted": bias is not None,
+        "accuracy": accuracy,
         "days": result,
+    }
+
+
+# จำนวนชั่วโมงขั้นต่ำที่ยอมให้รายงานความแม่นยำ
+#
+# ต่ำกว่าหนึ่งวันเต็มจะไม่ครอบคลุมทั้งรอบกลางวันกลางคืน ซึ่งค่าฝุ่นต่างกันมาก
+# ตัวเลขที่ได้จะสะท้อนแค่ช่วงเวลาที่บังเอิญมีข้อมูล ไม่ใช่ความแม่นยำจริง
+MIN_HOURS_FOR_ACCURACY = 24
+
+# จำนวนชั่วโมงขั้นต่ำที่ยอมให้นำค่าคลาดเคลื่อนไปปรับค่าพยากรณ์
+#
+# ตั้งสูงกว่าเกณฑ์รายงานเพราะการปรับค่าเปลี่ยนตัวเลขที่ผู้ใช้เห็นจริง
+# ถ้าปรับด้วยค่าที่คำนวณจากข้อมูลน้อยเกินไป อาจทำให้แย่ลงกว่าไม่ปรับ
+MIN_HOURS_FOR_ADJUST = 24
+
+
+def measured_hourly(session: Session, province: str) -> dict[str, float]:
+    """ค่าฝุ่นรายชั่วโมงที่สถานีในจังหวัดนั้นวัดได้จริง เฉลี่ยข้ามสถานี
+
+    เฉลี่ยข้ามสถานีเพราะแบบจำลองให้ค่าเดียวต่อหนึ่งพิกัด
+    ขณะที่บางจังหวัดมีหลายสิบสถานี ถ้าไม่เฉลี่ยจะเทียบกันไม่ได้
+    """
+    rows = session.exec(
+        select(Reading.measured_at, func.avg(Reading.pm25))
+        .join(Station, col(Reading.station_id) == col(Station.id))
+        .where(Station.province == province, col(Reading.pm25).is_not(None))
+        .group_by(col(Reading.measured_at))
+    ).all()
+    # ปรับรูปเวลาให้ตรงกับที่ต้นทางส่งมา คือ 2026-08-19T14:00
+    return {moment.strftime("%Y-%m-%dT%H:00"): value for moment, value in rows}
+
+
+def forecast_accuracy(session: Session, province: str) -> dict:
+    """ความแม่นยำของแบบจำลอง เทียบกับค่าที่สถานีของเราวัดได้จริง
+
+    ทำไมถึงมีค่าทางวิชาการ
+        ระบบที่แสดงค่าพยากรณ์ทั่วไปไม่ได้บอกว่าค่านั้นแม่นแค่ไหนในพื้นที่จริง
+        งานนี้มีทั้งค่าที่วัดได้เองรายชั่วโมงและเข้าถึงค่าที่แบบจำลองเคยทำนายย้อนหลังได้
+        จึงตรวจสอบได้ว่าแบบจำลองต่างประเทศใช้กับพื้นที่ไทยได้ดีเพียงใด
+
+    ค่าที่คำนวณ
+        MAE   ค่าคลาดเคลื่อนสัมบูรณ์เฉลี่ย บอกว่าโดยเฉลี่ยพลาดไปกี่หน่วย
+        bias  ค่าคลาดเคลื่อนเฉลี่ยแบบมีเครื่องหมาย บอกว่าพลาดไปทางสูงหรือต่ำอย่างเป็นระบบ
+              ถ้าติดลบแปลว่าแบบจำลองทำนายต่ำกว่าที่วัดได้จริง
+
+    ใช้ bias ไปชดเชยค่าพยากรณ์ได้ เพราะเป็นความคลาดที่ไปทางเดียวกันสม่ำเสมอ
+    ต่างจาก MAE ที่รวมความคลาดแบบสุ่มไว้ด้วยและชดเชยไม่ได้
+    """
+    coords = province_coordinates(session).get(province)
+    if coords is None:
+        return {"available": False, "reason": f"ไม่มีพิกัดของจังหวัด{province}"}
+
+    actual = measured_hourly(session, province)
+    if not actual:
+        return {"available": False, "reason": f"ยังไม่มีค่าที่วัดได้จริงของจังหวัด{province}"}
+
+    # ต้นทางย้อนหลังได้สูงสุดเจ็ดวัน ขอมาให้เต็มเพื่อให้จับคู่ได้มากที่สุด
+    modelled = fetch_pm25_forecast(*coords, days=1, past_days=7)
+    if modelled is None:
+        return {"available": False, "reason": "เรียกค่าพยากรณ์ย้อนหลังไม่สำเร็จ"}
+
+    pairs = [
+        (item["pm25"], actual[item["time"]])
+        for item in modelled
+        if item["time"] in actual
+    ]
+    if len(pairs) < MIN_HOURS_FOR_ACCURACY:
+        return {
+            "available": False,
+            "hours": len(pairs),
+            "hours_needed": MIN_HOURS_FOR_ACCURACY,
+            "reason": (
+                f"มีชั่วโมงที่เทียบกันได้ {len(pairs)} ชั่วโมง "
+                f"ยังไม่ถึง {MIN_HOURS_FOR_ACCURACY} ชั่วโมงที่ต้องใช้"
+            ),
+        }
+
+    differences = [model - measured for model, measured in pairs]
+    bias = statistics.fmean(differences)
+
+    return {
+        "available": True,
+        "province": province,
+        "hours": len(pairs),
+        "model_avg": round(statistics.fmean(m for m, _ in pairs), 1),
+        "measured_avg": round(statistics.fmean(a for _, a in pairs), 1),
+        "mae": round(statistics.fmean(abs(d) for d in differences), 2),
+        "bias": round(bias, 2),
+        "can_adjust": len(pairs) >= MIN_HOURS_FOR_ADJUST,
     }
 
 
