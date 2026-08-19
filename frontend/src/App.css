@@ -206,6 +206,151 @@ body {
   color: var(--text-soft);
 }
 
+/* ---------- การ์ดสรุปแบ่งเป็นสองกลุ่ม ---------- */
+
+/* แบ่งสองกลุ่มเพราะการ์ดสองชุดตอบคนละเรื่องและมีขอบเขตต่างกัน
+   ฝั่งซ้ายเป็นค่าทั้งประเทศ ฝั่งขวาเป็นจังหวัดเดียวที่ผู้ใช้เลือกเอง
+
+   ให้ฝั่งอากาศกว้างเกือบเท่าฝั่งฝุ่น เพราะมีช่องเลือกจังหวัดอยู่ด้วย
+   ถ้าแคบกว่านี้ ชื่อจังหวัดยาวๆ จะเบียดกับหัวข้อกลุ่ม */
+.card-groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.card-group {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.card-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  /* ตั้งความสูงขั้นต่ำเท่าช่องเลือก เพื่อให้หัวของสองกลุ่มอยู่ระดับเดียวกัน
+     แม้ฝั่งซ้ายจะมีแค่ข้อความและฝั่งขวามีช่องเลือก */
+  min-height: 36px;
+}
+
+.card-group-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.card-group-title::before {
+  content: "";
+  width: 4px;
+  height: 16px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent), #6bb3f7);
+  flex: none;
+}
+
+/* กลุ่มอากาศใช้สีส้มแทนฟ้า ให้แยกออกจากกลุ่มฝุ่นตั้งแต่กวาดสายตา */
+.card-group:last-child .card-group-title::before {
+  background: linear-gradient(180deg, #e59500, #f5c04a);
+}
+
+.card-group-scope {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.card-group-picker select {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #ccd4e0;
+  border-radius: 9px;
+  background: #fbfcfe;
+  max-width: 100%;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.card-group-picker select:hover {
+  border-color: var(--accent);
+}
+
+.card-group-picker select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(29, 111, 208, 0.16);
+}
+
+/* การ์ดในกลุ่มแคบกว่าตอนเรียงเต็มความกว้าง จึงลดระยะขอบในลง
+   ไม่งั้นตัวเลขจะเหลือที่น้อยจนตัดบรรทัด */
+.card-group .card {
+  padding: 13px 15px;
+}
+
+.cards-dust {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* การ์ดค่าเฉลี่ยกินเต็มความกว้างของกลุ่ม เพราะเป็นตัวเลขหลักของทั้งหน้า */
+.cards-dust .card-hero {
+  grid-column: 1 / -1;
+}
+
+.cards-weather {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* การ์ดเวลาอยู่ล่างสุดและกินเต็มความกว้าง เพราะข้อความยาวกว่าอีกสองใบ */
+.card-wide {
+  grid-column: 1 / -1;
+}
+
+/* ขนาดกลาง ใช้กับการ์ดที่อยู่ในกลุ่มซึ่งแคบกว่าการ์ดเดี่ยว
+   ยังใหญ่พอให้อ่านจากระยะไกลตอนนำเสนอ แต่ไม่ล้นกล่อง */
+.card-value-md {
+  font-size: 30px;
+  letter-spacing: -0.6px;
+}
+
+/* จอแคบวางสองกลุ่มข้างกันไม่ไหว ให้ซ้อนกันแทน */
+@media (max-width: 980px) {
+  .card-groups {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .cards-dust,
+  .cards-weather {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ข้อความสำหรับโปรแกรมอ่านหน้าจอ ซ่อนจากสายตาแต่ยังอ่านออกเสียงได้
+   ใช้กับป้ายกำกับช่องเลือกที่หน้าจอสื่อความหมายด้วยตำแหน่งอยู่แล้ว */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ---------- แผงทั่วไป ---------- */
 
 .panel {
@@ -1385,7 +1530,6 @@ body {
 /* การ์ดใบแรกกว้างสองช่อง เพราะเป็นคำตอบหลักของทั้งหน้า
    ระบายสีตามระดับคุณภาพอากาศ ทำให้อ่านสถานการณ์ได้จากสีก่อนอ่านตัวเลข */
 .card-hero {
-  grid-column: span 2;
   border: none;
   color: #fff;
   display: flex;
@@ -1419,16 +1563,13 @@ body {
 }
 
 .card-hero .card-value {
-  font-size: 52px;
-  letter-spacing: -2px;
+  font-size: 44px;
+  letter-spacing: -1.6px;
 }
 
-/* จอแคบไม่มีที่ให้กว้างสองช่อง ให้กลับไปเท่าใบอื่น */
+/* จอแคบมีที่น้อย ลดขนาดตัวเลขลงไม่ให้ล้นกล่อง
+   ส่วนความกว้างไม่ต้องแก้ เพราะใบนี้กินเต็มความกว้างของกลุ่มอยู่แล้ว */
 @media (max-width: 700px) {
-  .card-hero {
-    grid-column: span 1;
-  }
-
   .card-hero .card-value {
     font-size: 40px;
   }

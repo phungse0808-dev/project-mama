@@ -55,6 +55,9 @@ export default function App() {
   const [alertData, setAlertData] = useState<Alerts | null>(null);
   const [weatherNow, setWeatherNow] = useState<WeatherNow | null>(null);
   const [provinces, setProvinces] = useState<string[]>([]);
+  // จังหวัดที่กำลังดูสภาพอากาศ แยกจากจังหวัดที่ผู้ใช้ตั้งไว้ในโปรไฟล์
+  // เพราะผู้ใช้อาจอยากดูที่อื่นชั่วคราวโดยไม่ต้องไปแก้โปรไฟล์ตัวเอง
+  const [weatherProvince, setWeatherProvince] = useState<string | null>(null);
   const [history, setHistory] = useState<StationHistory | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,13 +101,13 @@ export default function App() {
   }, [loadAll, user]);
 
 
-  // สภาพอากาศปัจจุบันของจังหวัดที่ผู้ใช้ตั้งไว้ ถ้ายังไม่ได้ตั้งใช้กรุงเทพฯ เป็นค่าตั้งต้น
+  // สภาพอากาศปัจจุบันของจังหวัดที่กำลังดูอยู่
   //
-  // แยกออกมาจากการโหลดชุดใหญ่ เพราะมาจากคนละแหล่งและเปลี่ยนตามจังหวัดของผู้ใช้
+  // แยกออกมาจากการโหลดชุดใหญ่ เพราะมาจากคนละแหล่งและเปลี่ยนตามจังหวัดที่เลือก
   // ต้นทางอัปเดตทุก 15 นาที จึงดึงซ้ำทุก 10 นาทีก็เพียงพอ
   useEffect(() => {
     if (!user) return;
-    const province = user.province ?? "กรุงเทพฯ";
+    const province = weatherProvince ?? user.province ?? "กรุงเทพฯ";
     let cancelled = false;
 
     const load = async () => {
@@ -122,7 +125,7 @@ export default function App() {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [user]);
+  }, [user, weatherProvince]);
 
   const handleSignedIn = useCallback((signed: AppUser) => {
     localStorage.setItem(USER_KEY, JSON.stringify(signed));
@@ -249,7 +252,15 @@ export default function App() {
             คุณภาพของข้อมูลเอง ตามลำดับที่ผู้ใช้อยากรู้ */}
         {active === "air" && (
           <>
-            {summary && <SummaryCards summary={summary} weatherNow={weatherNow} />}
+            {summary && (
+              <SummaryCards
+                summary={summary}
+                weatherNow={weatherNow}
+                provinces={provinces}
+                weatherProvince={weatherProvince ?? user.province ?? "กรุงเทพฯ"}
+                onWeatherProvinceChange={setWeatherProvince}
+              />
+            )}
             {summary && <LevelBar summary={summary} />}
 
             <PersonalPanel user={user} onProfileChange={handleProfileChange} />

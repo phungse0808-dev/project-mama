@@ -2,7 +2,12 @@ import type { Summary, WeatherNow } from "../api";
 import { formatThaiDateTime } from "../api";
 
 type Props = { summary: Summary };
-type CardProps = Props & { weatherNow: WeatherNow | null };
+type CardProps = Props & {
+  weatherNow: WeatherNow | null;
+  provinces: string[];
+  weatherProvince: string;
+  onWeatherProvinceChange: (province: string) => void;
+};
 
 /** ตัดเอาเฉพาะเวลาจากค่าที่ต้นทางส่งมาเป็น 2026-08-19T08:30 ซึ่งเป็นเวลาไทยอยู่แล้ว */
 function formatClock(value: string | undefined): string {
@@ -27,106 +32,148 @@ function describeAge(minutes: number | null): string {
   return `ข้อมูลเมื่อ ${Math.floor(hours / 24)} วันที่แล้ว`;
 }
 
-/** การ์ดสรุปภาพรวมด้านบนสุดของแดชบอร์ด */
-export function SummaryCards({ summary, weatherNow }: CardProps) {
+/** การ์ดสรุปภาพรวมด้านบนสุดของแดชบอร์ด
+ *
+ * แบ่งเป็นสองกลุ่มเพราะการ์ดสองชุดนี้ตอบคนละเรื่องและมีขอบเขตต่างกัน
+ *     เรื่องของฝุ่น   ภาพรวมทั้งประเทศ จากสถานีตรวจวัดของกรมควบคุมมลพิษ
+ *     สภาพอากาศ     จังหวัดเดียวที่เลือก จาก Open-Meteo
+ *
+ * เดิมวางเรียงต่อกันเจ็ดใบแล้วขึ้นบรรทัดที่สอง แยกไม่ออกว่าใบไหนเป็นเรื่องอะไร
+ * และเสี่ยงเข้าใจผิดว่าค่าฝุ่นเป็นของจังหวัดที่เลือกด้วย ทั้งที่เป็นค่าทั้งประเทศ
+ */
+export function SummaryCards({
+  summary,
+  weatherNow,
+  provinces,
+  weatherProvince,
+  onWeatherProvinceChange,
+}: CardProps) {
   const worst = summary.worst_station;
   const now = weatherNow?.available ? weatherNow : null;
 
   return (
-    <section className="cards">
-      {/* การ์ดใบแรกเป็นคำตอบหลักของทั้งหน้า จึงให้กว้างเป็นสองเท่าและระบายสีตามระดับ
-          ผู้ใช้อ่านสถานการณ์ได้จากสีก่อนอ่านตัวเลข ซึ่งเร็วกว่าและเห็นได้จากระยะไกล
-          ตอนนำเสนอด้วยโปรเจกเตอร์ */}
-      <article
-        className="card card-hero"
-        style={summary.level ? { background: summary.level.color } : undefined}
-      >
-        <p className="card-label">PM2.5 เฉลี่ยทั้งประเทศ</p>
-        <p className="card-value">
-          {summary.pm25_avg ?? "-"}
-          <span className="card-unit">µg/m³</span>
-        </p>
-        <p className="card-note">
-          {summary.level ? `คุณภาพอากาศ${summary.level.label_th} · ` : ""}
-          ต่ำสุด {summary.pm25_min ?? "-"} · สูงสุด {summary.pm25_max ?? "-"}
-        </p>
-      </article>
+    <section className="card-groups">
+      <section className="card-group">
+        <header className="card-group-head">
+          <h2 className="card-group-title">เรื่องของฝุ่น</h2>
+          {/* บอกขอบเขตไว้ตรงนี้ เพราะกลุ่มข้างๆ มีช่องเลือกจังหวัด
+              ถ้าไม่บอกจะเข้าใจว่าค่าฝุ่นเปลี่ยนตามจังหวัดที่เลือกไปด้วย */}
+          <span className="card-group-scope">ทั้งประเทศ</span>
+        </header>
 
-      <article className="card">
-        <p className="card-label">สถานีที่รายงานข้อมูล</p>
-        <p className="card-value">
-          {summary.stations_reporting}
-          <span className="card-unit">/ {summary.stations_total} สถานี</span>
-        </p>
-        <p className="card-note">
-          {summary.stations_stale > 0
-            ? `มี ${summary.stations_stale} สถานีที่ข้อมูลค้างเกิน 6 ชั่วโมง`
-            : "ทุกสถานีส่งข้อมูลเป็นปัจจุบัน"}
-        </p>
-      </article>
+        <div className="cards cards-dust">
+          {/* การ์ดใบแรกเป็นคำตอบหลักของทั้งหน้า จึงกินเต็มความกว้างและระบายสีตามระดับ
+              ผู้ใช้อ่านสถานการณ์ได้จากสีก่อนอ่านตัวเลข ซึ่งเร็วกว่าและเห็นได้จากระยะไกล
+              ตอนนำเสนอด้วยโปรเจกเตอร์ */}
+          <article
+            className="card card-hero"
+            style={summary.level ? { backgroundColor: summary.level.color } : undefined}
+          >
+            <p className="card-label">PM2.5 เฉลี่ยทั้งประเทศ</p>
+            <p className="card-value">
+              {summary.pm25_avg ?? "-"}
+              <span className="card-unit">µg/m³</span>
+            </p>
+            <p className="card-note">
+              {summary.level ? `คุณภาพอากาศ${summary.level.label_th} · ` : ""}
+              ต่ำสุด {summary.pm25_min ?? "-"} · สูงสุด {summary.pm25_max ?? "-"}
+            </p>
+          </article>
 
-      <article className="card">
-        <p className="card-label">จุดที่ค่าฝุ่นสูงที่สุดขณะนี้</p>
-        <p className="card-value card-value-sm">{worst ? worst.pm25 : "-"}</p>
-        <p className="card-note">
-          {worst ? `${worst.name_th} จ.${worst.province}` : "ไม่มีข้อมูล"}
-        </p>
-      </article>
+          <article className="card">
+            <p className="card-label">สถานีที่รายงาน</p>
+            <p className="card-value card-value-md">
+              {summary.stations_reporting}
+              <span className="card-unit">/ {summary.stations_total}</span>
+            </p>
+            <p className="card-note">
+              {summary.stations_stale > 0
+                ? `ข้อมูลค้าง ${summary.stations_stale} สถานี`
+                : "ทุกสถานีเป็นปัจจุบัน"}
+            </p>
+          </article>
 
-      <article className="card">
-        <p className="card-label">ข้อมูล ณ เวลา</p>
-        <p className="card-value card-value-sm">
-          {formatThaiDateTime(summary.measured_at)}
-        </p>
-        <p className="card-note">{describeAge(summary.minutes_behind)}</p>
-      </article>
+          <article className="card">
+            <p className="card-label">สูงสุดขณะนี้</p>
+            <p className="card-value card-value-md">{worst ? worst.pm25 : "-"}</p>
+            <p className="card-note">{worst ? `จ.${worst.province}` : "ไม่มีข้อมูล"}</p>
+          </article>
 
-      {/* สภาพอากาศ ณ ขณะนี้ ของจังหวัดที่ผู้ใช้ตั้งไว้
-          ไม่ใช่ค่าเฉลี่ยทั้งประเทศแบบเดิม เพราะสภาพอากาศต่างกันมากในแต่ละภาค
-          ค่าเฉลี่ยรวมทั้งประเทศจึงไม่ตรงกับที่ผู้ใช้เจอจริง
+          <article className="card">
+            <p className="card-label">ข้อมูล ณ เวลา</p>
+            <p className="card-value card-value-sm">
+              {formatThaiDateTime(summary.measured_at)}
+            </p>
+            <p className="card-note">{describeAge(summary.minutes_behind)}</p>
+          </article>
+        </div>
+      </section>
 
+      {/* สภาพอากาศ ณ ขณะนี้ ของจังหวัดที่เลือก
           ใช้คนละแหล่งกับข้อมูลอากาศย้อนหลังที่ระบบเก็บเอง
           เพราะ NASA POWER เผยแพร่เฉพาะข้อมูลที่ผ่านมาแล้วและตามหลังหลายวัน
           บอกสภาพอากาศตอนนี้ไม่ได้ */}
-      {now && (
-        <>
-          <article className="card">
-            <p className="card-label">อากาศตอนนี้ · {now.province}</p>
-            <p className="card-value">
-              {now.temperature ?? "-"}
-              <span className="card-unit">°C</span>
-            </p>
-            <p className="card-note">
-              {now.condition} · สูงสุด {now.temp_max ?? "-"} · ต่ำสุด {now.temp_min ?? "-"} °C
-            </p>
-          </article>
+      <section className="card-group">
+        <header className="card-group-head">
+          <h2 className="card-group-title">สภาพอากาศ</h2>
+          {/* ช่องเลือกอยู่ที่หัวกลุ่ม ไม่ใช่ในการ์ดใบใดใบหนึ่ง
+              เพราะจังหวัดที่เลือกมีผลกับทุกใบในกลุ่มนี้ */}
+          <label className="card-group-picker">
+            <span className="sr-only">เลือกจังหวัดที่ต้องการดูสภาพอากาศ</span>
+            <select
+              value={weatherProvince}
+              onChange={(event) => onWeatherProvinceChange(event.target.value)}
+            >
+              {provinces.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+        </header>
 
-          <article className="card">
-            <p className="card-label">โอกาสฝนตกวันนี้</p>
-            <p className="card-value">
-              {now.rain_chance_pct ?? "-"}
-              <span className="card-unit">%</span>
-            </p>
-            <p className="card-note">
-              ความชื้น {now.humidity ?? "-"}% · ลม {now.wind_speed ?? "-"} km/h
-            </p>
-          </article>
+        {now ? (
+          <div className="cards cards-weather">
+            <article className="card">
+              <p className="card-label">อากาศตอนนี้</p>
+              <p className="card-value card-value-md">
+                {now.temperature ?? "-"}
+                <span className="card-unit">°C</span>
+              </p>
+              <p className="card-note">
+                {now.condition} · {now.temp_min ?? "-"}–{now.temp_max ?? "-"} °C
+              </p>
+            </article>
 
-          <article className="card">
-            <p className="card-label">อากาศ ณ เวลา</p>
-            <p className="card-value card-value-sm">
-              {formatClock(now.observed_at)}
-            </p>
-            <p className="card-note">
-              {now.minutes_behind != null
-                ? `ข้อมูลเมื่อ ${now.minutes_behind} นาทีที่แล้ว · `
-                : ""}
-              จาก Open-Meteo
-            </p>
-          </article>
-        </>
-      )}
+            <article className="card">
+              <p className="card-label">โอกาสฝนตกวันนี้</p>
+              <p className="card-value card-value-md">
+                {now.rain_chance_pct ?? "-"}
+                <span className="card-unit">%</span>
+              </p>
+              <p className="card-note">
+                ชื้น {now.humidity ?? "-"}% · ลม {now.wind_speed ?? "-"} km/h
+              </p>
+            </article>
 
+            <article className="card card-wide">
+              <p className="card-label">อากาศ ณ เวลา</p>
+              <p className="card-value card-value-sm">{formatClock(now.observed_at)}</p>
+              <p className="card-note">
+                {now.minutes_behind != null
+                  ? `ข้อมูลเมื่อ ${now.minutes_behind} นาทีที่แล้ว · `
+                  : ""}
+                จาก Open-Meteo
+              </p>
+            </article>
+          </div>
+        ) : (
+          <p className="empty">
+            ยังไม่มีข้อมูลสภาพอากาศของ{weatherProvince} อาจเป็นเพราะเชื่อมต่อแหล่งข้อมูลไม่ได้
+          </p>
+        )}
+      </section>
     </section>
   );
 }
