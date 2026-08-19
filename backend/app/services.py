@@ -300,6 +300,13 @@ def pm25_forecast(
             {
                 "day": day,
                 "is_today": day == today,
+                # ค่ารายชั่วโมงของวันนั้น ส่งไปให้หน้าเว็บเลือกแสดงได้
+                # ค่าเฉลี่ยทั้งวันบอกภาพรวม แต่ไม่บอกว่าช่วงไหนควรเลี่ยง
+                # ซึ่งเป็นสิ่งที่ต้องใช้ตัดสินใจว่าจะออกนอกบ้านตอนไหน
+                "hourly": [
+                    {"clock": clock, "pm25": round(used, 1), "is_measured": is_real}
+                    for clock, used, _, is_real in entries
+                ],
                 "pm25_avg": average,
                 "pm25_max": round(max(values), 1),
                 "pm25_min": round(min(values), 1),

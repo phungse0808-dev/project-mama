@@ -47,20 +47,24 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
   // ค่าภายในจังหวัดเดียวกันต่างกันได้หลายเท่า ค่าเฉลี่ยรวมจึงไม่ตรงกับที่ไหนเลย
   // การเลือกสถานีที่ใกล้ตัวที่สุดให้ค่าที่ใช้ตัดสินใจได้จริงมากกว่า
   const [station, setStation] = useState("");
+  // มุมมองรายวันบอกภาพรวมว่าวันไหนควรระวัง
+  // มุมมองรายชั่วโมงบอกว่าควรเลี่ยงช่วงไหนของวัน ซึ่งใช้วางแผนได้ตรงกว่า
+  const [view, setView] = useState<"day" | "hour">("day");
   const [data, setData] = useState<Pm25Forecast | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ดึงใหม่เป็นระยะ ไม่ใช่ครั้งเดียวตอนเปิดหน้า
+  // คำนวณใหม่ทุกต้นชั่วโมง ไม่ใช่ทุกหกสิบนาทีนับจากเปิดหน้า
   //
-  // ค่าชดเชยคำนวณจากค่าที่สถานีวัดได้จริง ซึ่งเพิ่มขึ้นทุกชั่วโมง
-  // ทุกชั่วโมงที่เก็บได้เพิ่มทำให้ค่าชดเชยแม่นขึ้น ถ้าดึงครั้งเดียวแล้วทิ้งไว้
-  // ผู้ใช้ที่เปิดหน้าค้างจะเห็นค่าที่คำนวณจากข้อมูลเก่าตลอด
+  // ทั้งค่าที่สถานีวัดได้และค่าจากแบบจำลองเผยแพร่เป็นรายชั่วโมง
+  // การตั้งเวลาให้ตรงกับต้นชั่วโมงจึงได้ข้อมูลใหม่เร็วที่สุดเท่าที่มี
+  // ถ้านับหกสิบนาทีจากตอนเปิดหน้า คนที่เปิดตอนนาทีที่ 59
+  // จะรอถึงนาทีที่ 59 ของชั่วโมงถัดไป ทั้งที่ข้อมูลใหม่มาตั้งแต่นาทีที่ 0
   //
-  // ตั้งสิบนาทีให้เท่ากับอายุของข้อมูลที่ฝั่งเซิร์ฟเวอร์เก็บไว้ใช้ซ้ำ
-  // ถี่กว่านี้จะได้คำตอบเดิมกลับมาโดยไม่ได้อะไรเพิ่ม
+  // เผื่อสามสิบวินาทีหลังต้นชั่วโมง เพราะต้นทางมักออกข้อมูลช้ากว่าเวลาที่ระบุเล็กน้อย
   useEffect(() => {
     if (!province) return;
     let cancelled = false;
+    let hourly: number | undefined;
 
     const load = async (showLoading: boolean) => {
       if (showLoading) setLoading(true);
@@ -75,13 +79,22 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
     };
 
     void load(true);
-    // ดึงรอบต่อไปไม่ต้องขึ้นข้อความกำลังโหลด เพราะมีข้อมูลเดิมแสดงอยู่แล้ว
-    // การล้างหน้าจอทิ้งทุกสิบนาทีรบกวนคนที่กำลังอ่านอยู่
-    const timer = setInterval(() => void load(false), 10 * 60 * 1000);
+
+    const now = new Date();
+    const untilNextHour =
+      (60 - now.getMinutes()) * 60_000 - now.getSeconds() * 1000 + 30_000;
+
+    // ดึงรอบต่อไปไม่ขึ้นข้อความกำลังโหลด เพราะมีข้อมูลเดิมแสดงอยู่แล้ว
+    // การล้างหน้าจอทิ้งทุกชั่วโมงรบกวนคนที่กำลังอ่านอยู่
+    const first = setTimeout(() => {
+      void load(false);
+      hourly = setInterval(() => void load(false), 60 * 60 * 1000);
+    }, untilNextHour);
 
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      clearTimeout(first);
+      if (hourly) clearInterval(hourly);
     };
   }, [province, station]);
 
@@ -118,6 +131,24 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
             ))}
           </select>
         </label>
+
+        {/* ปุ่มสลับมุมมอง ใช้รูปแบบเดียวกับปุ่มช่วงเวลาในแผงอื่นของระบบ */}
+        <div className="range-buttons">
+          <button
+            type="button"
+            className={view === "day" ? "range active" : "range"}
+            onClick={() => setView("day")}
+          >
+            รายวัน
+          </button>
+          <button
+            type="button"
+            className={view === "hour" ? "range active" : "range"}
+            onClick={() => setView("hour")}
+          >
+            รายชั่วโมง
+          </button>
+        </div>
 
         {stations.length > 1 && (
           <label>
@@ -166,6 +197,36 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
     <section className="panel">
       {header}
 
+      {view === "hour" ? (
+        <div className="hour-grid">
+          {days.map((day, index) => (
+            <section key={day.day} className="hour-day">
+              <h3 className="hour-day-title">
+                {DAY_LABELS[index] ?? shortDate(day.day)}
+                <span className="panel-hint">{shortDate(day.day)}</span>
+              </h3>
+              <div className="hour-cells">
+                {day.hourly.map((hour) => (
+                  <div
+                    key={hour.clock}
+                    className={hour.is_measured ? "hour-cell real" : "hour-cell"}
+                    title={`${hour.clock} น. ${hour.pm25} µg/m³ ${
+                      hour.is_measured ? "วัดได้จริง" : "คาดการณ์"
+                    }`}
+                  >
+                    <span className="hour-clock">{hour.clock.slice(0, 2)}</span>
+                    <span className="hour-value">{hour.pm25}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+          <p className="hour-legend">
+            ช่องพื้นเขียวคือชั่วโมงที่สถานีวัดค่าได้จริงแล้ว พื้นเทาคือค่าที่ยังเป็นการคาดการณ์
+            ตัวเลขบนคือชั่วโมง ตัวเลขล่างคือค่าฝุ่นหน่วยไมโครกรัมต่อลูกบาศก์เมตร
+          </p>
+        </div>
+      ) : (
       <div className="forecast-list">
         {days.map((day, index) => (
           <article key={day.day} className={day.is_today ? "forecast-row today" : "forecast-row"}>
@@ -217,6 +278,7 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
           </article>
         ))}
       </div>
+      )}
 
       <p className="weather-note">
         {overStandard

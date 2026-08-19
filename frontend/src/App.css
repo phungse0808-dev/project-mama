@@ -1563,6 +1563,67 @@ body {
   color: var(--text-soft);
 }
 
+/* ---------- พยากรณ์ฝุ่นแบบรายชั่วโมง ---------- */
+
+/* แสดงเป็นตารางช่องเล็กแทนกราฟ เพราะสิ่งที่ต้องหาคือชั่วโมงที่ควรเลี่ยง
+   ซึ่งอ่านจากตัวเลขในช่องได้ตรงกว่ากวาดตาหาจุดบนเส้นกราฟ */
+.hour-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hour-day-title {
+  margin: 0 0 9px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+/* หนึ่งแถวยี่สิบสี่ช่องบนจอกว้าง หดลงตามความกว้างที่มี
+   ใช้ auto-fit เพื่อไม่ต้องกำหนดจำนวนคอลัมน์แยกทีละขนาดหน้าจอ */
+.hour-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(46px, 1fr));
+  gap: 4px;
+}
+
+.hour-cell {
+  background: #f1f4f8;
+  border-radius: 7px;
+  padding: 7px 4px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ชั่วโมงที่วัดได้จริงใช้พื้นเขียว แยกจากที่ยังคาดการณ์
+   สีเดียวกับป้ายวัดจริงในมุมมองรายวัน ให้ความหมายตรงกันทั้งแผง */
+.hour-cell.real {
+  background: #e6f5ec;
+}
+
+.hour-clock {
+  display: block;
+  font-size: 10.5px;
+  color: var(--text-soft);
+}
+
+.hour-value {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hour-legend {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--text-soft);
+}
+
 /* ---------- พยากรณ์ฝุ่นล่วงหน้า ---------- */
 
 /* แสดงเป็นแถวรายวันแทนกราฟ เพราะสิ่งที่ต้องตัดสินใจคือวันไหนควรระวัง
