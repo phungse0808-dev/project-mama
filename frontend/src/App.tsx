@@ -26,7 +26,6 @@ import { PersonalPanel } from "./components/PersonalPanel";
 import { ProvinceRanking } from "./components/ProvinceRanking";
 import { ForecastPanel } from "./components/ForecastPanel";
 import { RainPanel } from "./components/RainPanel";
-import { RegionPanel } from "./components/RegionPanel";
 import { SignIn } from "./components/SignIn";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { StationMap } from "./components/StationMap";
@@ -276,7 +275,6 @@ export default function App() {
               <ProvinceRanking ranking={ranking} />
             </div>
 
-            <RegionPanel />
 
             <h2 className="section-heading">
               ย้อนหลังและปัจจัยแวดล้อม

@@ -485,6 +485,20 @@ def forecast_accuracy(
     }
 
 
+# เกณฑ์นับว่าเป็น "วันฝนตก" ใช้ 1.0 มิลลิเมตรตามนิยามของ WMO
+#
+# ต่ำกว่านี้คือฝนประปรายที่วัดได้แต่แทบไม่มีผลต่อการชะฝุ่นหรือการใช้ชีวิต
+# ถ้าใช้เกณฑ์ 0 จะได้ตัวเลขสูงเกินจริงเพราะนับวันที่มีละอองน้ำเล็กน้อยด้วย
+RAIN_DAY_MM = 1.0
+
+# ช่วงวันที่นำมาคิด นับจากวันเดียวกันของทุกปีบวกลบ 3 วัน
+#
+# ที่ต้องเผื่อช่วงเพราะถ้าใช้วันเดียวเป๊ะ จะได้ตัวอย่างแค่ปีละหนึ่งวัน
+# รวม 6 ปีก็เพียง 6 ตัวอย่าง ซึ่งน้อยเกินกว่าจะเชื่อถือได้
+# การเผื่อบวกลบ 3 วันทำให้ได้ราว 42 ตัวอย่าง โดยยังอยู่ในช่วงฤดูกาลเดียวกัน
+RAIN_WINDOW_DAYS = 3
+
+
 def province_ranking(session: Session) -> list[dict]:
     """อันดับจังหวัดตามค่า PM2.5 เฉลี่ยของสถานีในจังหวัดนั้น"""
     grouped: dict[str, list[float]] = {}
@@ -505,60 +519,6 @@ def province_ranking(session: Session) -> list[dict]:
     ]
     ranking.sort(key=lambda item: item["pm25_avg"], reverse=True)
     return ranking
-
-
-def region_ranking(session: Session) -> list[dict]:
-    """ค่าฝุ่นเฉลี่ยรายภาค
-
-    ใช้ค่าเฉลี่ยของทุกสถานีในภาคนั้น ไม่ใช่ค่าเฉลี่ยของค่าเฉลี่ยรายจังหวัด
-    เพราะจังหวัดที่มีสถานีเดียวไม่ควรมีน้ำหนักเท่ากับจังหวัดที่มีสิบสถานี
-    การเฉลี่ยจากสถานีโดยตรงจึงสะท้อนพื้นที่ที่วัดได้จริงมากกว่า
-
-    หมายเหตุสำหรับการตีความ
-        สถานีตรวจวัดกระจายไม่เท่ากันในแต่ละภาค ภาคที่มีสถานีน้อย
-        ค่าเฉลี่ยจะอ่อนไหวต่อสถานีเดียวมาก จึงคืนจำนวนสถานีไปด้วยเสมอ
-        เพื่อให้หน้าเว็บบอกผู้อ่านได้ว่าตัวเลขนั้นมาจากกี่จุด
-    """
-    grouped: dict[str, list[float]] = {}
-    provinces: dict[str, set[str]] = {}
-
-    for station, reading in latest_readings(session):
-        if is_stale(reading) or reading.pm25 is None:
-            continue
-        region = region_of(station.province)
-        if region is None:
-            continue
-        grouped.setdefault(region, []).append(reading.pm25)
-        provinces.setdefault(region, set()).add(station.province)
-
-    ranking = [
-        {
-            "region": region,
-            "pm25_avg": round(statistics.fmean(values), 1),
-            "pm25_max": round(max(values), 1),
-            "pm25_min": round(min(values), 1),
-            "station_count": len(values),
-            "province_count": len(provinces[region]),
-            "level": describe(None, statistics.fmean(values)),
-        }
-        for region, values in grouped.items()
-    ]
-    ranking.sort(key=lambda item: item["pm25_avg"], reverse=True)
-    return ranking
-
-
-# เกณฑ์นับว่าเป็น "วันฝนตก" ใช้ 1.0 มิลลิเมตรตามนิยามของ WMO
-#
-# ต่ำกว่านี้คือฝนประปรายที่วัดได้แต่แทบไม่มีผลต่อการชะฝุ่นหรือการใช้ชีวิต
-# ถ้าใช้เกณฑ์ 0 จะได้ตัวเลขสูงเกินจริงเพราะนับวันที่มีละอองน้ำเล็กน้อยด้วย
-RAIN_DAY_MM = 1.0
-
-# ช่วงวันที่นำมาคิด นับจากวันเดียวกันของทุกปีบวกลบ 3 วัน
-#
-# ที่ต้องเผื่อช่วงเพราะถ้าใช้วันเดียวเป๊ะ จะได้ตัวอย่างแค่ปีละหนึ่งวัน
-# รวม 6 ปีก็เพียง 6 ตัวอย่าง ซึ่งน้อยเกินกว่าจะเชื่อถือได้
-# การเผื่อบวกลบ 3 วันทำให้ได้ราว 42 ตัวอย่าง โดยยังอยู่ในช่วงฤดูกาลเดียวกัน
-RAIN_WINDOW_DAYS = 3
 
 
 def rain_chance(session: Session, province: str) -> dict:
