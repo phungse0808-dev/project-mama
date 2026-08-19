@@ -280,6 +280,25 @@ export type RainChance = {
   monthly?: { month: number; label: string; chance_pct: number; rainfall_avg_mm: number }[];
 };
 
+export type Pm25Forecast = {
+  available: boolean;
+  reason?: string;
+  province?: string;
+  source?: string;
+  standard_th?: number;
+  guideline_who?: number;
+  days?: {
+    day: string;
+    is_today: boolean;
+    pm25_avg: number;
+    pm25_max: number;
+    pm25_min: number;
+    peak_at: string;
+    hours: number;
+    level: AqiLevel;
+  }[];
+};
+
 export type WeatherNow = {
   available: boolean;
   reason?: string;
@@ -364,6 +383,8 @@ export const api = {
   personalSummary: (id: number) => get<PersonalSummary>(`/api/users/${id}/summary`),
   riskGroups: () => get<RiskGroup[]>("/api/risk-groups"),
   provinces: () => get<string[]>("/api/provinces"),
+  pm25Forecast: (province: string) =>
+    get<Pm25Forecast>("/api/pm25-forecast/" + encodeURIComponent(province)),
   weatherNow: (province: string) =>
     get<WeatherNow>("/api/weather-now/" + encodeURIComponent(province)),
   rainChance: (province: string) =>

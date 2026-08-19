@@ -24,6 +24,9 @@ import requests
 from app.config import CA_BUNDLE, REQUEST_TIMEOUT
 
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+
+# บริการพยากรณ์ฝุ่น แยกที่อยู่จากพยากรณ์อากาศ แต่เป็นผู้ให้บริการรายเดียวกัน
+AIR_QUALITY_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
 SOURCE = "Open-Meteo (open-meteo.com)"
 
 # เก็บผลไว้ใช้ซ้ำ 10 นาที
@@ -33,6 +36,7 @@ SOURCE = "Open-Meteo (open-meteo.com)"
 CACHE_SECONDS = 600
 
 _cache: dict[tuple[float, float], tuple[float, dict]] = {}
+_pm25_cache: dict[tuple[float, float, int], tuple[float, list[dict]]] = {}
 
 # รหัสสภาพอากาศตามมาตรฐาน WMO แปลเป็นคำอธิบายภาษาไทย
 # ต้นทางส่งมาเป็นตัวเลข ถ้าไม่แปลผู้ใช้จะเห็นแค่เลขที่ไม่มีความหมาย
@@ -144,3 +148,57 @@ def _minutes_since(observed: str | None) -> int | None:
     except ValueError:
         return None
     return max(0, int((datetime.now() - moment).total_seconds() // 60))
+
+
+def fetch_pm25_forecast(latitude: float, longitude: float, days: int = 3) -> list[dict] | None:
+    """ค่าฝุ่น PM2.5 ที่คาดว่าจะเกิดขึ้นรายชั่วโมง ล่วงหน้าตามจำนวนวันที่ขอ
+
+    ทำไมต้องดึงจากที่อื่น ไม่คำนวณเอง
+        การสร้างแบบจำลองพยากรณ์ฝุ่นต้องใช้ข้อมูลย้อนหลังอย่างน้อยหนึ่งปีเต็ม
+        เพราะฝุ่นในไทยขึ้นกับฤดูกาลอย่างชัดเจน ช่วงมกราคมถึงเมษายนสูงกว่าหน้าฝนหลายเท่า
+        แบบจำลองที่เรียนรู้จากข้อมูลหน้าฝนอย่างเดียวจะทำนายหน้าแล้งผิดทั้งหมด
+        ระบบนี้เพิ่งเริ่มเก็บค่าฝุ่นได้ราวหนึ่งเดือน จึงยังสร้างแบบจำลองเองไม่ได้
+
+        ค่าที่ได้มาจากแบบจำลองบรรยากาศ CAMS ของศูนย์พยากรณ์อากาศระยะปานกลางแห่งยุโรป
+        ต้องระบุที่มาให้ชัดทุกครั้งที่แสดงผล ห้ามให้เข้าใจว่าระบบคำนวณเอง
+
+    คืน None เมื่อเรียกไม่สำเร็จ เพราะเป็นส่วนเสริม ไม่ควรทำให้ทั้งหน้าใช้ไม่ได้
+    """
+    key = (round(latitude, 2), round(longitude, 2), days)
+    cached = _pm25_cache.get(key)
+    if cached and time.time() - cached[0] < CACHE_SECONDS:
+        return cached[1]
+
+    try:
+        response = requests.get(
+            AIR_QUALITY_URL,
+            params={
+                "latitude": latitude,
+                "longitude": longitude,
+                "hourly": "pm2_5",
+                "forecast_days": days,
+                "timezone": "Asia/Bangkok",
+            },
+            timeout=REQUEST_TIMEOUT,
+            verify=CA_BUNDLE,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except (requests.RequestException, ValueError):
+        return None
+
+    hourly = payload.get("hourly") or {}
+    times = hourly.get("time") or []
+    values = hourly.get("pm2_5") or []
+
+    # ตัดชั่วโมงที่ต้นทางไม่มีค่าออก ดีกว่าปล่อยให้ค่าว่างไปโผล่ในการคำนวณสรุป
+    result = [
+        {"time": t, "pm25": v}
+        for t, v in zip(times, values)
+        if v is not None
+    ]
+    if not result:
+        return None
+
+    _pm25_cache[key] = (time.time(), result)
+    return result

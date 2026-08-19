@@ -13,13 +13,19 @@ from app.health_advice import (
     advice_for,
     compare_standards,
 )
-from app.forecast import fetch_now
+from app.forecast import fetch_now, fetch_pm25_forecast
 from app.live import minutes_behind
 from app.regions import ALIASES, region_of
 from app.models import AppUser, CollectionLog, DiseaseDaily, HivStatistic, Reading, Station, WeatherDaily
 
 # ถ้าสถานีไม่ส่งข้อมูลใหม่เกินจำนวนชั่วโมงนี้ ถือว่าข้อมูลค้าง ไม่นำมาคิดภาพรวม
 STALE_HOURS = 6
+
+# ที่มาของค่าพยากรณ์ฝุ่น ต้องแสดงให้ผู้ใช้เห็นทุกครั้ง
+# เพราะเป็นค่าจากแบบจำลองภายนอก ไม่ใช่ค่าที่ระบบนี้คำนวณเอง
+FORECAST_SOURCE = (
+    "แบบจำลอง CAMS ของศูนย์พยากรณ์อากาศระยะปานกลางแห่งยุโรป เผยแพร่ผ่าน Open-Meteo"
+)
 
 
 def latest_readings(session: Session) -> list[tuple[Station, Reading]]:
@@ -213,6 +219,67 @@ def weather_now(session: Session, province: str) -> dict:
         }
 
     return {"available": True, "province": province, **data}
+
+
+def pm25_forecast(session: Session, province: str, days: int = 3) -> dict:
+    """ค่าฝุ่นที่คาดว่าจะเกิดขึ้น สรุปเป็นรายวันพร้อมระดับคุณภาพอากาศ
+
+    สรุปเป็นรายวันแทนการส่งค่ารายชั่วโมงทั้งหมดไปให้หน้าเว็บ
+    เพราะสิ่งที่ผู้ใช้ต้องตัดสินใจคือวันไหนควรระวังและควรเลี่ยงออกนอกบ้านช่วงไหน
+    ไม่ใช่ค่าของทุกชั่วโมง
+
+    เวลาที่ค่าสูงสุดเป็นข้อมูลที่มีประโยชน์กว่าค่าเฉลี่ย เพราะบอกได้ตรงๆ
+    ว่าควรเลี่ยงกิจกรรมกลางแจ้งช่วงใดของวัน
+
+    ค่าทั้งหมดมาจากแบบจำลองภายนอก ไม่ใช่ค่าที่ระบบคำนวณเองและยังไม่เกิดขึ้นจริง
+    ผู้เรียกต้องแสดงที่มาให้ผู้ใช้เห็นเสมอ
+    """
+    coords = province_coordinates(session).get(province)
+    if coords is None:
+        return {"available": False, "reason": f"ไม่มีพิกัดของจังหวัด{province}"}
+
+    hourly = fetch_pm25_forecast(*coords, days=days)
+    if hourly is None:
+        return {
+            "available": False,
+            "reason": "เรียกข้อมูลพยากรณ์ฝุ่นไม่สำเร็จ อาจเป็นเพราะไม่มีอินเทอร์เน็ต",
+        }
+
+    per_day: dict[str, list[tuple[str, float]]] = {}
+    for item in hourly:
+        day, _, clock = item["time"].partition("T")
+        per_day.setdefault(day, []).append((clock, item["pm25"]))
+
+    today = date.today().isoformat()
+    result = []
+    for day in sorted(per_day):
+        entries = per_day[day]
+        values = [v for _, v in entries]
+        peak_time, peak = max(entries, key=lambda pair: pair[1])
+        average = round(statistics.fmean(values), 1)
+        result.append(
+            {
+                "day": day,
+                "is_today": day == today,
+                "pm25_avg": average,
+                "pm25_max": round(peak, 1),
+                "pm25_min": round(min(values), 1),
+                "peak_at": peak_time,
+                "hours": len(entries),
+                # ใช้ค่าเฉลี่ยทั้งวันตัดสินระดับ ให้ตรงกับวิธีที่มาตรฐานไทยใช้
+                # ซึ่งกำหนดเป็นค่าเฉลี่ย 24 ชั่วโมง ไม่ใช่ค่าสูงสุดรายชั่วโมง
+                "level": describe(None, average),
+            }
+        )
+
+    return {
+        "available": True,
+        "province": province,
+        "source": FORECAST_SOURCE,
+        "standard_th": THAI_STANDARD_PM25,
+        "guideline_who": WHO_GUIDELINE_PM25,
+        "days": result,
+    }
 
 
 def province_ranking(session: Session) -> list[dict]:

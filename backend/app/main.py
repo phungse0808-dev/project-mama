@@ -28,6 +28,7 @@ from app.services import (
     hiv_statistics,
     national_summary,
     personal_summary,
+    pm25_forecast,
     province_ranking,
     rain_chance,
     region_ranking,
@@ -177,6 +178,16 @@ class ProfileRequest(BaseModel):
 
     province: str | None = Field(default=None, max_length=60)
     risk_group: str | None = Field(default=None, max_length=40)
+
+
+@app.get("/api/pm25-forecast/{province}", tags=["ข้อมูลอากาศ"])
+def get_pm25_forecast(province: str, session: Session = Depends(get_session)) -> dict:
+    """ค่าฝุ่นที่คาดว่าจะเกิดขึ้นล่วงหน้าสามวัน สรุปเป็นรายวัน
+
+    ค่าเหล่านี้มาจากแบบจำลองบรรยากาศภายนอก ไม่ใช่ค่าที่ระบบนี้คำนวณเอง
+    และยังไม่ใช่ค่าที่วัดได้จริง ต่างจากค่าฝุ่นในหน้าหลักที่มาจากสถานีตรวจวัด
+    """
+    return pm25_forecast(session, province)
 
 
 @app.get("/api/weather-now/{province}", tags=["ข้อมูลอากาศ"])
