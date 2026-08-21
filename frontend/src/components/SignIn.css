@@ -27,7 +27,7 @@
   z-index: 2;
   width: 100%;
   max-width: 420px;
-  background: #fff;
+  background: var(--surface);
   border: none;
   border-radius: 20px;
   box-shadow: 0 30px 70px rgba(4, 10, 22, 0.42);
@@ -65,7 +65,7 @@
   font-family: inherit;
   border: 1px solid #d3dbe6;
   border-radius: 12px;
-  background: #fbfcfe;
+  background: var(--surface-2);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 

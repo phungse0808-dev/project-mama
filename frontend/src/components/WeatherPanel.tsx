@@ -128,7 +128,7 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
         <div className="chart">
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: -12 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e6e9ef" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#2a2f3d" />
               <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
               <YAxis yAxisId="left" tick={{ fontSize: 11 }} width={54} unit=" มม." />
               <YAxis
@@ -139,7 +139,7 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
                 unit=" °C"
               />
               <Tooltip
-                contentStyle={{ borderRadius: 8, borderColor: "#d8dde5", fontSize: 13 }}
+                contentStyle={{ borderRadius: 8, borderColor: "#303544", background: "#1a1d27", color: "#e8eaf0", fontSize: 13 }}
                 labelFormatter={(label) => `วันที่ ${label}`}
               />
               <Legend />
@@ -164,7 +164,7 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
                 type="monotone"
                 dataKey="wind_speed"
                 name="ความเร็วลม (m/s)"
-                stroke="#00a06a"
+                stroke="#3ecf8e"
                 strokeWidth={2}
                 dot={false}
               />

@@ -127,7 +127,7 @@ export function DiseasePanel() {
       <div className="chart">
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={points} margin={{ top: 8, right: 16, bottom: 8, left: -8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e6e9ef" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#2a2f3d" />
             <XAxis dataKey="label" tick={{ fontSize: 12 }} />
             <YAxis yAxisId="cases" tick={{ fontSize: 12 }} width={64} />
             <YAxis
@@ -138,7 +138,7 @@ export function DiseasePanel() {
               width={64}
             />
             <Tooltip
-              contentStyle={{ borderRadius: 8, borderColor: "#d8dde5", fontSize: 13 }}
+              contentStyle={{ borderRadius: 8, borderColor: "#303544", background: "#1a1d27", color: "#e8eaf0", fontSize: 13 }}
               labelFormatter={(label) => `เดือน ${label}`}
             />
             <Legend />
@@ -188,7 +188,7 @@ export function DiseasePanel() {
                 </td>
                 <td>{row.dry.toLocaleString("th-TH")}</td>
                 <td>{row.wet.toLocaleString("th-TH")}</td>
-                <td style={{ color: row.change > 0 ? "#b02020" : "#0a7a3d" }}>
+                <td style={{ color: row.change > 0 ? "#f08080" : "#5fd18c" }}>
                   {row.change > 0 ? "+" : ""}
                   {row.change}%
                 </td>

@@ -2,20 +2,27 @@
    จึงใช้ตัวอักษรใหญ่ ตัดกันชัด และเว้นระยะเยอะกว่าเว็บทั่วไป */
 
 :root {
-  --bg: #f4f6f9;
-  --surface: #ffffff;
-  --border: #e2e6ed;
-  --text: #1c2430;
-  --text-soft: #67717f;
-  --accent: #1d6fd0;
-  --accent-deep: #12508f;
-  --accent-soft: #e8f0fb;
-  --radius: 14px;
-  --shadow: 0 1px 3px rgba(20, 30, 45, 0.06), 0 6px 20px rgba(20, 30, 45, 0.05);
+  /* ธีมมืด พื้นหลังไม่ใช้ดำสนิทแต่เป็นกรมท่าเข้ม
+     เพราะดำสนิทกับตัวอักษรขาวทำให้ตาล้าเร็วและขอบตัวอักษรเรืองแสง
+     สีที่มีเนื้อสีเล็กน้อยอ่านสบายกว่าในระยะยาว */
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface-2: #21252f;
+  --border: #262a36;
+  --border-strong: #303544;
+  --text: #e8eaf0;
+  --text-soft: #9aa0b0;
+  --text-dim: #6d7383;
 
-  /* เงาตอนชี้เมาส์ ยกกล่องขึ้นมากกว่าปกติเล็กน้อย
-     ให้รู้ว่ากล่องไหนกำลังถูกอ่านอยู่ โดยไม่ต้องเปลี่ยนสีจนรบกวนสายตา */
-  --shadow-lift: 0 2px 6px rgba(20, 30, 45, 0.07), 0 14px 34px rgba(20, 30, 45, 0.1);
+  /* สีเน้นต้องสว่างขึ้นเมื่ออยู่บนพื้นมืด
+     ม่วง #4a3a9e ที่ใช้บนพื้นสว่างจะจมหายไปกับพื้นหลังเข้ม */
+  --accent: #8b7ae0;
+  --accent-deep: #b3a5f0;
+  --accent-soft: #252032;
+
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.45), 0 14px 34px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -29,8 +36,8 @@ body {
   margin: 0;
   background: var(--bg);
   background-image:
-    radial-gradient(1200px 600px at 12% -8%, #e6eefb 0%, rgba(230, 238, 251, 0) 60%),
-    radial-gradient(900px 500px at 100% 8%, #f3ece2 0%, rgba(243, 236, 226, 0) 55%);
+    radial-gradient(1200px 600px at 12% -8%, #1a1c2c 0%, rgba(26, 28, 44, 0) 62%),
+    radial-gradient(900px 500px at 100% 8%, #1c1a24 0%, rgba(28, 26, 36, 0) 55%);
   background-attachment: fixed;
   color: var(--text);
   font-family: "Sarabun", "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
@@ -117,7 +124,7 @@ body {
   position: absolute;
   inset: 0 0 auto;
   height: 3px;
-  background: linear-gradient(90deg, var(--accent), #4da3f5);
+  background: linear-gradient(90deg, var(--accent), #8b7ae0);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.25s ease;
@@ -182,7 +189,7 @@ body {
 }
 
 .card-group {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 14px;
@@ -213,7 +220,7 @@ body {
   width: 4px;
   height: 16px;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--accent), #6bb3f7);
+  background: linear-gradient(180deg, var(--accent), #8b7ae0);
   flex: none;
 }
 
@@ -233,9 +240,9 @@ body {
   color: var(--text);
   height: 36px;
   padding: 0 10px;
-  border: 1px solid #ccd4e0;
+  border: 1px solid var(--border-strong);
   border-radius: 9px;
-  background: #fbfcfe;
+  background: var(--surface-2);
   max-width: 100%;
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -312,6 +319,13 @@ body {
   border: 0;
 }
 
+/* ปุ่มทุกตัวต้องรับสีตัวอักษรจากกล่องที่ครอบ
+   ค่าตั้งต้นของเบราว์เซอร์คือสีของระบบซึ่งเป็นดำ และไม่เปลี่ยนตามธีม
+   ปุ่มที่กำหนดสีเองอยู่แล้วจะทับกฎนี้ตามลำดับความเฉพาะเจาะจงปกติ */
+button {
+  color: inherit;
+}
+
 /* ---------- แผงทั่วไป ---------- */
 
 .panel {
@@ -345,7 +359,7 @@ body {
   width: 4px;
   height: 17px;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--accent), #6bb3f7);
+  background: linear-gradient(180deg, var(--accent), #8b7ae0);
   flex: none;
 }
 
@@ -386,7 +400,7 @@ body {
   gap: 16px;
   flex-wrap: wrap;
   padding-top: 9px;
-  border-top: 1px solid #eef1f5;
+  border-top: 1px solid var(--border);
   font-size: 12px;
   color: var(--text-soft);
 }
@@ -443,7 +457,7 @@ body {
   gap: 7px;
   padding: 4px 10px 4px 8px;
   border-radius: 999px;
-  background: #f5f7fa;
+  background: var(--surface-2);
 }
 
 .legend strong {
@@ -540,6 +554,7 @@ body {
   cursor: pointer;
 }
 
+
 /* ---------- อันดับจังหวัด ---------- */
 
 .ranking {
@@ -577,7 +592,7 @@ body {
 }
 
 .ranking-bar-track {
-  background: #e9edf3;
+  background: var(--border);
   border-radius: 999px;
   height: 9px;
   overflow: hidden;
@@ -636,7 +651,7 @@ body {
 }
 
 .health-stat {
-  background: #f7f9fc;
+  background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 15px 17px;
@@ -691,7 +706,7 @@ body {
 }
 
 .field-track {
-  background: #eef1f5;
+  background: var(--border);
   border-radius: 999px;
   height: 8px;
   overflow: hidden;
@@ -741,13 +756,13 @@ body {
 
 .runs-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid #f1f3f7;
+  border-bottom: 1px solid var(--border);
   font-variant-numeric: tabular-nums;
 }
 
 /* แถบสีสลับแถว ช่วยให้สายตาไม่หลุดบรรทัดเวลาไล่อ่านตัวเลขข้ามคอลัมน์ */
 .runs-table tbody tr:nth-child(even) {
-  background: #fafbfd;
+  background: var(--surface-2);
 }
 
 .runs-table tbody tr {
@@ -767,13 +782,13 @@ body {
 }
 
 .badge-ok {
-  background: #e3f5e9;
-  color: #10743a;
+  background: #152a1d;
+  color: #5fd18c;
 }
 
 .badge-fail {
   background: #fdeaea;
-  color: #b02020;
+  color: #f08080;
 }
 
 /* ---------- หน้าเข้าใช้งาน ---------- */
@@ -842,9 +857,9 @@ body {
   padding: 13px 15px;
   font-size: 15px;
   font-family: inherit;
-  border: 1px solid #ccd4e0;
+  border: 1px solid var(--border-strong);
   border-radius: 10px;
-  background: #fbfcfe;
+  background: var(--surface-2);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -857,7 +872,7 @@ body {
 .signin-error {
   margin: 10px 0 0;
   font-size: 13px;
-  color: #b02020;
+  color: #f08080;
   text-align: left;
 }
 
@@ -877,7 +892,7 @@ body {
 }
 
 .signin-button:hover:not(:disabled) {
-  background: #175dae;
+  background: #33297a;
 }
 
 .signin-button:disabled {
@@ -955,7 +970,7 @@ body {
 
 .badge-sensitive {
   background: #fff3e0;
-  color: #a35400;
+  color: #f0a326;
   font-size: 11px;
   font-weight: 600;
   padding: 2px 9px;
@@ -983,16 +998,16 @@ body {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  border-bottom: 1px solid #f1f3f7;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 6px;
 }
 
 .standard-list .over {
-  color: #b02020;
+  color: #f08080;
 }
 
 .standard-list .under {
-  color: #10743a;
+  color: #5fd18c;
 }
 
 .personal-settings {
@@ -1019,9 +1034,9 @@ body {
   font-size: 14px;
   color: var(--text);
   padding: 9px 12px;
-  border: 1px solid #ccd4e0;
+  border: 1px solid var(--border-strong);
   border-radius: 9px;
-  background: #fbfcfe;
+  background: var(--surface-2);
   min-width: 190px;
 }
 
@@ -1080,7 +1095,7 @@ body {
 
 .error-box h2 {
   margin: 0 0 8px;
-  color: #b02020;
+  color: #f08080;
 }
 
 .error-hint {
@@ -1090,7 +1105,7 @@ body {
 }
 
 .error-box code {
-  background: #f1f3f7;
+  background: var(--border);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 12px;
@@ -1127,7 +1142,7 @@ body {
   background: #e8f6ed;
   border: 1px solid #b7e2c6;
   border-radius: 10px;
-  color: #10743a;
+  color: #5fd18c;
   font-size: 14px;
 }
 
@@ -1144,8 +1159,8 @@ body {
   border-left-width: 4px;
 }
 
-.alert-box.danger { border-left-color: #ff0000; background: #fff8f8; }
-.alert-box.warn   { border-left-color: #ff7e00; background: #fffaf3; }
+.alert-box.danger { border-left-color: #ff0000; background: #241618; }
+.alert-box.warn   { border-left-color: #ff7e00; background: #241f14; }
 .alert-box.quiet  { border-left-color: #cfd6e0; }
 
 .alert-heading {
@@ -1264,9 +1279,9 @@ body {
   font-size: 14px;
   color: var(--text);
   padding: 9px 12px;
-  border: 1px solid #ccd4e0;
+  border: 1px solid var(--border-strong);
   border-radius: 9px;
-  background: #fbfcfe;
+  background: var(--surface-2);
   min-width: 175px;
   max-width: 100%;
   cursor: pointer;
@@ -1292,9 +1307,9 @@ body {
   font-family: inherit;
   font-size: 13px;
   padding: 9px 15px;
-  border: 1px solid #ccd4e0;
+  border: 1px solid var(--border-strong);
   border-radius: 9px;
-  background: #fbfcfe;
+  background: var(--surface-2);
   color: var(--text-soft);
   cursor: pointer;
   transition: all 0.15s;
@@ -1305,7 +1320,9 @@ body {
 .range.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  /* ตัวอักษรเข้มบนพื้นม่วงสว่าง อ่านชัดกว่าตัวขาว
+     เพราะสีเน้นของธีมมืดสว่างพอที่ตัวขาวจะกลืนไปกับพื้น */
+  color: #15111f;
   font-weight: 600;
 }
 
@@ -1336,7 +1353,7 @@ body {
 
 .pending-box {
   background: #f8f9fc;
-  border: 1px dashed #ccd4e0;
+  border: 1px dashed var(--border-strong);
   border-radius: 12px;
   padding: 20px 22px;
   font-size: 13.5px;
@@ -1362,7 +1379,7 @@ body {
 }
 
 .pending-box code {
-  background: #eef1f6;
+  background: var(--border);
   padding: 2px 7px;
   border-radius: 5px;
   font-size: 12px;
@@ -1373,7 +1390,7 @@ body {
   margin: 0;
   padding-top: 12px;
   border-top: 1px solid var(--border);
-  color: #a35400;
+  color: #f0a326;
 }
 
 .vulnerability-row .ranking-name small {
@@ -1387,7 +1404,7 @@ body {
   font-family: inherit;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
   min-width: 220px;
 }
 
@@ -1413,6 +1430,10 @@ body {
   flex-direction: column;
   text-align: left;
   font-family: inherit;
+  /* เบราว์เซอร์บังคับสีตัวอักษรของปุ่มเป็นสีของระบบ ซึ่งเป็นดำเสมอ
+     และไม่รับสีจากกล่องที่ครอบเหมือนแท็กอื่น ต้องสั่งให้รับเอง
+     ไม่งั้นข้อความในปุ่มจะเป็นดำสนิทบนพื้นมืดจนมองไม่เห็น */
+  color: inherit;
   cursor: pointer;
   border: 1px solid var(--border);
   transition: transform 0.14s, box-shadow 0.14s, border-color 0.14s;
@@ -1460,7 +1481,7 @@ body {
 }
 
 .home-stats > div {
-  background: var(--bg-soft, #f4f6fa);
+  background: var(--bg-soft, var(--surface-2));
   border-radius: 10px;
   padding: 12px 14px;
 }
@@ -1553,7 +1574,7 @@ body {
   flex-wrap: wrap;
   padding-left: 16px;
   border-left: 4px solid transparent;
-  border-image: linear-gradient(180deg, var(--accent), #7cc0f8) 1;
+  border-image: linear-gradient(180deg, var(--accent), #8b7ae0) 1;
   line-height: 1.4;
 }
 
@@ -1590,7 +1611,7 @@ body {
 
 /* วันนี้พื้นหลังต่างจากวันอื่น เพราะเป็นวันที่ผู้ใช้ต้องตัดสินใจก่อน */
 .forecast-row.today {
-  background: #fbfcfe;
+  background: var(--surface-2);
 }
 
 .forecast-bar {
@@ -1627,13 +1648,13 @@ body {
   padding: 2px 7px;
   border-radius: 999px;
   display: inline-block;
-  background: #eef1f5;
+  background: var(--border);
   color: var(--text-soft);
 }
 
 .forecast-tag.real {
-  background: #e6f5ec;
-  color: #14713f;
+  background: #152a1d;
+  color: #5fd18c;
 }
 
 .forecast-value {
@@ -1749,7 +1770,7 @@ body {
 }
 
 .rain-stats > div {
-  background: #f4f6fa;
+  background: var(--surface-2);
   border-radius: 10px;
   padding: 12px 14px;
 }
@@ -1785,8 +1806,8 @@ body {
    แต่เป็นคำเตือนที่ต้องอ่านก่อน ใช้เหลืองไม่ใช่แดง เพราะไม่ใช่ข้อผิดพลาด
    เป็นข้อจำกัดที่รู้อยู่แล้วและยอมรับได้ถ้าตีความให้ถูก */
 .notice {
-  background: #fffaf0;
-  border-color: #f0e0bd;
+  background: #241f14;
+  border-color: #3d3423;
 }
 
 .notice .panel-title::before {
@@ -1803,7 +1824,7 @@ body {
 }
 
 .notice-list li::marker {
-  color: #b47500;
+  color: #f0b64a;
   font-weight: 700;
 }
 
@@ -1822,7 +1843,7 @@ body {
 .notice-foot {
   margin: 16px 0 0;
   padding-top: 13px;
-  border-top: 1px solid #f0e0bd;
+  border-top: 1px solid #3d3423;
   font-size: 12.5px;
   line-height: 1.7;
   color: var(--text-soft);

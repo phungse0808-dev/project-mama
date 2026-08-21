@@ -88,8 +88,8 @@ export function WeatherIcon({ code, size = 46 }: Props) {
   if (value === 45 || value === 48) {
     return (
       <svg {...common}>
-        <path d="M8 20c0-1.1.9-2 2-2h28a2 2 0 010 4H10a2 2 0 01-2-2z" fill="#c3ccd8" />
-        <path d="M8 28c0-1.1.9-2 2-2h24a2 2 0 010 4H10a2 2 0 01-2-2z" fill="#c3ccd8" />
+        <path d="M8 20c0-1.1.9-2 2-2h28a2 2 0 010 4H10a2 2 0 01-2-2z" fill="#3a4152" />
+        <path d="M8 28c0-1.1.9-2 2-2h24a2 2 0 010 4H10a2 2 0 01-2-2z" fill="#3a4152" />
         <path d="M12 36c0-1.1.9-2 2-2h20a2 2 0 010 4H14a2 2 0 01-2-2z" fill={CLOUD_LIGHT} />
       </svg>
     );

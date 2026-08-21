@@ -113,7 +113,7 @@ export function HivRegionChart() {
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{ borderRadius: 8, borderColor: "#d8dde5", fontSize: 13 }}
+              contentStyle={{ borderRadius: 8, borderColor: "#303544", background: "#1a1d27", color: "#e8eaf0", fontSize: 13 }}
               formatter={(value, name) => [`${Number(value).toLocaleString("th-TH")} คน`, String(name)]}
             />
             <Legend />

@@ -185,7 +185,7 @@ export function RainPanel({ provinces, defaultProvince }: Props) {
             <XAxis dataKey="label" tick={{ fontSize: 12 }} />
             <YAxis tick={{ fontSize: 12 }} unit="%" width={52} domain={[0, 100]} />
             <Tooltip
-              contentStyle={{ borderRadius: 8, borderColor: "#d8dde5", fontSize: 13 }}
+              contentStyle={{ borderRadius: 8, borderColor: "#303544", background: "#1a1d27", color: "#e8eaf0", fontSize: 13 }}
               formatter={(value) => [value + "%", "โอกาสฝนตก"]}
             />
             <Bar dataKey="chance_pct" radius={[4, 4, 0, 0]} isAnimationActive={false}>
@@ -193,7 +193,7 @@ export function RainPanel({ provinces, defaultProvince }: Props) {
               {(data.monthly ?? []).map((item) => (
                 <Cell
                   key={item.month}
-                  fill={item.month === data.this_month ? "#1d6fd0" : "#c9d9ef"}
+                  fill={item.month === data.this_month ? "#4a3a9e" : "#d8d3ec"}
                 />
               ))}
             </Bar>

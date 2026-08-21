@@ -25,7 +25,7 @@
   color: var(--text);
   border: none;
   border-radius: 16px;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 20px 50px rgba(4, 12, 24, 0.34);
 }
 
@@ -38,7 +38,7 @@
 
 .search-results {
   margin-top: 10px;
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   box-shadow: 0 20px 50px rgba(4, 12, 24, 0.3);
   overflow: hidden;

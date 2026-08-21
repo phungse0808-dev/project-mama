@@ -196,11 +196,11 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                 data={daily.points}
                 margin={{ top: 8, right: 16, bottom: 8, left: -8 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e6e9ef" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2f3d" />
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} unit=" µg/m³" width={82} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 8, borderColor: "#d8dde5", fontSize: 13 }}
+                  contentStyle={{ borderRadius: 8, borderColor: "#303544", background: "#1a1d27", color: "#e8eaf0", fontSize: 13 }}
                   labelFormatter={(label) => `วันที่ ${label}`}
                 />
                 <Legend />
@@ -213,7 +213,7 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                     value: `มาตรฐานไทย ${daily.thai_standard}`,
                     position: "insideTopRight",
                     fontSize: 11,
-                    fill: "#b02020",
+                    fill: "#f08080",
                   }}
                 />
                 <Bar
@@ -260,11 +260,11 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
         <div className="chart">
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={history.points} margin={{ top: 8, right: 16, bottom: 8, left: -8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e6e9ef" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#2a2f3d" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} unit=" µg/m³" width={80} />
               <Tooltip
-                contentStyle={{ borderRadius: 8, borderColor: "#d8dde5", fontSize: 13 }}
+                contentStyle={{ borderRadius: 8, borderColor: "#303544", background: "#1a1d27", color: "#e8eaf0", fontSize: 13 }}
                 labelFormatter={(label) => `เวลา ${label}`}
               />
               <Legend />
@@ -281,7 +281,7 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                 type="monotone"
                 dataKey="pm10"
                 name="PM10"
-                stroke="#4c7fe2"
+                stroke="#8b7ae0"
                 strokeWidth={2}
                 dot={{ r: 3 }}
                 connectNulls
