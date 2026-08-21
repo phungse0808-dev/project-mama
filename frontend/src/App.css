@@ -20,6 +20,11 @@
   --accent-deep: #b3a5f0;
   --accent-soft: #252032;
 
+  /* ฟอนต์สำหรับตัวเลข ทุกหลักกว้างเท่ากัน
+     ทำให้ตัวเลขไม่ขยับตอนค่าเปลี่ยน ซึ่งสำคัญกับหน้าที่อัปเดตตัวเองทุกชั่วโมง
+     ถ้าใช้ฟอนต์ปกติ เลข 1 แคบกว่าเลข 8 พอค่าเปลี่ยนทั้งบรรทัดจะขยับตาม */
+  --font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+
   --radius: 14px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
   --shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.45), 0 14px 34px rgba(0, 0, 0, 0.4);
@@ -35,9 +40,14 @@
 body {
   margin: 0;
   background: var(--bg);
+  /* เส้นกริดจางเป็นพื้นหลัง ให้ความรู้สึกเป็นหน้าจอเครื่องมือวัด
+     ไล่สีสองจุดยังอยู่ ทับบนกริดเพื่อไม่ให้กริดแข็งจนรบกวนสายตา */
   background-image:
-    radial-gradient(1200px 600px at 12% -8%, #1a1c2c 0%, rgba(26, 28, 44, 0) 62%),
-    radial-gradient(900px 500px at 100% 8%, #1c1a24 0%, rgba(28, 26, 36, 0) 55%);
+    radial-gradient(1200px 600px at 12% -8%, rgba(30, 34, 56, 0.9) 0%, rgba(26, 28, 44, 0) 62%),
+    radial-gradient(900px 500px at 100% 8%, rgba(32, 28, 44, 0.8) 0%, rgba(28, 26, 36, 0) 55%),
+    linear-gradient(rgba(70, 110, 160, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(70, 110, 160, 0.05) 1px, transparent 1px);
+  background-size: auto, auto, 28px 28px, 28px 28px;
   background-attachment: fixed;
   color: var(--text);
   font-family: "Sarabun", "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
@@ -329,12 +339,19 @@ button {
 /* ---------- แผงทั่วไป ---------- */
 
 .panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  /* พื้นโปร่งบางบนพื้นหลังกริด ทำให้เห็นเส้นกริดจาง ๆ ผ่านกล่อง
+     ต่างจากพื้นทึบที่บังกริดจนหายไปทั้งหน้า */
+  background: rgba(26, 29, 39, 0.72);
+  border: 1px solid rgba(120, 150, 190, 0.16);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 22px 24px;
-  transition: box-shadow 0.18s ease;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+/* ขอบสว่างขึ้นตอนชี้เมาส์ บอกว่ากำลังอ่านกล่องไหน */
+.panel:hover {
+  border-color: rgba(139, 122, 224, 0.35);
 }
 
 .panel:hover {
@@ -409,6 +426,121 @@ button {
   color: var(--text);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- ตัวเลขทั้งระบบ ---------- */
+
+/* ตัวเลขทุกจุดใช้ฟอนต์ที่ทุกหลักกว้างเท่ากัน
+   หน้านี้อัปเดตตัวเองทุกชั่วโมง ถ้าใช้ฟอนต์ปกติ ตัวเลขจะขยับทุกครั้งที่ค่าเปลี่ยน
+   เพราะเลข 1 แคบกว่าเลข 8 พอเปลี่ยนจาก 11 เป็น 88 ทั้งบรรทัดจะเลื่อนตาม
+
+   ไม่ใช้กับข้อความไทย เพราะฟอนต์แบบนี้ไม่มีอักขระไทยและจะอ่านยาก */
+.card-value,
+.forecast-number,
+.rain-figure strong,
+.rain-stat-value,
+.personal-value,
+.health-value,
+.ranking-value,
+.calibration-value,
+.hour-value,
+.alert-count,
+.home-stat-value,
+.level-segment,
+.forecast-range,
+.field-pct {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+
+/* แสงเรืองรอบตัวเลขหลัก ใช้เฉพาะตัวที่ใหญ่พอ
+   ถ้าใส่กับตัวเล็กจะฟุ้งจนอ่านยากแทนที่จะเด่นขึ้น */
+.card-hero .card-value,
+.forecast-number,
+.personal-value {
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.28);
+}
+
+/* ---------- หัวข้อแบบเครื่องมือวัด ---------- */
+
+/* หัวข้อแผงเว้นระยะตัวอักษรกว้างและนำหน้าด้วยเครื่องหมาย
+   ให้ความรู้สึกเป็นหน้าจอเครื่องมือ ยังเป็นภาษาไทยเพราะทั้งระบบเป็นไทย
+   และกรรมการที่อ่านเป็นคนไทย */
+.panel-title {
+  letter-spacing: 0.3px;
+}
+
+.panel-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  min-width: 20px;
+  background: linear-gradient(90deg, rgba(139, 122, 224, 0.4), transparent);
+}
+
+/* ---------- แสงเรืองของแถบและตัวชี้ ---------- */
+
+/* แถบที่ระบายด้วยสีระดับให้เรืองแสงตามสีของตัวเอง
+   ใช้ currentColor ไม่ได้เพราะสีมาจาก inline style ที่กำหนดพื้นหลัง
+   จึงใช้เงาสีขาวจาง ๆ แทน ซึ่งเรืองตามสีที่อยู่ข้างใต้เอง */
+.ranking-bar,
+.level-segment,
+.forecast-bar,
+.field-fill {
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.22);
+}
+
+/* จุดสีในคำอธิบายและรายการแจ้งเตือน */
+.legend-dot,
+.alert-dot {
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* ขีดสีนำหน้าหัวข้อ เรืองตามสีเน้นของธีม */
+.panel-title::before,
+.card-group-title::before,
+.section-heading {
+  box-shadow: 0 0 10px rgba(139, 122, 224, 0.5);
+}
+
+/* ปุ่มที่เลือกอยู่ เรืองเพื่อให้เห็นชัดว่ากำลังดูอะไร */
+.range.active {
+  box-shadow: 0 0 14px rgba(139, 122, 224, 0.45);
+}
+
+/* หมุดบนแผนที่ ให้เรืองตามสีระดับของสถานีนั้น */
+.leaflet-interactive {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.4));
+}
+
+/* ---------- ตัวบอกว่าข้อมูลกำลังไหลเข้า ---------- */
+
+/* จุดกะพริบข้างเวลาข้อมูล บอกว่าระบบยังดึงข้อมูลอยู่
+   ไม่ใช่ตกแต่งเปล่า แต่แทนสถานะจริงว่าระบบทำงานอยู่ */
+.live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3ecf8e;
+  box-shadow: 0 0 8px #3ecf8e;
+  margin-right: 6px;
+  vertical-align: middle;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ผู้ใช้บางคนตั้งค่าระบบให้ลดการเคลื่อนไหว ต้องเคารพค่านั้น
+   จุดยังอยู่และยังเรือง แค่ไม่กะพริบ */
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
 }
 
 /* ---------- แถบระดับคุณภาพอากาศ ---------- */

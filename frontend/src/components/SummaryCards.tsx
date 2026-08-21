@@ -105,7 +105,11 @@ export function SummaryCards({
             <p className="card-value card-value-sm">
               {formatThaiDateTime(summary.measured_at)}
             </p>
-            <p className="card-note">{describeAge(summary.minutes_behind)}</p>
+            <p className="card-note">
+          {/* จุดกะพริบบอกว่าระบบยังดึงข้อมูลอยู่ ไม่ใช่หน้าที่ค้างไว้เฉย ๆ */}
+          <span className="live-dot" aria-hidden="true" />
+          {describeAge(summary.minutes_behind)}
+        </p>
           </article>
         </div>
       </section>
