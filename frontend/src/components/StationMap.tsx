@@ -89,8 +89,13 @@ function radiusFor(pm25: number | null): number {
 export function StationMap({ stations, onSelect }: Props) {
   return (
     <section className="panel">
+      {/* บอกจำนวนหมุดที่แสดงจริง เพราะสถานีที่ข้อมูลค้างจะไม่ขึ้นบนแผนที่
+          ตัวเลขนี้จึงน้อยกว่าจำนวนสถานีทั้งหมดในแผงคุณภาพข้อมูล */}
       <h2 className="panel-title">
-        แผนที่สถานีตรวจวัด <span className="panel-hint">คลิกที่หมุดเพื่อดูรายละเอียด</span>
+        แผนที่สถานีตรวจวัด
+        <span className="panel-hint">
+          {stations.length} สถานีที่ยังส่งข้อมูล · คลิกที่หมุดเพื่อดูรายละเอียด
+        </span>
       </h2>
       <div className="map-wrapper">
         <MapContainer

@@ -716,6 +716,32 @@ button {
   filter: brightness(1.1);
 }
 
+/* บรรทัดบอกสถานีที่ค่าสูงสุด อยู่ใต้คำอธิบายสีของแถบสัดส่วน
+   ใช้เส้นคั่นด้านบนเพื่อแยกว่าเป็นคนละเรื่องกับการนับจำนวนสถานีตามระดับ */
+.level-worst {
+  margin: 12px 0 0;
+  padding-top: 11px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+
+.level-worst strong {
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.level-note {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
 .legend {
   list-style: none;
   display: flex;

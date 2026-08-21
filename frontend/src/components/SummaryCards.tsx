@@ -264,9 +264,17 @@ export function LevelBar({ summary }: Props) {
   const total = Object.values(summary.level_counts).reduce((a, b) => a + b, 0);
   if (total === 0) return null;
 
+  const worst = summary.worst_station;
+
   return (
     <section className="panel">
-      <h2 className="panel-title">สัดส่วนสถานีแยกตามระดับคุณภาพอากาศ</h2>
+      {/* เขียนกำกับว่านับเป็นรายสถานี เพราะแผงอันดับข้างกันนับเป็นรายจังหวัด
+          สองแผงจึงให้ตัวเลขคนละชุดจากข้อมูลก้อนเดียวกัน
+          ถ้าไม่บอกไว้จะดูเหมือนตัวเลขขัดกันเอง */}
+      <h2 className="panel-title">
+        สัดส่วนสถานีแยกตามระดับคุณภาพอากาศ
+        <span className="panel-hint">นับรายสถานี จาก {total} สถานีที่ส่งข้อมูล</span>
+      </h2>
       <div className="level-bar">
         {summary.levels.map((level) => {
           const count = summary.level_counts[level.key] ?? 0;
@@ -295,6 +303,34 @@ export function LevelBar({ summary }: Props) {
           </li>
         ))}
       </ul>
+
+      {/* สถานีที่ค่าสูงสุดของประเทศ
+          ก่อนหน้านี้มองไม่เห็นเลยสักที่ในหน้าจอ เพราะแผงอันดับเฉลี่ยรายจังหวัด
+          สถานีที่ค่าสูงจึงถูกสถานีอื่นในจังหวัดเดียวกันเฉลี่ยจนจมหายไป
+          ทั้งที่เป็นตัวเลขที่ควรเห็นที่สุด เพราะเป็นจุดที่คนได้รับฝุ่นมากที่สุดจริง */}
+      {worst && worst.pm25 != null && (
+        <p className="level-worst">
+          <span
+            className="legend-dot"
+            style={{ background: worst.level?.color ?? "var(--text-soft)" }}
+          />
+          สถานีที่ค่าสูงสุดตอนนี้ <strong>{worst.name_th}</strong>
+          {/* ชื่อสถานีหลายแห่งมีชื่อจังหวัดอยู่ในตัวอยู่แล้ว
+              เช่น ศูนย์ราชการจังหวัดระยอง ถ้าต่อท้ายอีกจะกลายเป็นพูดซ้ำ */}
+          {worst.name_th.includes(worst.province) ? "" : ` จ.${worst.province}`}{" "}
+          <strong>{worst.pm25}</strong> µg/m³
+          {worst.level ? ` · ระดับ${worst.level.label_th}` : ""}
+        </p>
+      )}
+
+      {/* สถานีที่ข้อมูลค้างถูกตัดออกจากทั้งแถบนี้ แผนที่ และอันดับ
+          ถ้าไม่บอกไว้ ผลรวมจะไม่ตรงกับจำนวนสถานีทั้งหมดที่รายงานในแผงคุณภาพข้อมูล */}
+      {summary.stations_stale > 0 && (
+        <p className="level-note">
+          ไม่รวม {summary.stations_stale} สถานีจากทั้งหมด {summary.stations_total} แห่ง
+          ที่ข้อมูลค้างเกินเวลาที่ยอมรับได้
+        </p>
+      )}
     </section>
   );
 }
