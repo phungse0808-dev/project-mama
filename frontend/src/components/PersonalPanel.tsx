@@ -66,7 +66,16 @@ export function PersonalPanel({ user, onProfileChange }: Props) {
       </h2>
 
       <div className="personal-top">
-        <div className="personal-reading" style={{ backgroundColor: level.color }}>
+        <div
+          className="personal-reading"
+          style={{
+            // พื้นโปร่งไล่สีจากสีระดับ ให้เข้าชุดกับการ์ดหลักด้านบน
+            // และทำให้ตัวเลขอ่านง่ายกว่าตัวขาวบนพื้นสีจัด
+            background: `linear-gradient(150deg, ${level.color}30, ${level.color}0d)`,
+            borderColor: `${level.color}59`,
+            boxShadow: `0 0 22px ${level.color}1f`,
+          }}
+        >
           <p className="personal-value">{summary.pm25 ?? "-"}</p>
           <p className="personal-unit">µg/m³</p>
           <p className="personal-level">{level.label_th}</p>

@@ -68,7 +68,22 @@ export function SummaryCards({
               ตอนนำเสนอด้วยโปรเจกเตอร์ */}
           <article
             className="card card-hero"
-            style={summary.level ? { backgroundColor: summary.level.color } : undefined}
+            style={
+              summary.level
+                ? {
+                    // พื้นโปร่งไล่สีจากสีระดับ แทนพื้นทึบ
+                    //
+                    // ทำให้เห็นเส้นกริดของพื้นหลังผ่านการ์ด เข้ากับส่วนอื่นของหน้า
+                    // และตัวเลขเด่นขึ้นเพราะไม่มีพื้นสีจัดแย่งความสนใจ
+                    //
+                    // ยังเปลี่ยนสีตามระดับได้เหมือนเดิม เพราะผสมจากสีที่ส่งเข้ามา
+                    // ไม่ได้กำหนดสีตายตัว พอค่าฝุ่นสูงขึ้นจะเป็นเหลืองส้มแดงเอง
+                    background: `linear-gradient(160deg, ${summary.level.color}26, ${summary.level.color}08)`,
+                    borderColor: `${summary.level.color}59`,
+                    boxShadow: `0 0 30px ${summary.level.color}1f, inset 0 0 30px ${summary.level.color}0d`,
+                  }
+                : undefined
+            }
           >
             <p className="card-label">PM2.5 เฉลี่ยทั้งประเทศ</p>
             <p className="card-value">

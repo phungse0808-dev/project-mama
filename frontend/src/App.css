@@ -439,6 +439,7 @@ button {
 .card-hero {
   position: relative;
   overflow: hidden;
+  /* ค่าตั้งต้นสำหรับตอนที่ยังไม่รู้ระดับ เมื่อรู้แล้วโค้ดจะส่งสีของระดับมาทับ */
   border: 1px solid rgba(94, 200, 255, 0.35);
   box-shadow: 0 0 30px rgba(94, 200, 255, 0.12), inset 0 0 30px rgba(94, 200, 255, 0.05);
 }
@@ -450,7 +451,7 @@ button {
   position: absolute;
   inset: 0 0 auto;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #5ec8ff, transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
   transform: none;
 }
 
@@ -973,7 +974,7 @@ button {
 }
 
 .badge-fail {
-  background: #fdeaea;
+  background: #2a1618;
   color: #f08080;
 }
 
@@ -1118,11 +1119,10 @@ button {
   border-radius: 12px;
   padding: 18px 14px;
   text-align: center;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
-  /* ไล่สีทับสีที่กำหนดมาจากระดับ ทำให้วงดูมีมิติแทนที่จะเป็นสีแบน
-     ใช้ backgroundColor ในโค้ดจึงไม่ไปลบไล่สีนี้ทิ้ง */
-  background-image: linear-gradient(150deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.1));
+  color: var(--text);
+  /* พื้นโปร่งกับขอบเรือง ส่งมาจากโค้ดพร้อมสีของระดับ
+     ทำให้เห็นกริดผ่านและตัวเลขอ่านง่ายกว่าตัวขาวบนพื้นสีจัด */
+  border: 1px solid rgba(94, 200, 255, 0.35);
 }
 
 .personal-value {
@@ -1702,7 +1702,7 @@ button {
 /* การ์ดใบแรกกว้างสองช่อง เพราะเป็นคำตอบหลักของทั้งหน้า
    ระบายสีตามระดับคุณภาพอากาศ ทำให้อ่านสถานการณ์ได้จากสีก่อนอ่านตัวเลข */
 .card-hero {
-  color: #fff;
+  color: var(--text);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1724,10 +1724,13 @@ button {
 
 
 
-.card-hero .card-label,
+.card-hero .card-label {
+  color: var(--accent);
+}
+
 .card-hero .card-note,
 .card-hero .card-unit {
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--text-soft);
 }
 
 .card-hero .card-value {
@@ -1900,9 +1903,8 @@ button {
   justify-content: center;
   gap: 3px;
   padding: 22px 18px;
-  /* ไล่สีทับสีที่กำหนดมาจากระดับ ทำให้วงดูมีมิติแทนที่จะเป็นสีแบน
-     ใช้ backgroundColor ในโค้ดจึงไม่ไปลบไล่สีนี้ทิ้ง */
-  background-image: linear-gradient(150deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.1));
+  /* พื้นโปร่งกับขอบเรือง ส่งมาจากโค้ดพร้อมสีของระดับ ให้เข้าชุดกับการ์ดอื่น */
+  border: 1px solid rgba(94, 200, 255, 0.3);
 }
 
 .rain-figure strong {
@@ -2059,7 +2061,8 @@ button {
   gap: 8px;
   padding: 5px 14px;
   border-radius: 999px;
-  color: #fff;
+  border: 1px solid rgba(94, 200, 255, 0.3);
+  color: var(--text);
   font-size: 12.5px;
   font-weight: 600;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);

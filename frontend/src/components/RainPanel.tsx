@@ -106,7 +106,16 @@ export function RainPanel({ provinces, defaultProvince }: Props) {
       {header}
 
       <div className="rain-summary">
-        <div className="rain-figure" style={{ backgroundColor: chanceColor }}>
+        <div
+          className="rain-figure"
+          style={{
+            // พื้นโปร่งไล่สีจากสีของระดับโอกาส ให้เข้าชุดกับการ์ดอื่นในหน้า
+            background: `linear-gradient(150deg, ${chanceColor}33, ${chanceColor}0f)`,
+            borderColor: `${chanceColor}59`,
+            boxShadow: `0 0 22px ${chanceColor}1f`,
+            color: "var(--text)",
+          }}
+        >
           <strong>{chance}</strong>
           <small>%</small>
         </div>

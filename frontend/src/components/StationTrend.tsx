@@ -135,7 +135,14 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
           {history.name_th} จ.{history.province}
         </span>
         {current && (
-          <span className="trend-status" style={{ background: current.level.color }}>
+          <span
+            className="trend-status"
+            style={{
+              // พื้นโปร่งไล่สีจากสีระดับ ให้เข้าชุดกับการ์ดอื่นในหน้า
+              background: `linear-gradient(150deg, ${current.level.color}33, ${current.level.color}12)`,
+              borderColor: `${current.level.color}59`,
+            }}
+          >
             {current.level.label_th}
             <strong>{current.pm25 ?? "-"}</strong>
             <small>µg/m³</small>
