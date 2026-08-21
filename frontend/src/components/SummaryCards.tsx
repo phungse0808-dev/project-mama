@@ -33,6 +33,20 @@ function describeAge(minutes: number | null): string {
   return `ข้อมูลเมื่อ ${Math.floor(hours / 24)} วันที่แล้ว`;
 }
 
+/** ตำแหน่งของอุณหภูมิปัจจุบันบนแถบช่วง คิดเป็นร้อยละนับจากขอบซ้าย
+ *
+ * บีบให้อยู่ในช่วงศูนย์ถึงร้อยเสมอ เพราะค่าปัจจุบันหลุดนอกช่วงได้จริง
+ * ค่าสูงสุดต่ำสุดเป็นค่าคาดการณ์ของทั้งวันซึ่งอัปเดตคนละรอบกับค่าปัจจุบัน
+ * ถ้าไม่บีบไว้ จุดจะเลื่อนออกไปนอกแถบเมื่อสองค่านั้นไม่ตรงกัน
+ *
+ * ถ้าช่วงกว้างเป็นศูนย์ ซึ่งเกิดได้ตอนที่ต้นทางยังส่งค่ามาไม่ครบ
+ * ให้วางไว้กลางแถบ แทนการหารด้วยศูนย์ซึ่งจะได้ค่าที่ใช้ไม่ได้
+ */
+function rangePosition(current: number, low: number, high: number): number {
+  if (high <= low) return 50;
+  return Math.min(100, Math.max(0, ((current - low) / (high - low)) * 100));
+}
+
 /** การ์ดสรุปภาพรวมด้านบนสุดของแดชบอร์ด
  *
  * แบ่งเป็นสองกลุ่มเพราะการ์ดสองชุดนี้ตอบคนละเรื่องและมีขอบเขตต่างกัน
@@ -173,16 +187,44 @@ export function SummaryCards({
                 </div>
               </div>
 
-              {/* เขียนกำกับว่าตัวเลขคู่นี้คืออะไร ของเดิมเขียนติดกันเป็นช่วง
-                  ผู้อ่านต้องเดาเองว่าเป็นช่วงของอะไร */}
-              <div className="weather-now-range">
-                <span>
-                  ต่ำสุดวันนี้ <strong>{now.temp_min ?? "-"}°</strong>
-                </span>
-                <span>
-                  สูงสุด <strong>{now.temp_max ?? "-"}°</strong>
-                </span>
-              </div>
+              {/* ช่วงอุณหภูมิของวัน แสดงเป็นแถบแทนบรรทัดตัวหนังสือ
+
+                  ตัวเลขคู่เดิมบอกได้แค่ขอบเขต แต่ไม่ได้บอกว่าตอนนี้อยู่ตรงไหนของวัน
+                  จุดบนแถบตอบคำถามนั้นได้ทันทีโดยไม่กินพื้นที่เพิ่ม
+                  เช่น จุดค่อนไปทางซ้ายแปลว่ายังไม่ถึงจุดร้อนสุด อีกสักพักจะร้อนขึ้นอีก
+
+                  ซ่อนทั้งแถบเมื่อขาดค่าใดค่าหนึ่ง เพราะแถบที่ไม่รู้ขอบเขตไม่ได้สื่ออะไร
+                  และการเว้นว่างดีกว่าแสดงขีดกลางซึ่งทำให้เข้าใจว่าเป็นค่าจริง */}
+              {now.temp_min != null && now.temp_max != null && (
+                <div className="weather-now-range">
+                  <div className="weather-range-end">
+                    <p className="weather-range-label">ต่ำสุดวันนี้</p>
+                    <p className="weather-range-value low">{now.temp_min}°</p>
+                  </div>
+
+                  <div className="weather-range-track">
+                    <div className="weather-range-bar" aria-hidden="true">
+                      {now.temperature != null && (
+                        <span
+                          className="weather-range-dot"
+                          style={{
+                            left: `${rangePosition(now.temperature, now.temp_min, now.temp_max)}%`,
+                          }}
+                        />
+                      )}
+                    </div>
+                    <p className="weather-range-caption">
+                      {now.temperature != null ? `ตอนนี้ ${now.temperature}° · ` : ""}
+                      ต่างกัน {(now.temp_max - now.temp_min).toFixed(1)}°
+                    </p>
+                  </div>
+
+                  <div className="weather-range-end right">
+                    <p className="weather-range-label">สูงสุด</p>
+                    <p className="weather-range-value high">{now.temp_max}°</p>
+                  </div>
+                </div>
+              )}
             </article>
 
             <article className="card">

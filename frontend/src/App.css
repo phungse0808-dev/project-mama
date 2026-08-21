@@ -412,20 +412,109 @@ button {
 /* แยกช่วงอุณหภูมิออกมาเป็นบรรทัดของตัวเองพร้อมคำกำกับ
    ของเดิมเขียนติดกับคำอธิบายเป็น เมฆครึ้ม · 26.1–32.9 องศา
    ซึ่งผู้อ่านต้องเดาเองว่าเป็นช่วงของอะไร */
+/* แถบช่วงอุณหภูมิของวัน
+ *
+ * ไล่สีจากฟ้าไปส้ม ฟ้าคือปลายเย็น ส้มคือปลายร้อน
+ * สีบอกความหมายได้เองโดยไม่ต้องมีคำอธิบายกำกับ
+ */
 .weather-now-range {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding-top: 9px;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
-  font-size: 12px;
+}
+
+.weather-range-end {
+  flex: none;
+}
+
+.weather-range-end.right {
+  text-align: right;
+}
+
+/* ใช้ --text-soft ไม่ใช่ --text-dim ทั้งที่เป็นป้ายกำกับ
+   เพราะตัวอักษรขนาดสิบพิกเซลบนสีจาง วัดค่าความต่างได้ 4.37 ต่อ 1
+   ซึ่งต่ำกว่าเกณฑ์ 4.5 ที่คนสายตาสั้นอ่านได้สบาย */
+.weather-range-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.7px;
   color: var(--text-soft);
 }
 
-.weather-now-range strong {
-  color: var(--text);
-  font-weight: 600;
+.weather-range-value {
+  margin: 2px 0 0;
+  font-family: var(--font-mono);
+  font-size: 17px;
   font-variant-numeric: tabular-nums;
+}
+
+.weather-range-value.low {
+  color: var(--accent);
+}
+
+.weather-range-value.high {
+  color: #f0a326;
+}
+
+/* ต้องกำหนด min-width เป็นศูนย์ เพราะกล่องยืดหยุ่นไม่ยอมหดต่ำกว่าความกว้างของเนื้อหา
+   ถ้าไม่กำหนด แถบจะดันตัวเลขสองข้างจนล้นออกนอกการ์ดบนจอแคบ */
+.weather-range-track {
+  flex: 1;
+  min-width: 0;
+}
+
+.weather-range-bar {
+  position: relative;
+  height: 7px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), #f0a326);
+  box-shadow: 0 0 12px rgba(94, 200, 255, 0.28);
+}
+
+/* ขอบสีพื้นหลังรอบจุด ทำให้จุดยังเห็นชัดตอนเลื่อนไปทับส่วนที่สว่างของแถบ */
+.weather-range-dot {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2.5px solid var(--bg);
+  box-shadow: 0 0 12px rgba(234, 246, 255, 0.75);
+}
+
+.weather-range-caption {
+  margin: 6px 0 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-soft);
+}
+
+/* จอแคบมาก แถบกับตัวเลขสองข้างเรียงในบรรทัดเดียวแล้วแถบสั้นจนอ่านตำแหน่งจุดยาก
+   ย้ายแถบขึ้นไปกินเต็มความกว้างบรรทัดบน แล้ววางตัวเลขไว้ใต้แถบ
+
+   ใช้ order กับ flex-basis แทนการเปลี่ยนเป็น display block
+   เพราะลำดับใน HTML คือ ต่ำสุด แถบ สูงสุด ถ้าเรียงตามลำดับนั้นตรง ๆ
+   แถบจะไปคั่นกลางระหว่างตัวเลขสองตัว กลายเป็นคนละบรรทัดกัน */
+@media (max-width: 400px) {
+  .weather-now-range {
+    flex-wrap: wrap;
+  }
+
+  .weather-range-track {
+    order: -1;
+    flex-basis: 100%;
+    margin-bottom: 2px;
+  }
+
+  .weather-range-end {
+    flex: 1;
+  }
 }
 
 /* ---------- การ์ดหลักแบบหน้าจอเครื่องมือ ---------- */
