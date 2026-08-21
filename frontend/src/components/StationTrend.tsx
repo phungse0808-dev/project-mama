@@ -4,8 +4,9 @@ import {
   CartesianGrid,
   ComposedChart,
   Legend,
+  Area,
+  AreaChart,
   Line,
-  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -196,11 +197,11 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                 data={daily.points}
                 margin={{ top: 8, right: 16, bottom: 8, left: -8 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2f3d" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,150,190,.12)" />
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} unit=" µg/m³" width={82} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 8, borderColor: "#303544", background: "#1a1d27", color: "#e8eaf0", fontSize: 13 }}
+                  contentStyle={{ borderRadius: 8, borderColor: "#2b3d52", background: "#0d1420", color: "#eaf6ff", fontSize: 13 }}
                   labelFormatter={(label) => `วันที่ ${label}`}
                 />
                 <Legend />
@@ -219,7 +220,7 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                 <Bar
                   dataKey="pm25_avg"
                   name="ค่าเฉลี่ยรายวัน"
-                  fill="#4c7fe2"
+                  fill="#3a7fc4"
                   radius={[3, 3, 0, 0]}
                 />
                 <Line
@@ -259,34 +260,51 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
       ) : (
         <div className="chart">
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={history.points} margin={{ top: 8, right: 16, bottom: 8, left: -8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2a2f3d" />
+            <AreaChart data={history.points} margin={{ top: 8, right: 16, bottom: 8, left: -8 }}>
+              {/* พื้นไล่สีใต้เส้น จางลงจนหายไปที่ฐาน
+                  ทำให้เห็นแนวโน้มเป็นปริมาตร ไม่ใช่แค่เส้นบาง ๆ */}
+              <defs>
+                <linearGradient id="pm25Fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#5ec8ff" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#5ec8ff" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="pm10Fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f0a326" stopOpacity={0.22} />
+                  <stop offset="100%" stopColor="#f0a326" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,150,190,.12)" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} unit=" µg/m³" width={80} />
               <Tooltip
-                contentStyle={{ borderRadius: 8, borderColor: "#303544", background: "#1a1d27", color: "#e8eaf0", fontSize: 13 }}
+                contentStyle={{ borderRadius: 8, borderColor: "#2b3d52", background: "#0d1420", color: "#eaf6ff", fontSize: 13 }}
                 labelFormatter={(label) => `เวลา ${label}`}
               />
               <Legend />
-              <Line
+              <Area
                 type="monotone"
                 dataKey="pm25"
                 name="PM2.5"
-                stroke="#e2574c"
+                stroke="#5ec8ff"
                 strokeWidth={2}
-                dot={{ r: 3 }}
+                fill="url(#pm25Fill)"
+                dot={false}
+                activeDot={{ r: 4 }}
                 connectNulls
+                style={{ filter: "drop-shadow(0 0 5px rgba(94,200,255,.65))" }}
               />
-              <Line
+              <Area
                 type="monotone"
                 dataKey="pm10"
                 name="PM10"
-                stroke="#8b7ae0"
+                stroke="#f0a326"
                 strokeWidth={2}
-                dot={{ r: 3 }}
+                fill="url(#pm10Fill)"
+                dot={false}
+                activeDot={{ r: 4 }}
                 connectNulls
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       )}

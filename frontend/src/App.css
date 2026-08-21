@@ -5,20 +5,20 @@
   /* ธีมมืด พื้นหลังไม่ใช้ดำสนิทแต่เป็นกรมท่าเข้ม
      เพราะดำสนิทกับตัวอักษรขาวทำให้ตาล้าเร็วและขอบตัวอักษรเรืองแสง
      สีที่มีเนื้อสีเล็กน้อยอ่านสบายกว่าในระยะยาว */
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface-2: #21252f;
-  --border: #262a36;
-  --border-strong: #303544;
-  --text: #e8eaf0;
-  --text-soft: #9aa0b0;
-  --text-dim: #6d7383;
+  --bg: #070a10;
+  --surface: #0d1420;
+  --surface-2: #131c2a;
+  --border: #1e2a3a;
+  --border-strong: #2b3d52;
+  --text: #eaf6ff;
+  --text-soft: #8fa2b8;
+  --text-dim: #6b7d92;
 
   /* สีเน้นต้องสว่างขึ้นเมื่ออยู่บนพื้นมืด
      ม่วง #4a3a9e ที่ใช้บนพื้นสว่างจะจมหายไปกับพื้นหลังเข้ม */
-  --accent: #8b7ae0;
-  --accent-deep: #b3a5f0;
-  --accent-soft: #252032;
+  --accent: #5ec8ff;
+--accent-deep:#9addfff;
+  --accent-soft: #0e2233;
 
   /* ฟอนต์สำหรับตัวเลข ทุกหลักกว้างเท่ากัน
      ทำให้ตัวเลขไม่ขยับตอนค่าเปลี่ยน ซึ่งสำคัญกับหน้าที่อัปเดตตัวเองทุกชั่วโมง
@@ -45,9 +45,9 @@ body {
   background-image:
     radial-gradient(1200px 600px at 12% -8%, rgba(30, 34, 56, 0.9) 0%, rgba(26, 28, 44, 0) 62%),
     radial-gradient(900px 500px at 100% 8%, rgba(32, 28, 44, 0.8) 0%, rgba(28, 26, 36, 0) 55%),
-    linear-gradient(rgba(70, 110, 160, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(70, 110, 160, 0.05) 1px, transparent 1px);
-  background-size: auto, auto, 28px 28px, 28px 28px;
+    linear-gradient(rgba(70, 110, 160, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(70, 110, 160, 0.07) 1px, transparent 1px);
+  background-size: auto, auto, 26px 26px, 26px 26px;
   background-attachment: fixed;
   color: var(--text);
   font-family: "Sarabun", "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
@@ -134,7 +134,7 @@ body {
   position: absolute;
   inset: 0 0 auto;
   height: 3px;
-  background: linear-gradient(90deg, var(--accent), #8b7ae0);
+  background: linear-gradient(90deg, var(--accent), #5ec8ff);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.25s ease;
@@ -230,7 +230,7 @@ body {
   width: 4px;
   height: 16px;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--accent), #8b7ae0);
+  background: linear-gradient(180deg, var(--accent), #5ec8ff);
   flex: none;
 }
 
@@ -341,8 +341,8 @@ button {
 .panel {
   /* พื้นโปร่งบางบนพื้นหลังกริด ทำให้เห็นเส้นกริดจาง ๆ ผ่านกล่อง
      ต่างจากพื้นทึบที่บังกริดจนหายไปทั้งหน้า */
-  background: rgba(26, 29, 39, 0.72);
-  border: 1px solid rgba(120, 150, 190, 0.16);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(120, 150, 190, 0.18);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 22px 24px;
@@ -351,7 +351,7 @@ button {
 
 /* ขอบสว่างขึ้นตอนชี้เมาส์ บอกว่ากำลังอ่านกล่องไหน */
 .panel:hover {
-  border-color: rgba(139, 122, 224, 0.35);
+  border-color: rgba(94, 200, 255, 0.35);
 }
 
 .panel:hover {
@@ -376,7 +376,7 @@ button {
   width: 4px;
   height: 17px;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--accent), #8b7ae0);
+  background: linear-gradient(180deg, var(--accent), #5ec8ff);
   flex: none;
 }
 
@@ -428,6 +428,60 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- การ์ดหลักแบบหน้าจอเครื่องมือ ---------- */
+
+/* การ์ดค่าเฉลี่ยเปลี่ยนจากพื้นทึบเป็นพื้นไล่สีโปร่ง กับขอบและแสงเรือง
+   ทำให้ตัวเลขหลักเด่นโดยไม่ต้องใช้พื้นสีทึบซึ่งบังกริดด้านหลัง
+
+   สีที่ใช้มาจากระดับคุณภาพอากาศเหมือนเดิม ส่งผ่าน inline style
+   จึงใช้ color-mix ผสมกับความโปร่งแทนการกำหนดสีตายตัว
+   ทำให้ยังเปลี่ยนสีตามระดับได้เมื่อค่าฝุ่นสูงขึ้น */
+.card-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(94, 200, 255, 0.35);
+  box-shadow: 0 0 30px rgba(94, 200, 255, 0.12), inset 0 0 30px rgba(94, 200, 255, 0.05);
+}
+
+/* เส้นแสงพาดขอบบน จางหัวจางท้าย */
+.card-hero::before {
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #5ec8ff, transparent);
+  transform: none;
+}
+
+/* ป้ายบนการ์ดหลักเป็นตัวพิมพ์เล็กเว้นระยะกว้าง แบบฉลากเครื่องมือวัด */
+.card-hero .card-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+/* ---------- ฉลากแบบเครื่องมือวัด ---------- */
+
+/* ป้ายกำกับของการ์ดทุกใบ ใช้ฟอนต์เดียวกับตัวเลขและเว้นระยะกว้าง
+   ให้ทั้งหน้าอ่านเหมือนหน้าจอเครื่องมือ ไม่ใช่เว็บทั่วไป */
+.card-label,
+.forecast-caption,
+.rain-stat-label,
+.health-label,
+.calibration-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.8px;
+}
+
+/* ---------- ปุ่มช่วงเวลา ---------- */
+
+.range {
+  font-family: var(--font-mono);
+  letter-spacing: 0.6px;
+}
+
 /* ---------- ตัวเลขทั้งระบบ ---------- */
 
 /* ตัวเลขทุกจุดใช้ฟอนต์ที่ทุกหลักกว้างเท่ากัน
@@ -476,7 +530,7 @@ button {
   flex: 1;
   height: 1px;
   min-width: 20px;
-  background: linear-gradient(90deg, rgba(139, 122, 224, 0.4), transparent);
+  background: linear-gradient(90deg, rgba(94, 200, 255, 0.4), transparent);
 }
 
 /* ---------- แสงเรืองของแถบและตัวชี้ ---------- */
@@ -501,12 +555,12 @@ button {
 .panel-title::before,
 .card-group-title::before,
 .section-heading {
-  box-shadow: 0 0 10px rgba(139, 122, 224, 0.5);
+  box-shadow: 0 0 10px rgba(94, 200, 255, 0.5);
 }
 
 /* ปุ่มที่เลือกอยู่ เรืองเพื่อให้เห็นชัดว่ากำลังดูอะไร */
 .range.active {
-  box-shadow: 0 0 14px rgba(139, 122, 224, 0.45);
+  box-shadow: 0 0 14px rgba(94, 200, 255, 0.45);
 }
 
 /* หมุดบนแผนที่ ให้เรืองตามสีระดับของสถานีนั้น */
@@ -1648,7 +1702,6 @@ button {
 /* การ์ดใบแรกกว้างสองช่อง เพราะเป็นคำตอบหลักของทั้งหน้า
    ระบายสีตามระดับคุณภาพอากาศ ทำให้อ่านสถานการณ์ได้จากสีก่อนอ่านตัวเลข */
 .card-hero {
-  border: none;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -1665,14 +1718,11 @@ button {
   width: 210px;
   height: 210px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 70%);
   pointer-events: none;
 }
 
-/* การ์ดใบนี้ระบายสีอยู่แล้ว ขีดสีขอบบนจะมองไม่เห็นและรบกวนสายตาเปล่าๆ */
-.card-hero::before {
-  display: none;
-}
+
 
 .card-hero .card-label,
 .card-hero .card-note,
@@ -1706,7 +1756,7 @@ button {
   flex-wrap: wrap;
   padding-left: 16px;
   border-left: 4px solid transparent;
-  border-image: linear-gradient(180deg, var(--accent), #8b7ae0) 1;
+  border-image: linear-gradient(180deg, var(--accent), #5ec8ff) 1;
   line-height: 1.4;
 }
 
