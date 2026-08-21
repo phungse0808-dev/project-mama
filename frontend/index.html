@@ -3,7 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/app-icon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- สีแถบบนสุดของมือถือ ให้กลืนกับแถบเมนูของแอป ไม่ให้เห็นรอยต่อ -->
+    <meta name="theme-color" content="#16233a" />
+    <!-- iPhone ไม่อ่าน manifest จึงต้องบอกซ้ำด้วยแท็กเฉพาะของมันเอง -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PM2.5" />
+    <link rel="apple-touch-icon" href="/app-icon.svg" />
+
     <title>ระบบเฝ้าระวังคุณภาพอากาศ PM2.5</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,5 +24,16 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // ลงทะเบียนตัวช่วยให้เปิดได้แม้เน็ตไม่ติด
+      // ทำหลังหน้าโหลดเสร็จ เพื่อไม่ให้แย่งแบนด์วิดท์ตอนกำลังโหลดหน้าครั้งแรก
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("/service-worker.js").catch(function () {
+            // ลงทะเบียนไม่สำเร็จก็ไม่เป็นไร แอปยังใช้งานได้ตามปกติ แค่เปิดออฟไลน์ไม่ได้
+          });
+        });
+      }
+    </script>
   </body>
 </html>

@@ -1,0 +1,27 @@
+{
+  "name": "ระบบเฝ้าระวังคุณภาพอากาศ PM2.5",
+  "short_name": "PM2.5",
+  "description": "ค่าฝุ่นรายชั่วโมงจากสถานีตรวจวัดทั่วประเทศ พร้อมคำแนะนำสุขภาพและพยากรณ์ล่วงหน้า",
+  "lang": "th",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f1117",
+  "theme_color": "#16233a",
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

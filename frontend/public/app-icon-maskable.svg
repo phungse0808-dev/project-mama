@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <title>ไอคอนแอปแบบเผื่อขอบสำหรับหน้าจอที่ครอบรูปทรง</title>
+  <rect width="100" height="100" fill="#16233a"/>
+  <g transform="translate(14 14) scale(0.72)">
+  
+  
+
+  <circle cx="19" cy="20" r="3.4" fill="#0099ff"/>
+  <circle cx="81" cy="19" r="2.8" fill="#00b050"/>
+  <circle cx="27" cy="12" r="2" fill="#ffd400" opacity=".8"/>
+  <circle cx="72" cy="11" r="2.2" fill="#0099ff" opacity=".8"/>
+  <circle cx="12" cy="33" r="2" fill="#00b050" opacity=".6"/>
+  <circle cx="88" cy="34" r="2" fill="#ffd400" opacity=".6"/>
+
+  <g fill="none" stroke-width="5" stroke-linecap="round" transform="rotate(-90 50 50)">
+    <circle cx="50" cy="50" r="42" stroke="#0099ff" stroke-dasharray="48 216"/>
+    <circle cx="50" cy="50" r="42" stroke="#00b050" stroke-dasharray="48 216" stroke-dashoffset="-52.8"/>
+    <circle cx="50" cy="50" r="42" stroke="#ffd400" stroke-dasharray="48 216" stroke-dashoffset="-105.6"/>
+    <circle cx="50" cy="50" r="42" stroke="#ff7e00" stroke-dasharray="48 216" stroke-dashoffset="-158.3"/>
+    <circle cx="50" cy="50" r="42" stroke="#e2574c" stroke-dasharray="48 216" stroke-dashoffset="-211.1"/>
+  </g>
+
+  <path d="M24 52h8M68 52h8" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  <path d="M32 46h36v17c0 6-8 12-18 12s-18-6-18-12V46z" fill="#fff"/>
+  <path d="M36 46l14 5 14-5" fill="none" stroke="#a9b8cc" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M34 56h32M35 63h30" stroke="#c9d3e0" stroke-width="3" stroke-linecap="round"/>
+
+  <circle cx="42" cy="37" r="3.4" fill="#fff"/>
+  <circle cx="58" cy="37" r="3.4" fill="#fff"/>
+
+  </g>
+</svg>

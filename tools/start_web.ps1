@@ -37,7 +37,7 @@ if (Test-ServerUp) {
     Write-Host "กำลังเปิดเซิร์ฟเวอร์..."
     $env:PYTHONIOENCODING = "utf-8"
     Start-Process -FilePath $python `
-        -ArgumentList "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000" `
+        -ArgumentList "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000" `
         -WorkingDirectory $backend `
         -WindowStyle Hidden
 
@@ -73,4 +73,24 @@ if ($browser) {
 }
 
 Write-Host "เปิดเว็บที่ $url แล้ว"
+
+# บอกที่อยู่สำหรับเปิดจากมือถือ
+#
+# เซิร์ฟเวอร์รับจากทุกเครื่องในวงเดียวกันแล้ว แต่ผู้ใช้ต้องรู้ว่าจะพิมพ์อะไร
+# เครื่องที่มีหลายการ์ดเครือข่ายจะมีหลายที่อยู่ จึงแสดงทุกอันให้ลองเอง
+$addresses = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+    Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.254.*" } |
+    Select-Object -ExpandProperty IPAddress
+
+if ($addresses) {
+    Write-Host ""
+    Write-Host "เปิดจากมือถือได้ที่ ให้มือถือต่อไวไฟวงเดียวกับเครื่องนี้" -ForegroundColor Cyan
+    foreach ($ip in $addresses) {
+        Write-Host "    http://${ip}:8000" -ForegroundColor Cyan
+    }
+    Write-Host ""
+    Write-Host "เปิดแล้วกดเมนูของเบราว์เซอร์ เลือกเพิ่มไปยังหน้าจอโฮม จะได้ไอคอนแอป"
+    Write-Host "ทุกคนที่ต่อไวไฟวงเดียวกันเปิดได้ และระบบนี้ไม่มีรหัสผ่าน" -ForegroundColor Yellow
+    Write-Host ""
+}
 Start-Sleep -Seconds 2
