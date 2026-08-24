@@ -54,6 +54,12 @@ export default function App() {
   // จังหวัดที่กำลังดูสภาพอากาศ แยกจากจังหวัดที่ผู้ใช้ตั้งไว้ในโปรไฟล์
   // เพราะผู้ใช้อาจอยากดูที่อื่นชั่วคราวโดยไม่ต้องไปแก้โปรไฟล์ตัวเอง
   const [weatherProvince, setWeatherProvince] = useState<string | null>(null);
+  // จังหวัดที่กำลังดูค่าฝุ่น ค่าว่างแปลว่าทั้งประเทศ
+  //
+  // แยกจากจังหวัดของสภาพอากาศ เพราะสองเรื่องนี้คนละขอบเขตกันโดยธรรมชาติ
+  // ค่าฝุ่นดูภาพรวมทั้งประเทศได้และเป็นค่าตั้งต้นที่มีความหมาย
+  // ส่วนสภาพอากาศต้องเจาะจงจังหวัดเสมอ เพราะอุณหภูมิเฉลี่ยทั้งประเทศไม่มีความหมาย
+  const [dustProvince, setDustProvince] = useState<string>("");
   const [history, setHistory] = useState<StationHistory | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,19 +69,22 @@ export default function App() {
   const [active, setActive] = useState<SectionKey>("home");
 
 
+  // ข้อมูลชุดที่ไม่ขึ้นกับพื้นที่ที่เลือก
+  //
+  // แยกออกจากการดึงค่าสรุปโดยตั้งใจ เพราะห้าเส้นทางนี้ให้คำตอบเดิมเสมอ
+  // ไม่ว่าผู้ใช้จะเลือกจังหวัดไหน ถ้ารวมไว้ด้วยกัน การกดเปลี่ยนจังหวัดหนึ่งครั้ง
+  // จะยิงคำขอที่รู้คำตอบอยู่แล้วเพิ่มอีกห้าครั้งโดยไม่ได้อะไรกลับมา
   const loadAll = useCallback(async () => {
     try {
       setError(null);
-      const [summaryData, stationData, rankingData, healthData, alertResult, provinceList] =
+      const [stationData, rankingData, healthData, alertResult, provinceList] =
         await Promise.all([
-          api.summary(),
           api.stations(),
           api.provinceRanking(),
           api.collectionHealth(),
           api.alerts(),
           api.provinces(),
         ]);
-      setSummary(summaryData);
       setStations(stationData);
       setRanking(rankingData);
       setHealth(healthData);
@@ -83,8 +92,6 @@ export default function App() {
       setProvinces(provinceList);
     } catch (err) {
       setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -95,6 +102,36 @@ export default function App() {
     const timer = setInterval(() => void loadAll(), 5 * 60 * 1000);
     return () => clearInterval(timer);
   }, [loadAll, user]);
+
+  // ค่าสรุปของพื้นที่ที่เลือก ดึงใหม่เมื่อเปลี่ยนพื้นที่
+  //
+  // ไม่ล้างค่าเดิมทิ้งระหว่างรอคำตอบใหม่ ตัวเลขของพื้นที่เดิมจึงค้างอยู่ครู่หนึ่ง
+  // ซึ่งดีกว่าให้การ์ดว่างแล้วเด้งกลับมา และป้ายกำกับอ่านขอบเขตจากคำตอบจริง
+  // ป้ายกับตัวเลขจึงตรงกันเสมอแม้ในจังหวะที่ยังเปลี่ยนไม่เสร็จ
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const result = await api.summary(dustProvince || null);
+        if (!cancelled) setSummary(result);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void load();
+    const timer = setInterval(() => void load(), 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [user, dustProvince]);
 
 
   // สภาพอากาศปัจจุบันของจังหวัดที่กำลังดูอยู่
@@ -255,6 +292,8 @@ export default function App() {
                 provinces={provinces}
                 weatherProvince={weatherProvince ?? user.province ?? "กรุงเทพฯ"}
                 onWeatherProvinceChange={setWeatherProvince}
+                dustProvince={dustProvince}
+                onDustProvinceChange={setDustProvince}
               />
             )}
             {summary && <LevelBar summary={summary} />}

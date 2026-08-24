@@ -77,9 +77,19 @@ def station_payload(station: Station, reading: Reading) -> dict:
     }
 
 
-def national_summary(session: Session) -> dict:
-    """ภาพรวมคุณภาพอากาศทั้งประเทศ ณ ชั่วโมงล่าสุด"""
+def national_summary(session: Session, province: str | None = None) -> dict:
+    """ภาพรวมคุณภาพอากาศ ณ ชั่วโมงล่าสุด
+
+    province ว่างแปลว่าทั้งประเทศ ถ้าระบุมาจะนับเฉพาะสถานีในจังหวัดนั้น
+
+    ทำไมต้องเลือกจังหวัดได้
+        ค่าเฉลี่ยทั้งประเทศบอกภาพรวมได้ แต่ไม่ตรงกับที่ไหนเลยสักที่
+        คนที่เปิดดูอยากรู้ว่าที่ตัวเองอยู่เป็นอย่างไร ไม่ใช่ค่ากลางของทั้งประเทศ
+        ซึ่งเฉลี่ยรวมพื้นที่ที่ฝุ่นสูงกับต่ำเข้าด้วยกันจนกลบกันไป
+    """
     rows = latest_readings(session)
+    if province:
+        rows = [(s, r) for s, r in rows if s.province == province]
     fresh = [(s, r) for s, r in rows if not is_stale(r)]
     values = [r.pm25 for _, r in fresh if r.pm25 is not None]
 
@@ -111,6 +121,11 @@ def national_summary(session: Session) -> dict:
             {"key": lv.key, "label_th": lv.label_th, "color": lv.color} for lv in LEVELS
         ],
         "worst_station": station_payload(*worst) if worst else None,
+        # ขอบเขตของตัวเลขชุดนี้ ให้หน้าเว็บเขียนกำกับได้ตรงกับที่คำนวณจริง
+        # ไม่ต้องเดาเอาจากค่าที่ตัวเองส่งไป ซึ่งจะเพี้ยนถ้าฝั่งใดฝั่งหนึ่งแก้ทีหลัง
+        "province": province,
+        # อากาศยังเป็นภาพรวมทั้งประเทศเสมอ เพราะกลุ่มสภาพอากาศบนหน้าเว็บ
+        # มีช่องเลือกจังหวัดของตัวเองอยู่แล้ว ถ้าผูกกับช่องนี้ด้วยจะสับสน
         "weather": national_weather(session),
     }
 

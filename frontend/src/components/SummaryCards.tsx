@@ -8,6 +8,9 @@ type CardProps = Props & {
   provinces: string[];
   weatherProvince: string;
   onWeatherProvinceChange: (province: string) => void;
+  /** ค่าว่างแปลว่าทั้งประเทศ */
+  dustProvince: string;
+  onDustProvinceChange: (province: string) => void;
 };
 
 /** ตัดเอาเฉพาะเวลาจากค่าที่ต้นทางส่งมาเป็น 2026-08-19T08:30 ซึ่งเป็นเวลาไทยอยู่แล้ว */
@@ -49,12 +52,16 @@ function rangePosition(current: number, low: number, high: number): number {
 
 /** การ์ดสรุปภาพรวมด้านบนสุดของแดชบอร์ด
  *
- * แบ่งเป็นสองกลุ่มเพราะการ์ดสองชุดนี้ตอบคนละเรื่องและมีขอบเขตต่างกัน
- *     เรื่องของฝุ่น   ภาพรวมทั้งประเทศ จากสถานีตรวจวัดของกรมควบคุมมลพิษ
- *     สภาพอากาศ     จังหวัดเดียวที่เลือก จาก Open-Meteo
+ * แบ่งเป็นสองกลุ่มเพราะการ์ดสองชุดนี้ตอบคนละเรื่องและมาคนละแหล่ง
+ *     เรื่องของฝุ่น   จากสถานีตรวจวัดของกรมควบคุมมลพิษ
+ *     สภาพอากาศ     จาก Open-Meteo
  *
  * เดิมวางเรียงต่อกันเจ็ดใบแล้วขึ้นบรรทัดที่สอง แยกไม่ออกว่าใบไหนเป็นเรื่องอะไร
- * และเสี่ยงเข้าใจผิดว่าค่าฝุ่นเป็นของจังหวัดที่เลือกด้วย ทั้งที่เป็นค่าทั้งประเทศ
+ *
+ * แต่ละกลุ่มมีช่องเลือกพื้นที่ของตัวเองที่หัวกลุ่ม และเลือกแยกกันได้
+ * เพราะบางครั้งอยากดูฝุ่นทั้งประเทศพร้อมกับดูอากาศของจังหวัดตัวเอง
+ * ต่างกันตรงที่กลุ่มฝุ่นมีตัวเลือกทั้งประเทศด้วย ส่วนอากาศต้องเจาะจงจังหวัดเสมอ
+ * เพราะอุณหภูมิเฉลี่ยของทั้งประเทศไม่ได้บอกอะไรกับใคร
  */
 export function SummaryCards({
   summary,
@@ -62,6 +69,8 @@ export function SummaryCards({
   provinces,
   weatherProvince,
   onWeatherProvinceChange,
+  dustProvince,
+  onDustProvinceChange,
 }: CardProps) {
   const worst = summary.worst_station;
   const now = weatherNow?.available ? weatherNow : null;
@@ -71,9 +80,26 @@ export function SummaryCards({
       <section className="card-group">
         <header className="card-group-head">
           <h2 className="card-group-title">เรื่องของฝุ่น</h2>
-          {/* บอกขอบเขตไว้ตรงนี้ เพราะกลุ่มข้างๆ มีช่องเลือกจังหวัด
-              ถ้าไม่บอกจะเข้าใจว่าค่าฝุ่นเปลี่ยนตามจังหวัดที่เลือกไปด้วย */}
-          <span className="card-group-scope">ทั้งประเทศ</span>
+          {/* ช่องเลือกอยู่ที่หัวกลุ่มเหมือนกลุ่มสภาพอากาศ
+              เพราะจังหวัดที่เลือกมีผลกับทุกใบในกลุ่มนี้ ไม่ใช่ใบใดใบหนึ่ง
+
+              ตัวเลือกแรกเป็นทั้งประเทศ ไม่ใช่จังหวัดใดจังหวัดหนึ่ง
+              เพราะภาพรวมทั้งประเทศเป็นคำตอบที่มีความหมายในตัวเอง
+              ต่างจากสภาพอากาศที่ค่าเฉลี่ยทั้งประเทศไม่ได้บอกอะไร */}
+          <label className="card-group-picker">
+            <span className="sr-only">เลือกพื้นที่ที่ต้องการดูค่าฝุ่น</span>
+            <select
+              value={dustProvince}
+              onChange={(event) => onDustProvinceChange(event.target.value)}
+            >
+              <option value="">ทั้งประเทศ</option>
+              {provinces.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
         </header>
 
         <div className="cards cards-dust">
@@ -99,7 +125,12 @@ export function SummaryCards({
                 : undefined
             }
           >
-            <p className="card-label">PM2.5 เฉลี่ยทั้งประเทศ</p>
+            {/* อ่านขอบเขตจากคำตอบของเซิร์ฟเวอร์ ไม่ใช่จากค่าที่หน้าเว็บส่งไป
+                เพราะระหว่างที่คำขอใหม่ยังไม่กลับมา ตัวเลขบนจอยังเป็นของขอบเขตเดิม
+                ถ้าเปลี่ยนป้ายทันทีที่กดจะกลายเป็นป้ายไม่ตรงกับตัวเลข */}
+            <p className="card-label">
+              PM2.5 เฉลี่ย{summary.province ? summary.province : "ทั้งประเทศ"}
+            </p>
             <p className="card-value">
               {summary.pm25_avg ?? "-"}
               <span className="card-unit">µg/m³</span>
@@ -126,7 +157,15 @@ export function SummaryCards({
           <article className="card">
             <p className="card-label">สูงสุดขณะนี้</p>
             <p className="card-value card-value-md">{worst ? worst.pm25 : "-"}</p>
-            <p className="card-note">{worst ? `จ.${worst.province}` : "ไม่มีข้อมูล"}</p>
+            {/* ดูทั้งประเทศอยากรู้ว่าจังหวัดไหน ดูจังหวัดเดียวอยากรู้ว่าสถานีไหน
+                เพราะรู้อยู่แล้วว่าเป็นจังหวัดที่เลือกไว้ การบอกซ้ำจึงไม่ได้ข้อมูลใหม่ */}
+            <p className="card-note">
+              {worst
+                ? summary.province
+                  ? worst.name_th
+                  : `จ.${worst.province}`
+                : "ไม่มีข้อมูล"}
+            </p>
           </article>
 
           <article className="card">

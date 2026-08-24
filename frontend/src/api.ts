@@ -43,6 +43,8 @@ export type StationReading = {
 };
 
 export type Summary = {
+  /** ว่างแปลว่าทั้งประเทศ */
+  province: string | null;
   measured_at: string | null;
   minutes_behind: number | null;
   stations_total: number;
@@ -322,7 +324,14 @@ async function send<T>(path: string, method: string, body: unknown): Promise<T> 
 }
 
 export const api = {
-  summary: () => get<Summary>("/api/summary"),
+  // ไม่ส่งจังหวัดแปลว่าทั้งประเทศ
+    //
+    // เข้ารหัสชื่อจังหวัดก่อนต่อเข้า URL เพราะเป็นภาษาไทยและมีอักขระอย่างจุด
+    // เช่น กรุงเทพฯ ซึ่งถ้าใส่ดิบ ๆ เบราว์เซอร์บางตัวจะตัดทิ้ง
+    summary: (province?: string | null) =>
+      get<Summary>(
+        province ? `/api/summary?province=${encodeURIComponent(province)}` : "/api/summary",
+      ),
   signIn: (name: string) => send<AppUser>("/api/users/sign-in", "POST", { name }),
   updateProfile: (id: number, province: string | null, riskGroup: string | null) =>
     send<AppUser>(`/api/users/${id}`, "PATCH", { province, risk_group: riskGroup }),

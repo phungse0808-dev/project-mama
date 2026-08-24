@@ -87,22 +87,51 @@ def health() -> dict:
 #
 # ต้องประกาศไว้ท้ายไฟล์ หลังทุก route ของ API เพราะ mount ที่ "/" จะรับทุกเส้นทาง
 # ที่ไม่ตรงกับ route ใดเลย ถ้าประกาศก่อน API จะถูกกลืนหมด
+class FrontendFiles(StaticFiles):
+    """เสิร์ฟไฟล์หน้าเว็บ โดยห้ามเบราว์เซอร์เก็บ index.html ไว้ใช้ซ้ำ
+
+    ทำไมต้องแยกกฎให้ index.html
+        ไฟล์ js กับ css ที่ build ออกมามีรหัสของเนื้อหาอยู่ในชื่อไฟล์
+        พอแก้โค้ดแล้ว build ใหม่ ชื่อไฟล์จะเปลี่ยนตาม เก็บไว้ในเครื่องนานแค่ไหนก็ได้
+        เพราะชื่อเดิมย่อมหมายถึงเนื้อหาเดิมเสมอ
+
+        แต่ index.html ชื่อคงที่ตลอด และเป็นที่เดียวที่บอกว่าต้องโหลดไฟล์ชื่ออะไร
+        ถ้าเบราว์เซอร์เก็บไว้ใช้ซ้ำ มันจะไปโหลดไฟล์ชื่อเก่าต่อไปเรื่อย ๆ
+        ผู้ใช้จึงเห็นเว็บรุ่นเก่าทั้งที่อัปเดตไปแล้ว และไม่มีทางรู้ตัวเลย
+        ต้องกดล้างแคชเองถึงจะเห็นของใหม่ ซึ่งไม่ควรต้องให้ใครทำ
+
+    no-cache ไม่ได้แปลว่าห้ามเก็บ แต่แปลว่าเก็บได้และต้องถามก่อนใช้ทุกครั้ง
+    ถ้าไฟล์ไม่เปลี่ยน เซิร์ฟเวอร์ตอบสั้น ๆ ว่าใช้ของเดิมได้ จึงแทบไม่เปลืองอะไร
+    """
+
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        if response.media_type == "text/html":
+            response.headers["cache-control"] = "no-cache"
+        return response
+
+
 def mount_frontend() -> None:
     dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
     if not (dist / "index.html").exists():
         return  # ยังไม่ได้ build หน้าเว็บ ใช้เฉพาะ API ได้ตามปกติ
-    app.mount("/", StaticFiles(directory=dist, html=True), name="frontend")
+    app.mount("/", FrontendFiles(directory=dist, html=True), name="frontend")
 
 
 @app.get("/api/summary", tags=["แดชบอร์ด"])
-def get_summary(session: Session = Depends(get_session)) -> dict:
-    """ภาพรวมคุณภาพอากาศทั้งประเทศ ณ ชั่วโมงล่าสุด
+def get_summary(
+    province: str | None = None,
+    session: Session = Depends(get_session),
+) -> dict:
+    """ภาพรวมคุณภาพอากาศ ณ ชั่วโมงล่าสุด
+
+    ไม่ส่ง province มาแปลว่าทั้งประเทศ ส่งมาจะนับเฉพาะสถานีในจังหวัดนั้น
 
     ถ้าข้อมูลในฐานข้อมูลเก่าเกินกำหนด จะไปดึงจาก Air4Thai ให้ก่อนหนึ่งครั้ง
     ผู้ใช้จึงไม่ต้องสั่งนำเข้าข้อมูลเองเพื่อให้หน้าเว็บเป็นปัจจุบัน
     """
     refresh_if_stale(session)
-    return national_summary(session)
+    return national_summary(session, province)
 
 
 @app.get("/api/stations", tags=["แดชบอร์ด"])
