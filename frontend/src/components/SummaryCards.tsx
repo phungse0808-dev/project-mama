@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import type { Summary, WeatherNow } from "../api";
 import { formatThaiDateTime } from "../api";
 import { WeatherIcon } from "./WeatherIcon";
@@ -48,6 +49,61 @@ function describeAge(minutes: number | null): string {
 function rangePosition(current: number, low: number, high: number): number {
   if (high <= low) return 50;
   return Math.min(100, Math.max(0, ((current - low) / (high - low)) * 100));
+}
+
+/** ความกว้างจริงของกล่อง หน่วยพิกเซล ตามขนาดหน้าจอขณะนั้น
+ *
+ * ต้องวัดของจริง ไม่ใช้สัดส่วนร้อยละตัดสินว่าตัวเลขจะพอดีหรือไม่
+ * เพราะร้อยละเท่ากันกินพื้นที่ไม่เท่ากันในแต่ละหน้าจอ
+ * เจ็ดเปอร์เซ็นต์บนจอคอมกว้างพอใส่เลขสองหลักสบาย แต่บนมือถือไม่พอ
+ *
+ * ติดตามการเปลี่ยนขนาดด้วย เพราะผู้ใช้ย่อขยายหน้าต่างหรือหมุนจอได้
+ * ถ้าวัดครั้งเดียวตอนเปิดหน้า ตัวเลขจะหายหรือโผล่ผิดจังหวะหลังจากนั้น
+ */
+function useWidth<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+
+    const measure = () => setWidth(node.getBoundingClientRect().width);
+    measure();
+
+    // ดักสองทางโดยตั้งใจ
+    //
+    // ResizeObserver แม่นกว่า เพราะจับได้แม้กล่องเปลี่ยนขนาดเองโดยที่หน้าต่างไม่ขยับ
+    // แต่ไม่ได้ทำงานทุกที่ ในเบราว์เซอร์ฝังตัวบางตัวมีคลาสให้เรียกแต่ไม่เคยยิงเลย
+    // ซึ่งเจอมาแล้วตอนทดสอบงานนี้
+    //
+    // เหตุการณ์ resize ของหน้าต่างหยาบกว่าแต่ทำงานทุกที่
+    // และครอบคลุมกรณีที่เกิดจริงบ่อยที่สุดคือย่อขยายหน้าต่างกับหมุนจอมือถือ
+    window.addEventListener("resize", measure);
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+
+    return () => {
+      window.removeEventListener("resize", measure);
+      observer.disconnect();
+    };
+  }, []);
+
+  return [ref, width] as const;
+}
+
+/** ความกว้างที่ตัวเลขต้องใช้ รวมช่องไฟข้างละนิด หน่วยพิกเซล
+ *
+ * ตัวเลขใช้ฟอนต์ความกว้างคงที่ขนาด 13 พิกเซล บีบระยะห่างอีก 0.5
+ * วัดของจริงบนหน้าเว็บได้ตัวละ 7.3 พิกเซล เลขสองหลักจึงกว้าง 14.6
+ * เผื่อช่องไฟรวมอีก 3 พิกเซล กันไม่ให้ตัวเลขชิดขอบช่วงพอดีจนดูอึดอัด
+ *
+ * ตัวเลขนี้มาจากการวัดจริง ไม่ได้กะเอา ถ้าเปลี่ยนขนาดหรือชนิดฟอนต์
+ * ของ .level-segment ใน App.css ต้องกลับมาวัดใหม่
+ */
+function labelWidth(count: number): number {
+  return String(count).length * 7.3 + 3;
 }
 
 /** การ์ดสรุปภาพรวมด้านบนสุดของแดชบอร์ด
@@ -300,10 +356,10 @@ export function SummaryCards({
 
 /** แถบแสดงจำนวนสถานีแยกตามระดับคุณภาพอากาศ */
 export function LevelBar({ summary }: Props) {
+  const [barRef, barWidth] = useWidth<HTMLDivElement>();
   const total = Object.values(summary.level_counts).reduce((a, b) => a + b, 0);
-  if (total === 0) return null;
-
   const worst = summary.worst_station;
+  if (total === 0) return null;
 
   return (
     <section className="panel">
@@ -314,10 +370,21 @@ export function LevelBar({ summary }: Props) {
         สัดส่วนสถานีแยกตามระดับคุณภาพอากาศ
         <span className="panel-hint">นับรายสถานี จาก {total} สถานีที่ส่งข้อมูล</span>
       </h2>
-      <div className="level-bar">
+      <div className="level-bar" ref={barRef}>
         {summary.levels.map((level) => {
           const count = summary.level_counts[level.key] ?? 0;
           if (count === 0) return null;
+
+          // แสดงตัวเลขเมื่อช่วงนั้นกว้างพอจริง ๆ เท่านั้น
+          //
+          // ถ้าฝืนใส่ในช่วงที่แคบกว่าตัวเลข ตัวเลขจะล้นไปทับช่วงข้างเคียง
+          // กลายเป็นอ่านผิดว่าเป็นของอีกระดับหนึ่ง ซึ่งแย่กว่าการไม่แสดง
+          //
+          // ช่วงที่แคบเกินไม่ได้หายไปไหน จำนวนอ่านได้จากคำอธิบายสีใต้แถบ
+          // ซึ่งบอกครบทุกระดับอยู่แล้ว และชี้ค้างบนแถบก็ขึ้นบอกเช่นกัน
+          const segmentWidth = (count / total) * barWidth;
+          const fits = segmentWidth >= labelWidth(count);
+
           return (
             <div
               key={level.key}
@@ -328,7 +395,7 @@ export function LevelBar({ summary }: Props) {
               }}
               title={`${level.label_th} ${count} สถานี`}
             >
-              {count / total > 0.08 ? count : ""}
+              {fits ? count : ""}
             </div>
           );
         })}
