@@ -1694,31 +1694,17 @@ button {
   color: #f0a326;
 }
 
-.vulnerability-row .ranking-name small {
-  font-size: 11px;
-}
-
-/* ช่องค้นหาในหน้า HIV ให้หน้าตาเหมือนช่องเลือกอื่นในแถบควบคุมเดียวกัน */
-.hiv-search-input {
-  padding: 7px 11px;
-  font-size: 14px;
-  font-family: inherit;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  min-width: 220px;
-}
-
-.hiv-search-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(29, 111, 208, 0.12);
-}
-
-.hiv-table {
+.disease-table {
   margin-top: 14px;
   border-radius: 10px;
   overflow: hidden;
+}
+
+/* หน้าหลักเหลือทางเข้าเดียว จึงให้กินเต็มความกว้างแทนการอยู่ครึ่งเดียว
+   กล่องใบเดียวที่กว้างครึ่งจอจะดูเหมือนอีกใบหายไป */
+.home-entry {
+  display: grid;
+  gap: 18px;
 }
 
 /* ---------- หน้าหลัก: กล่องทางเข้าสองใบ ---------- */

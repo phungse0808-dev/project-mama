@@ -16,9 +16,6 @@ import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
 import { DiseasePanel } from "./components/DiseasePanel";
-import { HivRegionChart } from "./components/HivRegionChart";
-import { HivDataNotice } from "./components/HivDataNotice";
-import { HivSearchPanel } from "./components/HivSearchPanel";
 import { HomePage } from "./components/HomePage";
 import { NavBar } from "./components/NavBar";
 import type { SectionKey } from "./components/NavBar";
@@ -30,7 +27,6 @@ import { SignIn } from "./components/SignIn";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { StationMap } from "./components/StationMap";
 import { StationTrend } from "./components/StationTrend";
-import { VulnerabilityPanel } from "./components/VulnerabilityPanel";
 import { LevelBar, SummaryCards } from "./components/SummaryCards";
 import { WeatherPanel } from "./components/WeatherPanel";
 
@@ -313,21 +309,8 @@ export default function App() {
           </>
         )}
 
-        {active === "hiv" && (
-          <>
-            <HivDataNotice />
-            <HivRegionChart />
-            <HivSearchPanel />
-            <VulnerabilityPanel />
-          </>
-        )}
-
         {active === "home" && (
-          <HomePage
-            summary={summary}
-            onOpenAir={() => goTo("air")}
-            onOpenHiv={() => goTo("hiv")}
-          />
+          <HomePage summary={summary} onOpenAir={() => goTo("air")} />
         )}
 
         <footer className="footer">

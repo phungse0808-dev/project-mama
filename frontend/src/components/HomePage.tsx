@@ -1,44 +1,21 @@
-import { useEffect, useState } from "react";
-import { api } from "../api";
-import type { Summary, Vulnerability } from "../api";
+import type { Summary } from "../api";
 
 type Props = {
   summary: Summary | null;
   onOpenAir: () => void;
-  onOpenHiv: () => void;
 };
 
 /**
  * หน้าหลัก
  *
- * ทำหน้าที่เป็นทางเข้าของทั้งสองส่วน แทนที่จะเป็นปุ่มบนแถบเมนู
+ * ทำหน้าที่เป็นทางเข้า แทนที่จะพาเข้าหน้าข้อมูลทันทีหลังเข้าระบบ
  *
- * ข้อดีคือแต่ละทางเข้ามีที่ให้บอกว่าข้างในมีอะไรและตอนนี้ค่าเป็นเท่าไร
- * ผู้ใช้จึงตัดสินใจได้ก่อนกดว่าจะเข้าไปดูอะไร ต่างจากปุ่มบนแถบเมนู
- * ที่มีแค่ชื่อ ต้องกดเข้าไปดูเองว่าข้างในคืออะไร
+ * ข้อดีคือทางเข้ามีที่ให้บอกว่าข้างในมีอะไรและตอนนี้ค่าเป็นเท่าไร
+ * ผู้ใช้จึงเห็นภาพรวมก่อนกดเข้าไปดูรายละเอียด
  */
-export function HomePage({ summary, onOpenAir, onOpenHiv }: Props) {
-  const [vulnerability, setVulnerability] = useState<Vulnerability | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const result = await api.vulnerability();
-        if (!cancelled) setVulnerability(result);
-      } catch {
-        if (!cancelled) setVulnerability(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const top = vulnerability?.provinces?.[0] ?? null;
-
+export function HomePage({ summary, onOpenAir }: Props) {
   return (
-    <div className="two-column">
+    <div className="home-entry">
       <button className="panel home-card" onClick={onOpenAir}>
         <h2 className="home-card-title">วัดคุณภาพอากาศ</h2>
         <p className="home-card-detail">
@@ -66,26 +43,6 @@ export function HomePage({ summary, onOpenAir, onOpenHiv }: Props) {
         <span className="home-card-go">เข้าดูข้อมูล →</span>
       </button>
 
-      <button className="panel home-card" onClick={onOpenHiv}>
-        <h2 className="home-card-title">HIV</h2>
-        <p className="home-card-detail">
-          พื้นที่ที่ควรเฝ้าระวังก่อน จากค่าฝุ่นรวมกับสัดส่วนผู้มีภูมิคุ้มกันบกพร่อง
-          ซึ่งเสี่ยงต่อการติดเชื้อทางเดินหายใจจากฝุ่นมากกว่าคนทั่วไป
-        </p>
-
-        <div className="home-stats home-stats-stacked">
-          <div>
-            <p className="home-stat-value">{vulnerability?.province_count ?? "—"}</p>
-            <p className="home-stat-label">จังหวัดที่มีข้อมูล</p>
-          </div>
-          <div>
-            <p className="home-stat-value home-stat-text">{top?.province ?? "—"}</p>
-            <p className="home-stat-label">อันดับ 1 ที่ควรเฝ้าระวัง</p>
-          </div>
-        </div>
-
-        <span className="home-card-go">เข้าดูข้อมูล →</span>
-      </button>
     </div>
   );
 }

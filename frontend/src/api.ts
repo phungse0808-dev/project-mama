@@ -190,36 +190,6 @@ export type Alerts = {
   over_who_guideline: StationReading[];
 };
 
-export type HivProvince = {
-  province: string;
-  region: string | null;
-  cases: number | null;
-  rate_per_100k: number | null;
-  note: string | null;
-};
-
-export type HivStatistics = {
-  regions: { name: string; aliases: string[] }[];
-  year: number | null;
-  source: string | null;
-  provinces: HivProvince[];
-};
-
-export type Vulnerability = {
-  available: boolean;
-  reason: string | null;
-  year: number | null;
-  source?: string | null;
-  province_count?: number;
-  provinces: {
-    province: string;
-    pm25_avg: number;
-    hiv_rate_per_100k: number;
-    score: number;
-    level: AqiLevel;
-  }[];
-};
-
 export type DiseaseMonth = {
   month: string;
   label: string;
@@ -351,42 +321,6 @@ async function send<T>(path: string, method: string, body: unknown): Promise<T> 
   return response.json() as Promise<T>;
 }
 
-// รวมคำขอที่เกิดพร้อมกันให้เหลือคำขอเดียว
-//
-// หลายส่วนบนหน้าเดียวกันต้องใช้ข้อมูลชุดเดียวกัน ถ้าต่างคนต่างขอจะยิงไปที่เซิร์ฟเวอร์
-// หลายรอบเพื่อเอาคำตอบเดิม และในโหมดพัฒนา React ยังเรียกซ้ำอีกเท่าตัว
-//
-// keepAfterDone บอกว่าจะเก็บคำตอบไว้ใช้ซ้ำหลังคำขอเสร็จแล้วหรือไม่
-//     true   สำหรับข้อมูลที่ไม่เปลี่ยนระหว่างเปิดหน้า เช่น สถิติรายปี
-//     false  สำหรับข้อมูลที่เปลี่ยนตามเวลา เช่น ค่าที่คำนวณจากค่าฝุ่นล่าสุด
-//            กรณีนี้แค่รวมคำขอที่เกิดพร้อมกัน แล้วล้างทิ้งทันทีที่เสร็จ
-//            เพื่อไม่ให้ผู้ใช้เห็นค่าค้างของชั่วโมงก่อน ซึ่งแย่กว่าการขอซ้ำ
-//
-// เก็บตัวคำขอ ไม่ใช่เก็บผลลัพธ์ ส่วนที่ขอพร้อมกันจึงได้คำขอเดียวกันไปใช้
-// แทนที่จะยิงพร้อมกันก่อนที่รอบแรกจะตอบกลับ
-//
-// ถ้าคำขอล้มเหลวจะล้างทิ้งเสมอ ให้ครั้งถัดไปได้ลองใหม่จริง
-// ไม่ใช่ติดคำตอบที่พังค้างไว้ตลอดการเปิดหน้า
-const inFlight = new Map<string, Promise<unknown>>();
-
-function shared<T>(key: string, run: () => Promise<T>, keepAfterDone: boolean): Promise<T> {
-  const existing = inFlight.get(key) as Promise<T> | undefined;
-  if (existing) return existing;
-
-  const request = run()
-    .then((value) => {
-      if (!keepAfterDone) inFlight.delete(key);
-      return value;
-    })
-    .catch((error) => {
-      inFlight.delete(key);
-      throw error;
-    });
-
-  inFlight.set(key, request);
-  return request;
-}
-
 export const api = {
   summary: () => get<Summary>("/api/summary"),
   signIn: (name: string) => send<AppUser>("/api/users/sign-in", "POST", { name }),
@@ -407,9 +341,6 @@ export const api = {
     get<RainChance>("/api/rain-chance/" + encodeURIComponent(province)),
   alerts: () => get<Alerts>("/api/alerts"),
   disease: () => get<DiseaseSummary>("/api/disease"),
-  hiv: () => shared("hiv", () => get<HivStatistics>("/api/hiv"), true),
-  vulnerability: () =>
-    shared("vulnerability", () => get<Vulnerability>("/api/vulnerability"), false),
   stations: () => get<StationReading[]>("/api/stations"),
   provinceRanking: () => get<ProvinceRank[]>("/api/provinces/ranking"),
   stationDaily: (code: string, days = 30) =>

@@ -15,8 +15,7 @@ from app.health_advice import (
 )
 from app.forecast import fetch_now, fetch_pm25_forecast
 from app.live import minutes_behind
-from app.regions import ALIASES, region_of
-from app.models import AppUser, CollectionLog, DiseaseDaily, HivStatistic, Reading, Station, WeatherDaily
+from app.models import AppUser, CollectionLog, DiseaseDaily, Reading, Station, WeatherDaily
 
 # ถ้าสถานีไม่ส่งข้อมูลใหม่เกินจำนวนชั่วโมงนี้ ถือว่าข้อมูลค้าง ไม่นำมาคิดภาพรวม
 STALE_HOURS = 6
@@ -829,119 +828,6 @@ def alerts(session: Session) -> dict:
         "over_who_guideline": over_who,
     }
 
-
-def hiv_statistics(session: Session) -> dict:
-    """สถิติผู้ติดเชื้อเอชไอวีรายจังหวัด เฉพาะปีล่าสุดที่มีข้อมูล"""
-    latest_year = session.exec(select(func.max(HivStatistic.year))).one()
-    if latest_year is None:
-        return {"year": None, "provinces": [], "source": None}
-
-    rows = session.exec(
-        select(HivStatistic)
-        .where(HivStatistic.year == latest_year)
-        .order_by(desc(col(HivStatistic.rate_per_100k)))
-    ).all()
-
-    return {
-        "regions": [
-            {"name": name, "aliases": list(words)} for name, words in ALIASES.items()
-        ],
-        "year": latest_year,
-        "source": rows[0].source if rows else None,
-        "provinces": [
-            {
-                "province": row.province,
-                "cases": row.cases,
-                "rate_per_100k": row.rate_per_100k,
-                "note": row.note,
-            "region": region_of(row.province),
-            }
-            for row in rows
-        ],
-    }
-
-
-def _normalise(value: float, low: float, high: float) -> float:
-    """ปรับค่าให้อยู่ในช่วง 0 ถึง 1 เพื่อให้นำตัวแปรคนละหน่วยมารวมกันได้"""
-    if high <= low:
-        return 0.0
-    return (value - low) / (high - low)
-
-
-def vulnerability_index(session: Session) -> dict:
-    """จัดลำดับจังหวัดที่ควรได้รับการเฝ้าระวังคุณภาพอากาศก่อน
-
-    แนวคิด
-        ความเสี่ยงต่อสุขภาพจากฝุ่นไม่ได้ขึ้นกับระดับฝุ่นอย่างเดียว แต่ขึ้นกับว่า
-        ในพื้นที่นั้นมีประชากรที่เปราะบางต่อฝุ่นมากแค่ไหนด้วย จังหวัดที่ฝุ่นปานกลาง
-        แต่มีผู้มีภูมิคุ้มกันบกพร่องอยู่มาก อาจต้องเฝ้าระวังก่อนจังหวัดที่ฝุ่นสูงกว่า
-        แต่มีประชากรกลุ่มนี้น้อย
-
-    วิธีคำนวณ
-        ปรับค่าฝุ่นเฉลี่ยและอัตราผู้ติดเชื้อต่อประชากรแสนคนให้อยู่ในช่วง 0 ถึง 1
-        แล้วถ่วงน้ำหนักเท่ากันคนละครึ่ง ได้คะแนน 0 ถึง 100
-
-    ข้อจำกัดที่ต้องระบุในเล่ม
-        การถ่วงน้ำหนักเท่ากันเป็นการตั้งสมมติฐานเอง ไม่ได้มาจากผลการศึกษาทางระบาดวิทยา
-        ดัชนีนี้จึงใช้เพื่อจัดลำดับความสำคัญในการเฝ้าระวังเท่านั้น
-        ไม่ใช่การประเมินความเสี่ยงทางการแพทย์
-    """
-    hiv = hiv_statistics(session)
-    if not hiv["provinces"]:
-        return {
-            "available": False,
-            "reason": "ยังไม่ได้นำเข้าข้อมูลผู้ติดเชื้อเอชไอวีรายจังหวัด",
-            "year": None,
-            "provinces": [],
-        }
-
-    pm_by_province = {item["province"]: item["pm25_avg"] for item in province_ranking(session)}
-    hiv_by_province = {
-        item["province"]: item["rate_per_100k"]
-        for item in hiv["provinces"]
-        if item["rate_per_100k"] is not None
-    }
-
-    shared = sorted(set(pm_by_province) & set(hiv_by_province))
-    if not shared:
-        return {
-            "available": False,
-            "reason": "ไม่มีจังหวัดที่มีข้อมูลครบทั้งค่าฝุ่นและสถิติผู้ติดเชื้อ",
-            "year": hiv["year"],
-            "provinces": [],
-        }
-
-    pm_values = [pm_by_province[p] for p in shared]
-    hiv_values = [hiv_by_province[p] for p in shared]
-    pm_low, pm_high = min(pm_values), max(pm_values)
-    hiv_low, hiv_high = min(hiv_values), max(hiv_values)
-
-    result = []
-    for province in shared:
-        pm25 = pm_by_province[province]
-        rate = hiv_by_province[province]
-        score = 100 * (
-            0.5 * _normalise(pm25, pm_low, pm_high) + 0.5 * _normalise(rate, hiv_low, hiv_high)
-        )
-        result.append(
-            {
-                "province": province,
-                "pm25_avg": pm25,
-                "hiv_rate_per_100k": rate,
-                "score": round(score, 1),
-                "level": describe(None, pm25),
-            }
-        )
-
-    result.sort(key=lambda item: item["score"], reverse=True)
-    return {
-        "available": True,
-        "reason": None,
-        "year": hiv["year"],
-        "source": hiv["source"],
-        "province_count": len(result),
-        "provinces": result,
-    }
 
 # จำนวนชั่วโมงขั้นต่ำที่ต้องมีในหนึ่งวัน จึงจะถือว่าค่าเฉลี่ยรายวันนั้นใช้อ้างอิงได้
 #

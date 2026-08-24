@@ -167,7 +167,7 @@ export function DiseasePanel() {
       </div>
 
       {seasons.length > 0 && (
-        <table className="hiv-table">
+        <table className="disease-table">
           <thead>
             <tr>
               <th>กลุ่มโรค</th>

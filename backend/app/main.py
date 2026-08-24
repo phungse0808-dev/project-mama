@@ -28,7 +28,6 @@ from app.services import (
     disease_summary,
     forecast_accuracy,
     health_guidance,
-    hiv_statistics,
     national_summary,
     personal_summary,
     pm25_forecast,
@@ -38,7 +37,6 @@ from app.services import (
     station_daily,
     station_history,
     update_profile,
-    vulnerability_index,
     weather_history,
     weather_now,
 )
@@ -316,25 +314,6 @@ def get_health_advice(
 def get_alerts(session: Session = Depends(get_session)) -> dict:
     """พื้นที่ที่ค่าฝุ่นเกินมาตรฐานไทยหรือเกินค่าแนะนำขององค์การอนามัยโลก"""
     return alerts(session)
-
-
-@app.get("/api/hiv", tags=["พื้นที่เปราะบาง"])
-def get_hiv_statistics(session: Session = Depends(get_session)) -> dict:
-    """สถิติผู้ติดเชื้อเอชไอวีรายจังหวัด ปีล่าสุดที่นำเข้าไว้
-
-    เป็นข้อมูลรวมยอดระดับจังหวัดที่หน่วยงานรัฐเผยแพร่เป็นสาธารณะเท่านั้น
-    ระบบไม่เก็บและไม่แสดงข้อมูลรายบุคคลหรือข้อมูลที่ละเอียดกว่าระดับจังหวัด
-    """
-    return hiv_statistics(session)
-
-
-@app.get("/api/vulnerability", tags=["พื้นที่เปราะบาง"])
-def get_vulnerability(session: Session = Depends(get_session)) -> dict:
-    """ลำดับจังหวัดที่ควรเฝ้าระวังคุณภาพอากาศก่อน
-
-    รวมค่าฝุ่นปัจจุบันเข้ากับสัดส่วนประชากรที่มีภูมิคุ้มกันบกพร่องในพื้นที่
-    """
-    return vulnerability_index(session)
 
 
 @app.get("/api/disease", tags=["ผลกระทบสุขภาพ"])
