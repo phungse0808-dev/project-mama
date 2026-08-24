@@ -239,7 +239,13 @@ export type RainChance = {
     wind_speed: number | null;
     pressure: number | null;
   };
-  normal?: { temp_avg: number | null; humidity: number | null; wind_speed: number | null };
+  normal?: {
+    temp_avg: number | null;
+    temp_max: number | null;
+    temp_min: number | null;
+    humidity: number | null;
+    wind_speed: number | null;
+  };
   monthly?: { month: number; label: string; chance_pct: number; rainfall_avg_mm: number }[];
 };
 

@@ -1702,6 +1702,104 @@ button {
   gap: 18px;
 }
 
+/* ---------- สรุปประจำวัน ---------- */
+
+/* กินเต็มความกว้างของแถวตั้งค่า เพราะมีหลายบรรทัดและมีข้อความอธิบายยาว
+   ถ้าอยู่ในคอลัมน์เดียวกับช่องเลือกจะเบียดจนอ่านไม่ออก */
+.digest {
+  flex-basis: 100%;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.digest-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.digest-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* สวิตช์วาดเองจากปุ่ม ไม่ใช้ checkbox ของเบราว์เซอร์
+   เพราะรูปแบบมาตรฐานของแต่ละระบบต่างกันมากจนดูไม่เข้ากับส่วนอื่นของหน้า */
+.digest-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex: none;
+  padding: 0;
+  border: none;
+  border-radius: 99px;
+  background: rgba(120, 150, 190, 0.25);
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.digest-switch.on {
+  background: linear-gradient(90deg, #2e86b8, var(--accent));
+  box-shadow: 0 0 12px rgba(94, 200, 255, 0.35);
+}
+
+.digest-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-soft);
+  transition: left 0.18s, background 0.18s;
+}
+
+.digest-switch.on .digest-knob {
+  left: 21px;
+  background: var(--text);
+}
+
+.digest-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-top: 13px;
+}
+
+.digest-test {
+  font-family: inherit;
+  font-size: 13px;
+  color: inherit;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.digest-test:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.digest-test:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.digest-note {
+  margin: 11px 0 0;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--text-soft);
+}
+
+.digest-note.warn {
+  color: #f0a326;
+}
+
 /* ---------- หน้าหลัก: กล่องทางเข้าสองใบ ---------- */
 
 /* เป็นปุ่มทั้งกล่อง ไม่ใช่ลิงก์เล็กๆ ข้างใน

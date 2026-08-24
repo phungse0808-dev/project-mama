@@ -617,8 +617,18 @@ def rain_chance(session: Session, province: str) -> dict:
         ]
         return round(statistics.fmean(values), 1) if values else None
 
+    # ค่าปกติของช่วงวันเดียวกันในปีก่อน ๆ
+    #
+    # ส่งอุณหภูมิสูงสุดกับต่ำสุดออกไปด้วย ไม่ใช่แค่ค่าเฉลี่ย
+    # เพราะการเตือนว่าวันนี้ร้อนหรือเย็นผิดปกติต้องเทียบกับปลายทั้งสองข้าง
+    # ค่าเฉลี่ยกลบความต่างไปหมด วันที่ร้อนจัดตอนบ่ายแล้วเย็นจัดตอนเช้า
+    # จะได้ค่าเฉลี่ยเท่ากับวันที่อุณหภูมิราบเรียบทั้งวัน ทั้งที่คนละเรื่องกัน
+    #
+    # คำนวณจากชุดข้อมูลเดียวกับที่ใช้อยู่แล้ว จึงไม่ต้องอ่านฐานข้อมูลเพิ่ม
     normal = {
         "temp_avg": season_mean("temp_avg"),
+        "temp_max": season_mean("temp_max"),
+        "temp_min": season_mean("temp_min"),
         "humidity": season_mean("humidity"),
         "wind_speed": season_mean("wind_speed"),
     }

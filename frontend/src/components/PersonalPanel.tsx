@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { AppUser, PersonalSummary, RiskGroup } from "../api";
+import { DigestSettings } from "./DigestSettings";
+import { loadSettings } from "../dailyDigest";
+import type { DigestSettings as Settings } from "../dailyDigest";
 
 type Props = {
   user: AppUser;
@@ -19,6 +22,7 @@ export function PersonalPanel({ user, onProfileChange }: Props) {
   const [provinces, setProvinces] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [digest, setDigest] = useState<Settings>(() => loadSettings());
 
   useEffect(() => {
     void (async () => {
@@ -142,6 +146,16 @@ export function PersonalPanel({ user, onProfileChange }: Props) {
             ))}
           </select>
         </label>
+
+        {/* สรุปประจำวันอยู่ในแผงเดียวกัน เพราะเป็นการตั้งค่าส่วนตัวเหมือนกัน
+            และข้อความที่แจ้งก็อ้างอิงกลุ่มเสี่ยงที่ตั้งไว้ตรงนี้ */}
+        <DigestSettings
+          settings={digest}
+          onChange={setDigest}
+          provinces={provinces}
+          fallbackProvince={user.province ?? ""}
+          userId={user.id}
+        />
 
         <button className="link-button" onClick={() => setShowAll((value) => !value)}>
           {showAll ? "ซ่อนคำแนะนำกลุ่มอื่น" : "ดูคำแนะนำของทุกกลุ่ม"}

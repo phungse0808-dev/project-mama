@@ -28,6 +28,7 @@ import { SearchOverlay } from "./components/SearchOverlay";
 import { StationMap } from "./components/StationMap";
 import { StationTrend } from "./components/StationTrend";
 import { LevelBar, SummaryCards } from "./components/SummaryCards";
+import { loadSettings, sendIfDue } from "./dailyDigest";
 import { WeatherPanel } from "./components/WeatherPanel";
 
 // เก็บผู้ใช้ไว้ในเบราว์เซอร์ เพื่อไม่ต้องกรอกชื่อใหม่ทุกครั้งที่เปิดโปรแกรม
@@ -132,6 +133,23 @@ export default function App() {
       clearInterval(timer);
     };
   }, [user, dustProvince]);
+
+  // ตรวจว่าถึงเวลาส่งสรุปประจำวันหรือยัง
+  //
+  // เกาะไปกับรอบดึงข้อมูลที่มีอยู่แล้วทุกห้านาที แทนการตั้งนาฬิกาแยกของตัวเอง
+  // ได้สองอย่างพร้อมกัน คือคนที่เพิ่งเปิดเว็บได้รับทันทีถ้าเลยเวลามาแล้ว
+  // และคนที่เปิดค้างไว้ก็ได้รับภายในห้านาทีหลังถึงเวลาที่ตั้ง
+  //
+  // เรียกซ้ำได้ปลอดภัย เพราะตัวมันเช็ควันที่แจ้งล่าสุดก่อนเสมอ
+  useEffect(() => {
+    if (!user) return;
+    const check = () => {
+      void sendIfDue(loadSettings(), user.province ?? "", user.id);
+    };
+    check();
+    const timer = setInterval(check, 5 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [user]);
 
 
   // สภาพอากาศปัจจุบันของจังหวัดที่กำลังดูอยู่
