@@ -29,6 +29,7 @@ import { StationMap } from "./components/StationMap";
 import { StationTrend } from "./components/StationTrend";
 import { LevelBar, SummaryCards } from "./components/SummaryCards";
 import { loadSettings, sendIfDue } from "./dailyDigest";
+import { recordAlerts } from "./noticeRecorder";
 import { WeatherPanel } from "./components/WeatherPanel";
 
 // เก็บผู้ใช้ไว้ในเบราว์เซอร์ เพื่อไม่ต้องกรอกชื่อใหม่ทุกครั้งที่เปิดโปรแกรม
@@ -91,6 +92,10 @@ export default function App() {
       setHealth(healthData);
       setAlertData(alertResult);
       setProvinces(provinceList);
+
+      // เก็บสถานการณ์ของชั่วโมงนี้ไว้ให้ย้อนดูในระฆัง
+      // ตัวมันกันซ้ำเองด้วยเวลาระดับชั่วโมง จึงเรียกทุกรอบได้โดยไม่บวม
+      recordAlerts(alertResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
     }

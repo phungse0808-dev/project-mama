@@ -22,6 +22,7 @@
 
 import { api } from "./api";
 import type { PersonalSummary, Pm25Forecast, RainChance, WeatherNow } from "./api";
+import { recordDigest } from "./noticeRecorder";
 
 const SETTINGS_KEY = "pm25.digest.settings";
 const LAST_SENT_KEY = "pm25.digest.lastSent";
@@ -217,19 +218,30 @@ export function buildMessage(source: DigestSource): DigestMessage | null {
   };
 }
 
-/** ถึงเวลาที่ควรแจ้งหรือยัง */
-export function shouldSend(settings: DigestSettings, now: Date): boolean {
-  if (!settings.enabled) return false;
-  if (permissionState() !== "granted") return false;
+/** ถึงเวลาสรุปประจำวันหรือยัง
+ *
+ * ไม่ดูสิทธิ์แจ้งเตือนและไม่ดูสวิตช์เปิดปิดตรงนี้ เพราะสองอย่างนั้นคุมแค่
+ * การเด้งขึ้นมาขัดจังหวะ ส่วนการบันทึกลงระฆังทำเสมอ
+ * คนที่ปฏิเสธคำขอแจ้งเตือนจึงยังได้สรุปประจำวันผ่านระฆัง
+ */
+export function isDue(settings: DigestSettings, now: Date): boolean {
   if (now.getHours() < settings.hour) return false;
   return !alreadySentToday(now);
 }
 
+/** จะเด้งขึ้นมาได้หรือไม่ ต้องเปิดสวิตช์และได้รับอนุญาตแล้วเท่านั้น */
+function canPopUp(settings: DigestSettings): boolean {
+  return settings.enabled && permissionState() === "granted";
+}
+
 /**
- * ตรวจแล้วแจ้งถ้าถึงเวลา คืนค่าว่าได้แจ้งออกไปหรือไม่
+ * ตรวจแล้วทำสรุปประจำวันถ้าถึงเวลา คืนค่าว่าได้ทำหรือไม่
  *
- * เรียกซ้ำได้ปลอดภัย เพราะเช็ควันที่แจ้งล่าสุดก่อนเสมอ
- * จึงเรียกทุกครั้งที่ข้อมูลรีเฟรชได้โดยไม่ต้องกลัวแจ้งซ้ำ
+ * ทำสองอย่างในรอบเดียว บันทึกลงระฆังเสมอ และเด้งขึ้นมาถ้าได้รับอนุญาต
+ * ดึงข้อมูลชุดเดียวใช้ทั้งสองอย่าง จึงไม่ได้เรียกเซิร์ฟเวอร์ซ้ำ
+ *
+ * เรียกซ้ำได้ปลอดภัย เพราะเช็ควันที่ทำล่าสุดก่อนเสมอ
+ * จึงเรียกทุกครั้งที่ข้อมูลรีเฟรชได้โดยไม่ต้องกลัวซ้ำ
  */
 export async function sendIfDue(
   settings: DigestSettings,
@@ -237,7 +249,7 @@ export async function sendIfDue(
   userId: number | null,
   now: Date = new Date(),
 ): Promise<boolean> {
-  if (!shouldSend(settings, now)) return false;
+  if (!isDue(settings, now)) return false;
 
   const province = settings.province || fallbackProvince;
   if (!province) return false;
@@ -264,13 +276,18 @@ export async function sendIfDue(
       return false;
     }
 
-    new Notification(message.title, {
-      body: message.body,
-      icon: "/app-icon.svg",
-      badge: "/app-icon.svg",
-      // ตั้ง tag ไว้เพื่อให้การแจ้งของวันเดียวกันทับกันแทนที่จะซ้อนกันหลายอัน
-      tag: "pm25-daily-digest",
-    });
+    // ลงระฆังก่อนเสมอ เพราะเป็นส่วนที่ทุกคนเห็นได้โดยไม่ต้องขออนุญาต
+    recordDigest(province, forecast, weather, now);
+
+    if (canPopUp(settings)) {
+      new Notification(message.title, {
+        body: message.body,
+        icon: "/app-icon.svg",
+        badge: "/app-icon.svg",
+        // ตั้ง tag ไว้เพื่อให้การแจ้งของวันเดียวกันทับกันแทนที่จะซ้อนกันหลายอัน
+        tag: "pm25-daily-digest",
+      });
+    }
     return true;
   } catch {
     clearLastSent();

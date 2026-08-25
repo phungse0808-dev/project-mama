@@ -1,4 +1,5 @@
 import { AppIcon } from "./AppIcon";
+import { NotificationBell } from "./NotificationBell";
 import "./NavBar.css";
 
 // "home" ไม่มีปุ่มในเมนู เพราะเข้าถึงได้จากการเข้าระบบและปุ่มกลับอยู่แล้ว
@@ -56,6 +57,9 @@ export function NavBar({ active, onGoTo, onSearch, onHome, onSignOut }: Props) {
         )}
 
         <div className="navbar-right">
+          {/* ระฆังอยู่ก่อนปุ่มอื่น เพราะเป็นสิ่งที่ต้องเหลือบดูว่ามีอะไรใหม่ไหม
+              ไม่ใช่ปุ่มที่ตั้งใจจะกด การวางไว้ซ้ายสุดของกลุ่มทำให้เจอง่ายกว่า */}
+          <NotificationBell />
           <button className="navbar-action" onClick={onSearch}>
             ค้นหา
           </button>

@@ -123,3 +123,190 @@
     font-size: 13.5px;
   }
 }
+
+/* ---------- ระฆังแจ้งเตือน ---------- */
+
+/* ตัวครอบต้องเป็น relative เพราะแผงรายการวางลอยอิงจากตรงนี้
+   ถ้าอิงจากแถบเมนูทั้งแถบ แผงจะไปโผล่ชิดขอบซ้ายแทนที่จะอยู่ใต้ระฆัง */
+.bell {
+  position: relative;
+  display: flex;
+}
+
+.bell-button {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  /* ปุ่มไม่รับสีจากกล่องที่ครอบเหมือนแท็กอื่น ต้องสั่งให้รับเอง
+     ไม่งั้นไอคอนจะเป็นสีดำของระบบบนพื้นมืดจนมองไม่เห็น */
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.bell-button:hover {
+  border-color: var(--accent);
+}
+
+/* มีเรื่องใหม่ ขอบเรืองตามสีของระดับที่แรงที่สุด
+   สีตัวไอคอนกำหนดจากโค้ดเพราะเปลี่ยนตามข้อมูล */
+.bell-button.has-unread {
+  border-color: currentColor;
+  box-shadow: 0 0 12px color-mix(in srgb, currentColor 35%, transparent);
+}
+
+.bell-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 99px;
+  /* ขอบสีพื้นหลังทำให้ตัวเลขไม่จมไปกับขอบปุ่มที่เรืองอยู่ */
+  border: 2px solid var(--bg);
+  color: #14100a;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bell-panel {
+  position: absolute;
+  top: 42px;
+  right: 0;
+  z-index: 60;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.bell-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.bell-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.bell-readall {
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.bell-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  /* จำกัดความสูงแล้วให้เลื่อนในตัวเอง ไม่ให้แผงยาวเกินจอเมื่อรายการเยอะ */
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.bell-item {
+  display: flex;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.bell-item.unread {
+  background: rgba(94, 200, 255, 0.05);
+}
+
+.bell-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  margin-top: 6px;
+  box-shadow: 0 0 7px currentColor;
+}
+
+.bell-body {
+  min-width: 0;
+}
+
+.bell-item-title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.bell-item-detail {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+
+.bell-item-when {
+  margin: 5px 0 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-dim);
+}
+
+.bell-empty,
+.bell-foot {
+  margin: 0;
+  padding: 16px 14px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
+.bell-foot {
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* จอแคบ แผงกางเต็มความกว้างแทนการห้อยใต้ระฆัง
+ *
+ * ปกติแผงจัดชิดขวาของตัวระฆัง ซึ่งใช้ได้บนจอกว้างเพราะมีที่ทางซ้ายเหลือเฟือ
+ * แต่บนมือถือ ระฆังไม่ได้อยู่ริมขวาสุด ยังมีปุ่มค้นหากับปุ่มกลับต่อท้ายอีก
+ * แผงกว้าง 320 พิกเซลที่ห้อยจากตรงนั้นจึงล้นออกนอกจอทางซ้ายไป 145 พิกเซล
+ */
+@media (max-width: 520px) {
+  .bell-panel {
+    position: fixed;
+    top: 62px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+  }
+
+  /* จำกัดความสูงตามจอ ไม่ให้แผงยาวเลยขอบล่างจนเลื่อนดูรายการท้าย ๆ ไม่ได้ */
+  .bell-list {
+    max-height: calc(100vh - 160px);
+  }
+}
