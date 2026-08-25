@@ -75,6 +75,14 @@ export function NotificationBell() {
   const worst = worstOf(items);
   const now = new Date();
 
+  // กำหนดสีตรง ๆ เสมอ ทั้งตอนมีเรื่องใหม่และตอนไม่มี
+  //
+  // เดิมส่ง undefined ตอนไม่มีเรื่องใหม่ หวังให้ตกไปใช้สีจาก CSS
+  // แต่พอ React ถอด style ออก เบราว์เซอร์ยังค้างสีเดิมไว้
+  // ปุ่มจึงติดสีของระดับล่าสุดและไม่ยอมกลับเป็นสีปกติ
+  // การส่งค่าที่ชัดเจนทุกครั้งทำให้ไม่ต้องพึ่งพฤติกรรมตอนถอดค่าออก
+  const bellColor = worst ? LEVEL_COLORS[worst] : "var(--text)";
+
   const toggle = () => {
     const next = !open;
     // อ่านรายการใหม่ทุกครั้งที่เปิด เพราะรายการถูกเพิ่มจากที่อื่นในแอป
@@ -93,10 +101,12 @@ export function NotificationBell() {
         onClick={toggle}
         aria-label={unread > 0 ? `การแจ้งเตือน ${unread} รายการใหม่` : "การแจ้งเตือน"}
         aria-expanded={open}
-        style={worst ? { color: LEVEL_COLORS[worst] } : undefined}
+        style={{ color: bellColor }}
       >
-        <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor"
-          strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        {/* ไอคอนกินราวสองในสามของกรอบ ไม่ใช่ครึ่งเดียวเหมือนเดิม
+            ที่ว่างรอบเยอะเกินทำให้ระฆังดูเล็กทั้งที่กรอบใหญ่พอแล้ว */}
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor"
+          strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.7 21a2 2 0 0 1-3.4 0" />
         </svg>
