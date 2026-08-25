@@ -133,15 +133,18 @@
   display: flex;
 }
 
+/* ใหญ่กว่าปุ่มข้าง ๆ ที่สูง 37 พิกเซลโดยตั้งใจ
+   เพราะเป็นสิ่งที่ต้องเหลือบเห็นว่ามีอะไรใหม่ไหม ไม่ใช่ปุ่มที่ตั้งใจจะกด
+   แถบเมนูจัดกึ่งกลางแนวตั้งอยู่แล้ว ปุ่มที่สูงกว่าจึงไม่ทำให้แถวเอียง */
 .bell-button {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: 9px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
   /* ปุ่มไม่รับสีจากกล่องที่ครอบเหมือนแท็กอื่น ต้องสั่งให้รับเอง
@@ -164,17 +167,17 @@
 
 .bell-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
   border-radius: 99px;
   /* ขอบสีพื้นหลังทำให้ตัวเลขไม่จมไปกับขอบปุ่มที่เรืองอยู่ */
   border: 2px solid var(--bg);
   color: #14100a;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 700;
   line-height: 1;
   display: flex;
@@ -184,7 +187,9 @@
 
 .bell-panel {
   position: absolute;
-  top: 42px;
+  /* 44 คือความสูงของปุ่มระฆัง บวกช่องไฟ 8
+     ถ้าเปลี่ยนขนาดปุ่มต้องแก้ตรงนี้ตาม ไม่งั้นแผงจะเหลื่อมทับปุ่ม */
+  top: 52px;
   right: 0;
   z-index: 60;
   width: 320px;
@@ -298,7 +303,10 @@
 @media (max-width: 520px) {
   .bell-panel {
     position: fixed;
-    top: 62px;
+    /* วัดจากความสูงจริงของแถบเมนู ไม่ใช่ตัวเลขตายตัว
+       เพราะบนจอแคบแถบเมนูตัดขึ้นบรรทัดที่สอง ความสูงจึงไม่คงที่
+       ตัวเลขตายตัวที่พอดีกับแถวเดียวจะไปทับระฆังเมื่อแถบสูงขึ้น */
+    top: calc(100% + 8px);
     left: 12px;
     right: 12px;
     width: auto;
