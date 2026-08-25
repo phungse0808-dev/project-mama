@@ -79,10 +79,6 @@ export function list(now: Date = new Date()): Notice[] {
   return prune(read(), now);
 }
 
-export function unreadCount(now: Date = new Date()): number {
-  return list(now).filter((item) => !item.read).length;
-}
-
 /** สีของระฆัง เลือกจากรายการที่ยังไม่ได้อ่านที่แรงที่สุด
  *
  * คืน null เมื่ออ่านหมดแล้ว ให้ระฆังเป็นสีจาง
@@ -95,10 +91,6 @@ export function worstOf(items: Notice[]): NoticeLevel | null {
     (worst, item) => (SEVERITY.indexOf(item.level) > SEVERITY.indexOf(worst) ? item.level : worst),
     unread[0].level,
   );
-}
-
-export function highestUnread(now: Date = new Date()): NoticeLevel | null {
-  return worstOf(list(now));
 }
 
 /**
@@ -120,8 +112,4 @@ export function markAllRead(now: Date = new Date()): Notice[] {
   const items = list(now).map((item) => ({ ...item, read: true }));
   write(items);
   return items;
-}
-
-export function clearAll(): void {
-  write([]);
 }

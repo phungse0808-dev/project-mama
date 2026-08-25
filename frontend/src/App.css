@@ -555,10 +555,6 @@ button {
 .forecast-caption,
 .rain-stat-label,
 .health-label,
-.calibration-label {
-  font-family: var(--font-mono);
-  letter-spacing: 0.8px;
-}
 
 /* ---------- ปุ่มช่วงเวลา ---------- */
 
@@ -581,8 +577,6 @@ button {
 .personal-value,
 .health-value,
 .ranking-value,
-.calibration-value,
-.hour-value,
 .alert-count,
 .home-stat-value,
 .level-segment,
@@ -1645,50 +1639,6 @@ button {
   color: var(--text-soft);
 }
 
-/* ---------- ส่วนที่ยังไม่พร้อมใช้งาน ---------- */
-
-.pending-box {
-  background: #f8f9fc;
-  border: 1px dashed var(--border-strong);
-  border-radius: 12px;
-  padding: 20px 22px;
-  font-size: 13.5px;
-  line-height: 1.75;
-  color: var(--text-soft);
-}
-
-.pending-title {
-  margin: 0 0 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.pending-box p { margin: 0 0 12px; }
-
-.pending-steps {
-  margin: 0 0 12px;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.pending-box code {
-  background: var(--border);
-  padding: 2px 7px;
-  border-radius: 5px;
-  font-size: 12px;
-  color: var(--text);
-}
-
-.pending-warn {
-  margin: 0;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  color: #f0a326;
-}
-
 .disease-table {
   margin-top: 14px;
   border-radius: 10px;
@@ -1855,11 +1805,6 @@ button {
   margin-bottom: 20px;
 }
 
-/* กล่องขวาแคบกว่า วางตัวเลขซ้อนกันแทนการเรียงข้าง */
-.home-stats-stacked {
-  grid-template-columns: 1fr;
-}
-
 .home-stats > div {
   background: var(--bg-soft, var(--surface-2));
   border-radius: 10px;
@@ -1871,10 +1816,6 @@ button {
   font-size: 23px;
   font-weight: 700;
   letter-spacing: -0.5px;
-}
-
-.home-stat-text {
-  font-size: 17px;
 }
 
 .home-stat-label {
@@ -2176,55 +2117,6 @@ button {
   .rain-summary {
     flex-direction: column;
   }
-}
-
-/* ---------- กล่องแจ้งข้อจำกัดของข้อมูล ---------- */
-
-/* ใช้สีเหลืองอ่อนแทนสีขาวเหมือนแผงอื่น เพื่อให้แยกออกทันทีว่าไม่ใช่กล่องข้อมูล
-   แต่เป็นคำเตือนที่ต้องอ่านก่อน ใช้เหลืองไม่ใช่แดง เพราะไม่ใช่ข้อผิดพลาด
-   เป็นข้อจำกัดที่รู้อยู่แล้วและยอมรับได้ถ้าตีความให้ถูก */
-.notice {
-  background: #241f14;
-  border-color: #3d3423;
-}
-
-.notice .panel-title::before {
-  background: linear-gradient(180deg, #e59500, #f5c04a);
-}
-
-.notice-list {
-  margin: 0;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  font-size: 14px;
-}
-
-.notice-list li::marker {
-  color: #f0b64a;
-  font-weight: 700;
-}
-
-.notice-list strong {
-  display: block;
-  margin-bottom: 3px;
-}
-
-.notice-list p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.65;
-  color: var(--text-soft);
-}
-
-.notice-foot {
-  margin: 16px 0 0;
-  padding-top: 13px;
-  border-top: 1px solid #3d3423;
-  font-size: 12.5px;
-  line-height: 1.7;
-  color: var(--text-soft);
 }
 
 .landing-result-dot {
