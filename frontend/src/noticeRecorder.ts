@@ -74,7 +74,26 @@ export function recordDigest(
   forecast: Pm25Forecast | null,
   weather: WeatherNow | null,
   at: Date = new Date(),
+  message: { title: string; body: string } | null = null,
 ): void {
+  // ไม่มีจังหวัด ใช้ข้อความที่ประกอบไว้แล้วซึ่งเป็นภาพรวมทั้งประเทศ
+  // เพราะข้อมูลรายจังหวัดที่ฟังก์ชันนี้ต้องใช้ไม่มีให้ในกรณีนั้น
+  if (!province) {
+    if (!message) return;
+    const key = `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, "0")}-${String(at.getDate()).padStart(2, "0")}`;
+    add(
+      {
+        id: `digest-${key}-ทั้งประเทศ`,
+        level: "good",
+        title: "สรุปวันนี้ · ทั้งประเทศ",
+        detail: message.body.split("\n")[0],
+        at: at.toISOString(),
+      },
+      at,
+    );
+    return;
+  }
+
   const today = forecast?.available ? forecast.days?.find((day) => day.is_today) : undefined;
   const now = weather?.available ? weather : null;
   if (!today && !now) return;

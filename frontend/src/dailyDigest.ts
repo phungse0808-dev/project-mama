@@ -21,7 +21,7 @@
  */
 
 import { api } from "./api";
-import type { PersonalSummary, Pm25Forecast, RainChance, WeatherNow } from "./api";
+import type { PersonalSummary, Pm25Forecast, RainChance, Summary, WeatherNow } from "./api";
 import { recordDigest } from "./noticeRecorder";
 
 const SETTINGS_KEY = "pm25.digest.settings";
@@ -137,11 +137,14 @@ function whole(value: number): string {
 }
 
 type DigestSource = {
+  /** ว่างแปลว่าสรุปภาพรวมทั้งประเทศ */
   province: string;
   forecast: Pm25Forecast | null;
   weather: WeatherNow | null;
   rain: RainChance | null;
   personal: PersonalSummary | null;
+  /** ใช้เฉพาะตอนไม่มีจังหวัด เพราะพยากรณ์รายจังหวัดใช้ไม่ได้ */
+  national: Summary | null;
 };
 
 export type DigestMessage = { title: string; body: string };
@@ -153,10 +156,27 @@ export type DigestMessage = { title: string; body: string };
  * และเพื่อให้เห็นชัดว่าข้อความที่ผู้ใช้เห็นประกอบขึ้นจากอะไรบ้าง
  */
 export function buildMessage(source: DigestSource): DigestMessage | null {
-  const { province, forecast, weather, rain, personal } = source;
+  const { province, forecast, weather, rain, personal, national } = source;
 
   const today = forecast?.available ? forecast.days?.find((day) => day.is_today) : undefined;
   const now = weather?.available ? weather : null;
+
+  // ยังไม่ได้ตั้งจังหวัด ใช้ภาพรวมทั้งประเทศแทน
+  //
+  // เดิมกรณีนี้เงียบไปเลย ไม่แจ้ง ไม่ลงระฆัง และไม่บอกด้วยว่าทำไม
+  // ซึ่งเป็นความผิดพลาดที่ผู้ใช้หาสาเหตุเองไม่ได้ เพราะดูจากหน้าจอไม่ออก
+  // การมีข้อมูลทั้งประเทศให้ดูดีกว่าการไม่ได้อะไรเลย
+  //
+  // ไม่มีอุณหภูมิในกรณีนี้ เพราะอุณหภูมิเฉลี่ยของทั้งประเทศไม่ได้บอกอะไรกับใคร
+  if (!province) {
+    if (national?.pm25_avg == null) return null;
+    const lines = [`ทั้งประเทศ · จาก ${national.stations_reporting} สถานี`];
+    if (national.level) lines[0] = `ทั้งประเทศ · ระดับ${national.level.label_th}`;
+    const advice = personal?.my_advice?.advice_th;
+    if (advice) lines.push(advice);
+    lines.push("ตั้งจังหวัดของคุณในแผงคำแนะนำ เพื่อดูค่าของพื้นที่ตัวเองแทนค่าเฉลี่ยรวม");
+    return { title: `ฝุ่นทั้งประเทศ ${national.pm25_avg}`, body: lines.join("\n") };
+  }
 
   // ไม่มีทั้งค่าฝุ่นและอุณหภูมิก็ไม่เหลืออะไรให้บอก
   if (!today && !now) return null;
@@ -251,33 +271,35 @@ export async function sendIfDue(
 ): Promise<boolean> {
   if (!isDue(settings, now)) return false;
 
+  // ว่างได้ แปลว่าสรุปภาพรวมทั้งประเทศแทนการไม่ทำอะไรเลย
   const province = settings.province || fallbackProvince;
-  if (!province) return false;
 
   // จองสิทธิ์ก่อนไปดึงข้อมูล กันการยิงซ้อนกันเมื่อมีหลายจุดเรียกพร้อมกัน
   // ถ้าดึงข้อมูลล้มเหลวจะคืนสิทธิ์กลับไป ให้รอบถัดไปได้ลองใหม่
   markSent(now);
 
   try {
-    const [forecast, weather, rain, personal] = await Promise.all([
-      api.pm25Forecast(province, null).catch(() => null),
-      api.weatherNow(province).catch(() => null),
-      api.rainChance(province).catch(() => null),
+    const [forecast, weather, rain, personal, national] = await Promise.all([
+      province ? api.pm25Forecast(province, null).catch(() => null) : Promise.resolve(null),
+      province ? api.weatherNow(province).catch(() => null) : Promise.resolve(null),
+      province ? api.rainChance(province).catch(() => null) : Promise.resolve(null),
       // คำแนะนำตามกลุ่มเสี่ยงที่ผู้ใช้ตั้งไว้ ถ้ายังไม่ได้เข้าระบบก็ข้ามไป
       // ข้อความยังใช้ได้อยู่ แค่ไม่มีบรรทัดคำแนะนำเฉพาะตัว
       userId != null
         ? api.personalSummary(userId).catch(() => null)
         : Promise.resolve(null as PersonalSummary | null),
+      // ดึงเฉพาะตอนไม่มีจังหวัด จะได้ไม่เรียกเซิร์ฟเวอร์เกินจำเป็น
+      province ? Promise.resolve(null) : api.summary(null).catch(() => null),
     ]);
 
-    const message = buildMessage({ province, forecast, weather, rain, personal });
+    const message = buildMessage({ province, forecast, weather, rain, personal, national });
     if (!message) {
       clearLastSent();
       return false;
     }
 
     // ลงระฆังก่อนเสมอ เพราะเป็นส่วนที่ทุกคนเห็นได้โดยไม่ต้องขออนุญาต
-    recordDigest(province, forecast, weather, now);
+    recordDigest(province, forecast, weather, now, message);
 
     if (canPopUp(settings)) {
       new Notification(message.title, {
