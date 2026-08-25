@@ -103,13 +103,14 @@ export function NotificationBell() {
         aria-expanded={open}
         style={{ color: bellColor }}
       >
-        {/* ไอคอนกินราวสองในสามของกรอบ ไม่ใช่ครึ่งเดียวเหมือนเดิม
-            ที่ว่างรอบเยอะเกินทำให้ระฆังดูเล็กทั้งที่กรอบใหญ่พอแล้ว */}
-        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor"
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
           strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.7 21a2 2 0 0 1-3.4 0" />
         </svg>
+        {/* เขียนคำกำกับไว้ เพราะไอคอนอย่างเดียวต้องรู้อยู่ก่อนว่ามันคืออะไรถึงจะหาเจอ
+            คำอ่านออกได้เลยโดยไม่ต้องเดา และทำให้ปุ่มกว้างขึ้นจนสะดุดตากว่าเดิมด้วย */}
+        <span className="bell-label">แจ้งเตือน</span>
         {unread > 0 && (
           <span className="bell-badge" style={{ background: LEVEL_COLORS[worst ?? "info"] }}>
             {unread > 9 ? "9+" : unread}

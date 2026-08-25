@@ -138,12 +138,12 @@
    แถบเมนูจัดกึ่งกลางแนวตั้งอยู่แล้ว ปุ่มที่สูงกว่าจึงไม่ทำให้แถวเอียง */
 .bell-button {
   position: relative;
-  width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  gap: 8px;
+  padding: 0 15px;
   border-radius: 12px;
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
@@ -159,6 +159,13 @@
   transition: border-color 0.15s, color 0.15s;
 }
 
+/* คำกำกับใช้ขนาดและน้ำหนักเดียวกับปุ่มข้าง ๆ ให้ดูเป็นชุดเดียวกัน
+   ต่างกันแค่สีที่สว่างกว่า ซึ่งเป็นตัวที่ทำให้หาเจอ */
+.bell-label {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .bell-button:hover {
   border-color: var(--accent);
 }
@@ -172,8 +179,8 @@
 
 .bell-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: -7px;
+  right: -7px;
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
