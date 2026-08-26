@@ -182,7 +182,7 @@ export function HomePage({
 
       {/* วางไว้หน้าหลักเพราะตอบคำถามว่าตัวเลขที่เห็นแปลว่าอะไร
           ซึ่งเป็นสิ่งแรกที่คนเปิดมาอยากรู้ ก่อนจะกดเข้าไปดูรายละเอียด */}
-      <DiseaseRisk current={summary?.pm25_avg ?? null} />
+      <DiseaseRisk summary={summary} />
     </div>
   );
 }

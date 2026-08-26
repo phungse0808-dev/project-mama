@@ -2233,149 +2233,72 @@ button {
   opacity: 0.9;
 }
 
-/* ---------- กราฟโรคที่มากับฝุ่น ---------- */
+/* ---------- โรคที่มากับฝุ่น ---------- */
 
-.drisk-top {
+/* บรรทัดตัวตั้ง วางค่าฝุ่นที่วัดได้ไว้เหนือผลลัพธ์
+   ผู้อ่านจะได้เห็นทั้งตัวตั้งและผลในสายตาเดียว */
+.drisk-source-value {
   display: flex;
-  align-items: center;
-  gap: 26px;
-  margin-top: 14px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 15px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--border);
 }
 
-.drisk-donut {
-  flex: none;
-  width: 172px;
+.drisk-scope {
+  font-size: 12.5px;
+  color: var(--text-soft);
 }
 
-.drisk-donut svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-/* ตัวหนังสือกลางวงแหวนวาดอยู่ใน svg จึงกำหนดขนาดเป็นหน่วยของ viewBox
-   ไม่ใช่พิกเซลจริง เลขจะย่อขยายไปพร้อมวงแหวนเสมอ */
-.drisk-donut-value {
-  fill: var(--text);
+.drisk-pm {
   font-family: var(--font-mono);
-  font-size: 25px;
+  font-size: 22px;
   font-weight: 600;
+  color: var(--text);
 }
 
-.drisk-donut-unit {
-  fill: var(--text-dim);
-  font-size: 10px;
-}
-
-.drisk-legend {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  flex: 1;
-  min-width: 0;
-}
-
-.drisk-legend li {
-  display: grid;
-  grid-template-columns: 9px minmax(0, 150px) 1fr auto auto;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 0;
-}
-
-.drisk-legend li + li {
-  border-top: 1px solid var(--border);
-}
-
-.drisk-swatch {
-  width: 9px;
-  height: 9px;
+.drisk-level-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
+  align-self: center;
   box-shadow: 0 0 8px currentColor;
 }
 
-.drisk-legend-name {
-  font-size: 12.5px;
-  color: var(--text-soft);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* แถบเทียบสัดส่วน ทำให้เห็นว่าสามกลุ่มแรกพอ ๆ กันโดยไม่ต้องอ่านตัวเลข
-   เป็นการอ่านซ้ำสิ่งที่วงแหวนบอก แต่เรียงเป็นแถวจึงเทียบกันได้ตรงกว่า */
-.drisk-legend-track {
-  height: 6px;
-  border-radius: 99px;
-  background: rgba(120, 150, 190, 0.09);
-  overflow: hidden;
-}
-
-.drisk-legend-bar {
-  display: block;
-  height: 100%;
-  border-radius: 99px;
-  opacity: 0.85;
-}
-
-.drisk-legend-count {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  color: var(--text);
-  text-align: right;
-  min-width: 58px;
-}
-
-.drisk-legend-share {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-dim);
-  text-align: right;
-  min-width: 42px;
-}
-
-.drisk-curve-head {
-  margin-top: 22px;
-  padding-top: 15px;
-  border-top: 1px solid var(--border);
-}
-
-.drisk-curve-title {
-  margin: 0;
+.drisk-level {
   font-size: 13.5px;
-  color: var(--text);
+  color: var(--text-soft);
 }
 
-.drisk-curve-sub {
-  margin: 3px 0 0;
+/* ดันไปชิดขวาเมื่อมีที่พอ พอจอแคบจะตกลงมาเป็นบรรทัดใหม่เอง */
+.drisk-standing {
+  margin-left: auto;
   font-size: 11.5px;
   color: var(--text-dim);
 }
 
-/* ป้ายบอกค่าปัจจุบันมีแถวของตัวเองเหนือกราฟ
-   เพราะเส้นโค้งยกสูงขึ้นไปทางขวา ถ้าป้ายเกาะจุดจะไปทับเส้นเมื่อค่าฝุ่นสูง */
-.drisk-tag-row {
-  position: relative;
-  height: 24px;
-  margin-top: 12px;
+.drisk-headline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 15px 0 12px;
 }
 
-.drisk-now-tag {
-  position: absolute;
-  top: 0;
-  transform: translateX(-50%);
-  padding: 3px 10px;
-  border-radius: 99px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-2);
-  font-size: 11px;
-  color: var(--text-soft);
-  white-space: nowrap;
-}
-
-.drisk-now-tag strong {
-  font-family: var(--font-mono);
+.drisk-headline-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14.5px;
   color: var(--text);
+}
+
+.drisk-headline-value {
+  font-family: var(--font-mono);
+  font-size: 27px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
 }
 
 .drisk-chart {
@@ -2431,35 +2354,15 @@ button {
   color: var(--text-dim);
 }
 
-.drisk-source strong {
-  color: var(--text-soft);
-}
-
-/* จอแคบ วงแหวนกับรายการซ้อนกันไม่พอ ย้ายวงแหวนขึ้นไปอยู่บรรทัดบน
-   และตัดคอลัมน์แถบเทียบสัดส่วนออก เหลือชื่อกับตัวเลขซึ่งจำเป็นกว่า */
-@media (max-width: 620px) {
-  .drisk-top {
-    flex-direction: column;
-    gap: 16px;
+@media (max-width: 560px) {
+  /* จอแคบ ข้อความเทียบเกณฑ์ยาวเกินกว่าจะอยู่ท้ายบรรทัดเดียวกับตัวเลข
+     ให้ตกลงมาเป็นบรรทัดของตัวเองแล้วชิดซ้ายตามปกติ */
+  .drisk-standing {
+    margin-left: 0;
+    flex-basis: 100%;
   }
 
-  .drisk-donut {
-    width: 150px;
-  }
-
-  .drisk-legend {
-    width: 100%;
-  }
-
-  .drisk-legend li {
-    grid-template-columns: 9px 1fr auto auto;
-  }
-
-  .drisk-legend-track {
-    display: none;
-  }
-
-  .drisk-legend-name {
-    white-space: normal;
+  .drisk-headline-value {
+    font-size: 23px;
   }
 }
