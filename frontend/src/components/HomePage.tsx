@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Summary, WeatherNow } from "../api";
-import { HealthThresholds } from "./HealthThresholds";
+import { DiseaseRisk } from "./DiseaseRisk";
 import { WeatherIcon } from "./WeatherIcon";
 
 type Props = {
@@ -182,7 +182,7 @@ export function HomePage({
 
       {/* วางไว้หน้าหลักเพราะตอบคำถามว่าตัวเลขที่เห็นแปลว่าอะไร
           ซึ่งเป็นสิ่งแรกที่คนเปิดมาอยากรู้ ก่อนจะกดเข้าไปดูรายละเอียด */}
-      <HealthThresholds current={summary?.pm25_avg ?? null} />
+      <DiseaseRisk current={summary?.pm25_avg ?? null} />
     </div>
   );
 }

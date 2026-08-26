@@ -2233,41 +2233,180 @@ button {
   opacity: 0.9;
 }
 
-/* ---------- กราฟค่าฝุ่นเท่าไหร่เริ่มกระทบใคร ---------- */
+/* ---------- กราฟโรคที่มากับฝุ่น ---------- */
 
-/* แถบสเกลใช้ทรงเดียวกับแถบช่วงอุณหภูมิในการ์ดสภาพอากาศ
-   ทั้งความหนา ความมน จุดขาวขอบเข้ม และแสงเรือง
-   เพื่อให้ทั้งเว็บพูดภาษาภาพเดียวกัน ไม่ใช่ต่างคนต่างมีสไตล์ */
-.threshold-scale {
-  position: relative;
-  height: 7px;
-  border-radius: 99px;
-  margin-top: 6px;
-  box-shadow: 0 0 14px rgba(94, 200, 255, 0.18);
+.drisk-top {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-top: 14px;
 }
 
-/* ขอบสีพื้นหลังรอบจุด ทำให้จุดยังเห็นชัดตอนเลื่อนไปทับส่วนที่สว่างของแถบ */
-.threshold-dot {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 13px;
-  height: 13px;
+.drisk-donut {
+  flex: none;
+  width: 172px;
+}
+
+.drisk-donut svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ตัวหนังสือกลางวงแหวนวาดอยู่ใน svg จึงกำหนดขนาดเป็นหน่วยของ viewBox
+   ไม่ใช่พิกเซลจริง เลขจะย่อขยายไปพร้อมวงแหวนเสมอ */
+.drisk-donut-value {
+  fill: var(--text);
+  font-family: var(--font-mono);
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.drisk-donut-unit {
+  fill: var(--text-dim);
+  font-size: 10px;
+}
+
+.drisk-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.drisk-legend li {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 150px) 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+}
+
+.drisk-legend li + li {
+  border-top: 1px solid var(--border);
+}
+
+.drisk-swatch {
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.drisk-legend-name {
+  font-size: 12.5px;
+  color: var(--text-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* แถบเทียบสัดส่วน ทำให้เห็นว่าสามกลุ่มแรกพอ ๆ กันโดยไม่ต้องอ่านตัวเลข
+   เป็นการอ่านซ้ำสิ่งที่วงแหวนบอก แต่เรียงเป็นแถวจึงเทียบกันได้ตรงกว่า */
+.drisk-legend-track {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(120, 150, 190, 0.09);
+  overflow: hidden;
+}
+
+.drisk-legend-bar {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  opacity: 0.85;
+}
+
+.drisk-legend-count {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text);
+  text-align: right;
+  min-width: 58px;
+}
+
+.drisk-legend-share {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: right;
+  min-width: 42px;
+}
+
+.drisk-curve-head {
+  margin-top: 22px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border);
+}
+
+.drisk-curve-title {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.drisk-curve-sub {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+/* ป้ายบอกค่าปัจจุบันมีแถวของตัวเองเหนือกราฟ
+   เพราะเส้นโค้งยกสูงขึ้นไปทางขวา ถ้าป้ายเกาะจุดจะไปทับเส้นเมื่อค่าฝุ่นสูง */
+.drisk-tag-row {
+  position: relative;
+  height: 24px;
+  margin-top: 12px;
+}
+
+.drisk-now-tag {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  font-size: 11px;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.drisk-now-tag strong {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.drisk-chart {
+  position: relative;
+  height: 128px;
+}
+
+.drisk-chart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.drisk-now {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(-50%, 50%);
   background: var(--text);
   border: 2.5px solid var(--bg);
   box-shadow: 0 0 12px rgba(234, 246, 255, 0.75);
 }
 
-/* ตัวเลขกำกับแกน วางตรงจุดเปลี่ยนระดับพอดี
-   เลื่อนซ้ายครึ่งตัวให้เลขอยู่กึ่งกลางรอยต่อ ไม่ใช่ชิดขวาของช่วง */
-.threshold-ticks {
+.drisk-axis {
   position: relative;
-  height: 15px;
-  margin: 9px 0 4px;
+  height: 16px;
+  margin-top: 7px;
 }
 
-.threshold-ticks span {
+.drisk-axis span {
   position: absolute;
   transform: translateX(-50%);
   font-family: var(--font-mono);
@@ -2276,155 +2415,51 @@ button {
 }
 
 /* ตัวสุดท้ายชิดขอบขวา ถ้าจัดกึ่งกลางเหมือนตัวอื่นจะล้นออกนอกแผง */
-.threshold-tick-end {
+.drisk-axis-end {
   right: 0;
   left: auto;
   transform: none !important;
   color: var(--text-dim);
 }
 
-.threshold-band {
-  margin-top: 16px;
-}
-
-.threshold-band-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 6px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.9px;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-/* ชุดที่ค่าปัจจุบันเลยจุดเริ่มไปแล้ว สว่างขึ้นให้เห็นว่ากำลังโดนอยู่ */
-.threshold-band-head.reached {
-  color: #ffe98a;
-}
-
-.threshold-band-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex: none;
-  box-shadow: 0 0 7px currentColor;
-}
-
-.threshold-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.threshold-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 0;
-}
-
-.threshold-name {
-  width: 168px;
-  flex: none;
-  font-size: 12px;
-  color: var(--text-soft);
-  text-align: right;
-}
-
-.threshold-row.hit .threshold-name {
-  color: var(--text);
-}
-
-.threshold-track {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  height: 8px;
-  border-radius: 99px;
-  background: rgba(120, 150, 190, 0.08);
-}
-
-.threshold-bar {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  border-radius: 99px;
-  opacity: 0.72;
-}
-
-.threshold-row.hit .threshold-bar {
-  opacity: 1;
-}
-
-/* เส้นค่าปัจจุบันวาดซ้ำในทุกแถว ไม่ใช่เส้นเดียวลากทับ
-   เพราะความสูงของแต่ละแถวเปลี่ยนได้เมื่อชื่อกลุ่มตัดบรรทัดบนจอแคบ
-   เส้นเดียวจะไม่ตรงกับแถบทุกแถว
-
-   บางและจางกว่าจุดบนแถบสเกล เพราะเป็นแค่เส้นอ้างอิงซ้ำ
-   ตัวที่ควรสะดุดตาคือจุดขาวบนแถบสเกลตัวเดียว */
-.threshold-now {
-  position: absolute;
-  top: -6px;
-  bottom: -6px;
-  width: 1.5px;
-  transform: translateX(-50%);
-  background: rgba(234, 246, 255, 0.6);
-}
-
-.threshold-value {
-  width: 30px;
-  flex: none;
-  text-align: right;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-.threshold-note {
-  margin: 18px 0 0;
+.drisk-source {
+  margin: 16px 0 0;
   padding-top: 13px;
   border-top: 1px solid var(--border);
-  font-size: 12.5px;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--text-dim);
+}
+
+.drisk-source strong {
   color: var(--text-soft);
 }
 
-.threshold-note strong {
-  color: var(--text);
-  font-family: var(--font-mono);
-}
-
-.threshold-gap {
-  color: var(--text-dim);
-}
-
-.threshold-source {
-  margin: 9px 0 0;
-  font-size: 11px;
-  line-height: 1.7;
-  color: var(--text-dim);
-}
-
-/* จอแคบ ชื่อกลุ่มยาวเกินกว่าจะอยู่คอลัมน์เดียวกับแถบ ย้ายขึ้นบรรทัดบน */
-@media (max-width: 560px) {
-  .threshold-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 4px 8px;
-    padding: 8px 0;
+/* จอแคบ วงแหวนกับรายการซ้อนกันไม่พอ ย้ายวงแหวนขึ้นไปอยู่บรรทัดบน
+   และตัดคอลัมน์แถบเทียบสัดส่วนออก เหลือชื่อกับตัวเลขซึ่งจำเป็นกว่า */
+@media (max-width: 620px) {
+  .drisk-top {
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .threshold-name {
-    width: auto;
-    text-align: left;
+  .drisk-donut {
+    width: 150px;
   }
 
-  .threshold-track {
-    grid-column: 1 / -1;
+  .drisk-legend {
+    width: 100%;
   }
 
-  .threshold-value {
-    width: auto;
+  .drisk-legend li {
+    grid-template-columns: 9px 1fr auto auto;
+  }
+
+  .drisk-legend-track {
+    display: none;
+  }
+
+  .drisk-legend-name {
+    white-space: normal;
   }
 }

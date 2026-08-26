@@ -58,18 +58,6 @@ _AQI_UPPER = (25, 50, 100, 200)
 _PM25_UPPER = (15.0, 25.0, 37.5, 75.0)
 
 
-def level_floor_pm25(level_key: str) -> float:
-    """ค่า PM2.5 ต่ำสุดที่เข้าระดับนั้น
-
-    ระดับแรกเริ่มที่ศูนย์ ระดับถัดไปเริ่มที่ขอบบนของระดับก่อนหน้า
-    ใช้ตอนวาดเส้นบอกว่าแต่ละกลุ่มเริ่มได้รับผลกระทบที่ค่าเท่าไหร่
-    """
-    for index, level in enumerate(LEVELS):
-        if level.key == level_key:
-            return 0.0 if index == 0 else _PM25_UPPER[index - 1]
-    return 0.0
-
-
 def level_from_aqi(aqi: int | None) -> AqiLevel | None:
     """แปลงค่า AQI เป็นระดับคุณภาพอากาศ"""
     if aqi is None or aqi < 0:

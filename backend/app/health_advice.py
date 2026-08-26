@@ -103,62 +103,6 @@ _ADVICE: dict[str, dict[str, str]] = {
 }
 
 
-# ระดับแรกที่คำแนะนำของกลุ่มนั้นเลิกเป็น "ทำได้ตามปกติ"
-#
-# ที่มาของค่าเหล่านี้
-#     ไม่ได้กำหนดขึ้นใหม่ แต่อ่านออกมาจากตาราง _ADVICE ข้างบนโดยตรง
-#     คือดูว่าแต่ละกลุ่ม คำแนะนำเปลี่ยนจากทำได้ตามปกติเป็นให้ระวังหรือให้ลด
-#     ครั้งแรกที่ระดับไหน แล้วใช้ระดับนั้นเป็นจุดเริ่ม
-#
-#     ทำแบบนี้เพื่อให้กราฟที่แสดงบนหน้าเว็บพูดตรงกับคำแนะนำที่ระบบให้อยู่แล้ว
-#     ไม่ใช่การอ้างข้อมูลทางการแพทย์ชุดใหม่ที่ยังไม่ได้ตรวจสอบ
-#
-# ถ้าแก้ตาราง _ADVICE ต้องกลับมาดูตรงนี้ด้วย ไม่งั้นกราฟจะไม่ตรงกับคำแนะนำ
-_ONSET_LEVEL: dict[str, str] = {
-    # "ควรสังเกตอาการไอหรือหายใจครืดคราด" ปรากฏตั้งแต่ระดับดี
-    "children": "good",
-    # "หากเริ่มมีอาการผิดปกติให้ลดกิจกรรมกลางแจ้ง" ปรากฏตั้งแต่ระดับดี
-    "respiratory": "good",
-    # "สังเกตอาการไอหรือมีไข้ซึ่งอาจเป็นสัญญาณการติดเชื้อ" ปรากฏตั้งแต่ระดับดี
-    "immunocompromised": "good",
-    # กลุ่มที่เหลือยังเป็นทำได้ตามปกติที่ระดับดี และเริ่มให้ลดที่ระดับปานกลาง
-    "elderly": "moderate",
-    "pregnant": "moderate",
-    "cardiac": "moderate",
-    "outdoor": "moderate",
-    "general": "moderate",
-}
-
-
-def onset_thresholds() -> list[dict]:
-    """ค่าฝุ่นที่คำแนะนำของแต่ละกลุ่มเริ่มเปลี่ยนจากทำได้ตามปกติ
-
-    เรียงจากกลุ่มที่ได้รับผลกระทบเร็วที่สุดไปช้าที่สุด
-    เพื่อให้กราฟอ่านได้จากบนลงล่างว่าใครเปราะบางกว่ากัน
-    """
-    from app.aqi import LEVELS, level_floor_pm25
-
-    by_key = {level.key: level for level in LEVELS}
-
-    rows = []
-    for group in RISK_GROUPS:
-        key = _ONSET_LEVEL.get(group.key, "moderate")
-        level = by_key.get(key)
-        rows.append(
-            {
-                "key": group.key,
-                "label_th": group.label_th,
-                "sensitive": group.sensitive,
-                "onset_pm25": level_floor_pm25(key),
-                "level_key": key,
-                "level_label_th": level.label_th if level else None,
-                "color": level.color if level else None,
-            }
-        )
-    rows.sort(key=lambda row: (row["onset_pm25"], not row["sensitive"]))
-    return rows
-
-
 def advice_for(level_key: str | None) -> list[dict]:
     """คำแนะนำของทุกกลุ่มเสี่ยง ณ ระดับคุณภาพอากาศที่กำหนด"""
     table = _ADVICE.get(level_key or "", {})

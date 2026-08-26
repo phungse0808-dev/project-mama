@@ -18,12 +18,10 @@ from sqlmodel import Session, col, desc, func, select
 from app import collector
 from app.config import CORS_ORIGINS
 from app.db import create_db_and_tables, get_session
-from app.aqi import LEVELS, level_floor_pm25
 from app.health_advice import (
     RISK_GROUPS,
     THAI_STANDARD_PM25,
     WHO_GUIDELINE_PM25,
-    onset_thresholds,
 )
 from app.live import refresh_if_stale
 from app.models import Station
@@ -320,26 +318,6 @@ def get_personal_summary(user_id: int, session: Session = Depends(get_session)) 
     if result is None:
         raise HTTPException(status_code=404, detail="ไม่พบผู้ใช้")
     return result
-
-
-@app.get("/api/health-thresholds", tags=["สุขภาพ"])
-def get_health_thresholds() -> dict:
-    """ค่าฝุ่นที่คำแนะนำของแต่ละกลุ่มเริ่มเปลี่ยนจากทำได้ตามปกติ
-
-    ใช้วาดกราฟบอกว่าค่าฝุ่นระดับไหนเริ่มกระทบใคร
-
-    ค่าเหล่านี้อ่านมาจากตารางคำแนะนำที่ระบบใช้อยู่แล้ว ไม่ใช่ข้อมูลชุดใหม่
-    กราฟจึงพูดตรงกับคำแนะนำที่ผู้ใช้เห็นในหน้าคำแนะนำเสมอ
-    """
-    return {
-        "thai_standard": THAI_STANDARD_PM25,
-        "who_guideline": WHO_GUIDELINE_PM25,
-        "levels": [
-            {"key": lv.key, "label_th": lv.label_th, "color": lv.color, "floor": level_floor_pm25(lv.key)}
-            for lv in LEVELS
-        ],
-        "groups": onset_thresholds(),
-    }
 
 
 @app.get("/api/risk-groups", tags=["ข้อมูลพื้นฐาน"])
