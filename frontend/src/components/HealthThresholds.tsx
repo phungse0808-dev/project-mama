@@ -55,73 +55,111 @@ export function HealthThresholds({ current }: Props) {
   const affected =
     current == null ? 0 : data.groups.filter((g) => current >= g.onset_pm25).length;
 
+  // รวมกลุ่มที่เริ่มระวังที่ค่าเดียวกันไว้ด้วยกัน
+  //
+  // สาระของกราฟคือมีบางกลุ่มเริ่มเร็วกว่าคนอื่น การแบ่งหัวข้อให้เห็น
+  // ทำให้อ่านออกทันที ต่างจากการเรียงแปดแถวรวดซึ่งต้องไล่อ่านตัวเลขทีละแถว
+  const bands: { onset: number; label: string | null; color: string | null; groups: typeof data.groups }[] = [];
+  for (const group of data.groups) {
+    const last = bands[bands.length - 1];
+    if (last && last.onset === group.onset_pm25) last.groups.push(group);
+    else
+      bands.push({
+        onset: group.onset_pm25,
+        label: group.level_label_th,
+        color: group.color,
+        groups: [group],
+      });
+  }
+
+  // แถบไล่สีของสเกล ประกอบจากขอบของแต่ละระดับ
+  //
+  // ใช้ hard stop คือจบสีเดิมแล้วเริ่มสีใหม่ที่ตำแหน่งเดียวกัน
+  // เพื่อให้เห็นขอบของระดับชัด ไม่ใช่ไล่สีต่อเนื่องจนไม่รู้ว่าเปลี่ยนระดับตรงไหน
+  const stops = data.levels
+    .map((level, index) => {
+      const from = pos(level.floor);
+      const next = data.levels[index + 1];
+      const to = next ? pos(next.floor) : 100;
+      return `${level.color} ${from}%, ${level.color} ${to}%`;
+    })
+    .join(", ");
+
   return (
     <section className="panel threshold">
       <h2 className="panel-title">
         ค่าฝุ่นเท่าไหร่ เริ่มกระทบใคร
-        <span className="panel-hint">แถบเริ่มตรงระดับที่คนกลุ่มนั้นเริ่มต้องระวัง</span>
+        <span className="panel-hint">จุดขาวคือค่าตอนนี้ · แถบเริ่มตรงจุดที่ควรเริ่มระวัง</span>
       </h2>
 
-      {/* แถบไล่สีด้านบนใช้สีระดับเดียวกับทั้งเว็บ
-          จุดเปลี่ยนสีคือขอบของแต่ละระดับตามเกณฑ์กรมควบคุมมลพิษ */}
-      <div className="threshold-scale" aria-hidden="true">
-        {data.levels.map((level, index) => {
-          const next = data.levels[index + 1];
-          const from = pos(level.floor);
-          const to = next ? pos(next.floor) : 100;
-          return (
-            <span
-              key={level.key}
-              style={{ left: `${from}%`, width: `${to - from}%`, background: level.color }}
-            />
-          );
-        })}
+      {/* แถบสเกลใช้ทรงเดียวกับแถบช่วงอุณหภูมิในการ์ดสภาพอากาศ
+          ทั้งความหนา ความมน จุดขาวขอบเข้ม และแสงเรือง
+          เพื่อให้ทั้งเว็บพูดภาษาภาพเดียวกัน */}
+      <div className="threshold-scale" style={{ backgroundImage: `linear-gradient(90deg, ${stops})` }}>
+        {current != null && (
+          <span className="threshold-dot" style={{ left: `${pos(current)}%` }} aria-hidden="true" />
+        )}
       </div>
 
       <div className="threshold-ticks" aria-hidden="true">
         {data.levels.slice(1).map((level) => (
-          <span key={level.key} style={{ left: `${pos(level.floor)}%` }}>
+          <span key={level.key} style={{ left: `${pos(level.floor)}%`, color: level.color }}>
             {level.floor}
           </span>
         ))}
-        <span style={{ left: "100%" }}>{AXIS_MAX}+</span>
+        <span className="threshold-tick-end">{AXIS_MAX}+</span>
       </div>
 
-      <ul className="threshold-rows">
-        {data.groups.map((group) => {
-          const start = pos(group.onset_pm25);
-          const hit = current != null && current >= group.onset_pm25;
-          return (
-            <li key={group.key} className={hit ? "threshold-row hit" : "threshold-row"}>
-              <span className="threshold-name">{group.label_th}</span>
-              <span className="threshold-track">
-                <span
-                  className="threshold-bar"
-                  style={{
-                    left: `${start}%`,
-                    width: `${100 - start}%`,
-                    background: group.color ?? "var(--accent)",
-                  }}
-                />
-                {/* เส้นค่าปัจจุบันวาดซ้ำในทุกแถว ไม่ใช่เส้นเดียวลากทับ
-                    เพราะแถบของแต่ละแถวมีความสูงต่างกันเมื่อชื่อกลุ่มตัดบรรทัด
-                    เส้นเดียวจะไม่ตรงกับแถบทุกแถว */}
-                {current != null && (
-                  <span className="threshold-now" style={{ left: `${pos(current)}%` }} />
-                )}
-              </span>
-              <span className="threshold-value">{group.onset_pm25}</span>
-            </li>
-          );
-        })}
-      </ul>
+      {bands.map((band) => {
+        const reached = current != null && current >= band.onset;
+        return (
+          <div key={band.onset} className="threshold-band">
+            <p className={reached ? "threshold-band-head reached" : "threshold-band-head"}>
+              <span className="threshold-band-dot" style={{ background: band.color ?? undefined }} />
+              เริ่มระวังตั้งแต่ {band.onset} · ระดับ{band.label}
+              {reached ? " · ผ่านจุดนี้แล้ว" : ""}
+            </p>
+
+            <ul className="threshold-rows">
+              {band.groups.map((group) => {
+                const start = pos(group.onset_pm25);
+                return (
+                  <li key={group.key} className={reached ? "threshold-row hit" : "threshold-row"}>
+                    <span className="threshold-name">{group.label_th}</span>
+                    <span className="threshold-track">
+                      <span
+                        className="threshold-bar"
+                        style={{
+                          left: `${start}%`,
+                          width: `${100 - start}%`,
+                          // จางไปทางขวาเพราะปลายขวาคือค่าที่สูงมากซึ่งเกิดไม่บ่อย
+                          // การไล่จางบอกเป็นนัยว่ายิ่งไปทางขวายิ่งห่างจากความจริง
+                          backgroundImage: `linear-gradient(90deg, ${group.color}d9, ${group.color}1f)`,
+                        }}
+                      />
+                      {current != null && (
+                        <span className="threshold-now" style={{ left: `${pos(current)}%` }} />
+                      )}
+                    </span>
+                    <span className="threshold-value">{group.onset_pm25}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
 
       <p className="threshold-note">
         {current == null ? (
           "ยังไม่มีค่าฝุ่นปัจจุบัน"
         ) : affected === 0 ? (
           <>
-            ตอนนี้ <strong>{current}</strong> ยังไม่ถึงจุดที่กลุ่มไหนต้องระวังเป็นพิเศษ
+            ตอนนี้ <strong>{current}</strong> ยังไม่ถึงจุดที่กลุ่มไหนต้องระวัง
+            <span className="threshold-gap">
+              {" "}
+              · ห่างจากกลุ่มแรก {(bands[0].onset - current).toFixed(1)}
+            </span>
           </>
         ) : (
           <>
