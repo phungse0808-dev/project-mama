@@ -213,6 +213,8 @@ export type DiseaseSummary = {
   monthly: DiseaseMonth[];
   by_province?: { province: string; cases: number }[];
   by_group?: { group: string; cases: number }[];
+  /** สัดส่วนกลุ่มโรคแยกรายจังหวัด มีเฉพาะจังหวัดที่อยู่ในชุดข้อมูล */
+  groups_by_province?: Record<string, { group: string; cases: number }[]>;
   /** ค่าความเสี่ยงจากงานวิจัยภายนอก ใช้คำนวณเส้นโค้งจำนวนผู้ป่วยส่วนเกิน */
   risk?: {
     relative_risk_per_10: number;

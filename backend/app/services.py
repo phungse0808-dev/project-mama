@@ -1120,6 +1120,28 @@ def disease_summary(session: Session) -> dict:
         reverse=True,
     )
 
+    # สัดส่วนกลุ่มโรคแยกรายจังหวัด
+    #
+    # ทำไมส่งไปทั้งก้อนแทนที่จะให้ถามทีละจังหวัด
+    #     มีแค่ห้าจังหวัดคูณสี่กลุ่มโรค เป็นตัวเลขยี่สิบตัว เล็กกว่าค่าใช้จ่าย
+    #     ของการยิงคำขอใหม่ทุกครั้งที่ผู้ใช้เปลี่ยนช่องเลือกพื้นที่
+    #
+    # จังหวัดที่ไม่มีในชุดข้อมูลจะไม่มีกุญแจของตัวเอง ฝั่งหน้าเว็บต้องตกไปใช้ค่ารวม
+    # เรียงตามลำดับเดียวกับ by_group ไม่ใช่ตามตัวอักษร
+    # เพราะฝั่งหน้าเว็บแจกสีตามลำดับที่ได้รับ ถ้าสองชุดเรียงไม่เหมือนกัน
+    # สีประจำโรคจะสลับกันตอนผู้ใช้เปลี่ยนจังหวัด
+    order = [item["group"] for item in by_group]
+
+    groups_by_province: dict[str, list[dict]] = {}
+    for province in provinces:
+        counts: dict[str, int] = {}
+        for row in rows:
+            if row.province == province:
+                counts[row.disease_group] = counts.get(row.disease_group, 0) + row.cases
+        groups_by_province[province] = [
+            {"group": group, "cases": counts.get(group, 0)} for group in order
+        ]
+
     days = sorted({row.observed_on for row in rows})
     return {
         "available": True,
@@ -1131,5 +1153,6 @@ def disease_summary(session: Session) -> dict:
         "monthly": monthly,
         "by_province": by_province,
         "by_group": by_group,
+        "groups_by_province": groups_by_province,
         "risk": RESPIRATORY_RISK,
     }

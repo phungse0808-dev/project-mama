@@ -80,7 +80,14 @@ export function DiseaseRisk({ summary }: Props) {
     };
   }, []);
 
-  const groups = data?.by_group ?? [];
+  // ใช้สัดส่วนของจังหวัดที่เลือกถ้ามี ไม่มีก็ตกไปใช้ค่ารวมของทั้งชุดข้อมูล
+  //
+  // ชุดข้อมูลมีแค่ห้าจังหวัด อีกหกสิบกว่าจังหวัดจึงไม่มีตัวเลขของตัวเอง
+  // ต้องบอกผู้อ่านด้วยว่ากำลังดูของจังหวัดไหนอยู่ ไม่งั้นจะเข้าใจว่า
+  // ตัวเลขนี้เป็นของจังหวัดที่เลือกทั้งที่เป็นค่ารวม
+  const own = summary?.province ? data?.groups_by_province?.[summary.province] : undefined;
+  const groups = own ?? data?.by_group ?? [];
+  const groupScope = own ? summary?.province : null;
   const risk = data?.risk;
   const current = summary?.pm25_avg ?? null;
   if (!risk || current == null) return null;
@@ -146,7 +153,10 @@ export function DiseaseRisk({ summary }: Props) {
 
       {arcs.length > 0 && (
         <>
-          <p className="drisk-section">ถ้าป่วยจากฝุ่น โอกาสเป็นโรคไหน</p>
+          <p className="drisk-section">
+            ถ้าป่วยจากฝุ่น{groupScope ? `ใน${groupScope}` : ""} โอกาสเป็นโรคไหน
+            {groupScope ? "" : ` · เฉลี่ย ${data?.provinces?.length ?? 0} จังหวัดที่มีข้อมูล`}
+          </p>
 
           <div className="drisk-top">
             <div className="drisk-donut">
@@ -279,8 +289,10 @@ export function DiseaseRisk({ summary }: Props) {
         ตัวเลขที่ได้{risk.note_th}
         <br />
         เปอร์เซ็นต์ของแต่ละโรคคำนวณจากผู้ป่วยจริง {totalCases.toLocaleString("th-TH")} ครั้ง
-        ที่{data?.source}บันทึกไว้ เป็นโอกาสเมื่อรู้แล้วว่าป่วยจากฝุ่น
-        ไม่ใช่โอกาสที่คนทั่วไปจะป่วย และเป็นสัดส่วนของทั้งชุดข้อมูล ไม่ขยับตามพื้นที่ที่เลือก
+        ที่{data?.source}บันทึกไว้ เป็นโอกาสเมื่อรู้แล้วว่าป่วยจากฝุ่น ไม่ใช่โอกาสที่คนทั่วไปจะป่วย
+        {groupScope
+          ? " ชุดข้อมูลนี้มีเฉพาะห้าจังหวัด จังหวัดอื่นจะเห็นค่าเฉลี่ยรวมแทน"
+          : " ชุดข้อมูลนี้มีเฉพาะห้าจังหวัด จังหวัดที่เลือกอยู่ไม่มีตัวเลขของตัวเอง จึงแสดงค่าเฉลี่ยรวม"}
       </p>
     </section>
   );
