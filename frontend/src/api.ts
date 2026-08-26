@@ -192,6 +192,21 @@ export type Alerts = {
   over_who_guideline: StationReading[];
 };
 
+export type HealthThresholds = {
+  thai_standard: number;
+  who_guideline: number;
+  levels: { key: string; label_th: string; color: string; floor: number }[];
+  groups: {
+    key: string;
+    label_th: string;
+    sensitive: boolean;
+    onset_pm25: number;
+    level_key: string;
+    level_label_th: string | null;
+    color: string | null;
+  }[];
+};
+
 export type DiseaseMonth = {
   month: string;
   label: string;
@@ -355,6 +370,7 @@ export const api = {
   rainChance: (province: string) =>
     get<RainChance>("/api/rain-chance/" + encodeURIComponent(province)),
   alerts: () => get<Alerts>("/api/alerts"),
+  healthThresholds: () => get<HealthThresholds>("/api/health-thresholds"),
   disease: () => get<DiseaseSummary>("/api/disease"),
   stations: () => get<StationReading[]>("/api/stations"),
   provinceRanking: () => get<ProvinceRank[]>("/api/provinces/ranking"),

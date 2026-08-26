@@ -2225,3 +2225,149 @@ button {
   font-weight: 500;
   opacity: 0.9;
 }
+
+/* ---------- กราฟค่าฝุ่นเท่าไหร่เริ่มกระทบใคร ---------- */
+
+/* แถบไล่สีบนสุด แต่ละช่วงวางทับตำแหน่งตามค่าจริงบนแกน
+   ไม่ได้แบ่งเท่า ๆ กัน เพราะช่วง 0 ถึง 15 กับ 75 ถึง 100 กว้างไม่เท่ากันจริง */
+.threshold-scale {
+  position: relative;
+  height: 13px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.threshold-scale span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+/* ตัวเลขกำกับแกน วางตรงจุดเปลี่ยนระดับพอดี
+   ใช้ transform เลื่อนซ้ายครึ่งตัว ให้เลขอยู่กึ่งกลางเส้นแบ่งไม่ใช่ชิดขวา */
+.threshold-ticks {
+  position: relative;
+  height: 15px;
+  margin-bottom: 10px;
+}
+
+.threshold-ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.threshold-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.threshold-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.threshold-name {
+  width: 168px;
+  flex: none;
+  font-size: 12px;
+  color: var(--text-soft);
+  text-align: right;
+}
+
+/* กลุ่มที่ค่าปัจจุบันเลยจุดเริ่มไปแล้ว เน้นให้เห็นว่ากำลังโดนอยู่ */
+.threshold-row.hit .threshold-name {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.threshold-track {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 15px;
+  border-radius: 4px;
+  background: rgba(120, 150, 190, 0.1);
+}
+
+.threshold-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  opacity: 0.55;
+}
+
+.threshold-row.hit .threshold-bar {
+  opacity: 0.9;
+}
+
+/* เส้นค่าปัจจุบัน วาดซ้ำทุกแถวให้ต่อกันเป็นเส้นเดียวในสายตา */
+.threshold-now {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 2px;
+  transform: translateX(-1px);
+  background: var(--text);
+  box-shadow: 0 0 8px rgba(234, 246, 255, 0.6);
+}
+
+.threshold-value {
+  width: 34px;
+  flex: none;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.threshold-note {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+
+.threshold-note strong {
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.threshold-source {
+  margin: 9px 0 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+
+/* จอแคบ ชื่อกลุ่มยาวเกินกว่าจะอยู่คอลัมน์เดียวกับแถบ ย้ายขึ้นบรรทัดบน */
+@media (max-width: 560px) {
+  .threshold-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 3px 8px;
+    padding: 9px 0;
+  }
+
+  .threshold-name {
+    width: auto;
+    text-align: left;
+  }
+
+  .threshold-track {
+    grid-column: 1 / -1;
+  }
+
+  .threshold-value {
+    width: auto;
+  }
+}
