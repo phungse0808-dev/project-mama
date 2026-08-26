@@ -1798,9 +1798,70 @@ button {
   color: var(--text-soft);
 }
 
+/* หัวกลุ่มบนการ์ดหน้าหลัก แยกเรื่องฝุ่นออกจากเรื่องอากาศ
+   เพราะสองชุดนี้คนละขอบเขต ฝุ่นเป็นทั้งประเทศ อากาศเป็นจังหวัดเดียว */
+.home-group {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 8px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.home-group-bar {
+  width: 3px;
+  height: 12px;
+  border-radius: 9px;
+  flex: none;
+}
+
+.home-group-bar.dust {
+  background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+}
+
+/* กลุ่มอากาศใช้สีส้ม ให้แยกออกจากกลุ่มฝุ่นตั้งแต่กวาดสายตา
+   ใช้ชุดสีเดียวกับหัวกลุ่มในหน้าฝุ่น จะได้อ่านเป็นภาษาเดียวกันทั้งเว็บ */
+.home-group-bar.weather {
+  background: linear-gradient(180deg, #e59500, #f5c04a);
+}
+
+/* ไอคอนกับตัวเลขอยู่บรรทัดเดียวกัน ต่างจากช่องอื่นที่มีแต่ตัวเลข */
+.home-weather-now {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.home-stat-unit {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+/* ปลายเย็นเป็นฟ้า ปลายร้อนเป็นส้ม ชุดเดียวกับแถบช่วงอุณหภูมิในหน้าฝุ่น */
+.temp-low {
+  color: var(--accent);
+}
+
+.temp-high {
+  color: #f0a326;
+}
+
+.temp-dash {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+/* ให้จำนวนคอลัมน์ยุบตามความกว้างเอง ไม่บังคับสามคอลัมน์เสมอ
+   บนจอ 390 พิกเซล สามคอลัมน์เหลือช่องละ 90 ซึ่งแคบจนตัวเลขอุณหภูมิ
+   ตัดบรรทัดกลางคำ เช่น 28.3 อยู่บรรทัดหนึ่งแล้ว องศาเซลเซียสตกไปอีกบรรทัด */
 .home-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
   gap: 10px;
   margin-bottom: 20px;
 }

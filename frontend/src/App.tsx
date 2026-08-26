@@ -372,7 +372,11 @@ export default function App() {
         )}
 
         {active === "home" && (
-          <HomePage summary={summary} onOpenAir={() => goTo("air")} />
+          <HomePage
+            summary={summary}
+            onOpenAir={() => goTo("air")}
+            province={user.province}
+          />
         )}
 
         <footer className="footer">
