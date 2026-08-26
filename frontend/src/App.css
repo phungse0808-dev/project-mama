@@ -2235,6 +2235,140 @@ button {
 
 /* ---------- โรคที่มากับฝุ่น ---------- */
 
+/* หัวข้อย่อยคั่นสองส่วนของแผง
+   ส่วนบนเป็นสัดส่วนคงที่ ส่วนล่างขยับตามพื้นที่ ต้องบอกให้รู้ว่าคนละเรื่องกัน */
+.drisk-section {
+  margin: 15px 0 10px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.drisk-section-gap {
+  margin-top: 22px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border);
+}
+
+.drisk-top {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+
+.drisk-donut {
+  flex: none;
+  width: 158px;
+}
+
+.drisk-donut svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ตัวหนังสือกลางวงแหวนวาดอยู่ใน svg จึงกำหนดขนาดเป็นหน่วยของ viewBox
+   ไม่ใช่พิกเซลจริง เลขจะย่อขยายไปพร้อมวงแหวนเสมอ */
+.drisk-donut-value {
+  fill: var(--text);
+  font-family: var(--font-mono);
+  font-size: 27px;
+  font-weight: 600;
+}
+
+.drisk-donut-unit {
+  fill: var(--text-dim);
+  font-size: 10px;
+}
+
+.drisk-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.drisk-legend li {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 170px) 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.drisk-legend li + li {
+  border-top: 1px solid var(--border);
+}
+
+.drisk-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.drisk-legend-name {
+  font-size: 12.5px;
+  color: var(--text-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* แถบเทียบโอกาส เรียงเป็นแถวจึงเทียบกันได้ตรงกว่าการกะขนาดส่วนโค้ง */
+.drisk-legend-track {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(120, 150, 190, 0.09);
+  overflow: hidden;
+}
+
+.drisk-legend-bar {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  opacity: 0.85;
+}
+
+.drisk-legend-share {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text);
+  text-align: right;
+  min-width: 52px;
+}
+
+/* จอแคบ วงแหวนกับรายการวางเคียงกันไม่พอ ย้ายวงแหวนขึ้นไปบรรทัดบน
+   และตัดแถบเทียบออก เหลือชื่อกับเปอร์เซ็นต์ซึ่งจำเป็นกว่า */
+@media (max-width: 620px) {
+  .drisk-top {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .drisk-donut {
+    width: 140px;
+  }
+
+  .drisk-legend {
+    width: 100%;
+  }
+
+  .drisk-legend li {
+    grid-template-columns: 9px 1fr auto;
+  }
+
+  .drisk-legend-track {
+    display: none;
+  }
+
+  .drisk-legend-name {
+    white-space: normal;
+  }
+}
 /* บรรทัดตัวตั้ง วางค่าฝุ่นที่วัดได้ไว้เหนือผลลัพธ์
    ผู้อ่านจะได้เห็นทั้งตัวตั้งและผลในสายตาเดียว */
 .drisk-source-value {

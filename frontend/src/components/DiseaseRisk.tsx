@@ -7,6 +7,14 @@ type Props = {
   summary: Summary | null;
 };
 
+/** สีประจำกลุ่มโรค เรียงตามลำดับที่เซิร์ฟเวอร์ส่งมา
+ *
+ * ตั้งใจไม่ใช้สีชุดเดียวกับระดับคุณภาพอากาศ
+ * เพราะสีชุดนั้นแปลว่าอันตรายมากน้อย ถ้าเอามาใช้กับชื่อโรค
+ * คนจะอ่านว่าโรคสีแดงร้ายแรงกว่าโรคสีเขียว ซึ่งไม่ใช่สิ่งที่แผงนี้บอก
+ */
+const GROUP_COLORS = ["#5ec8ff", "#5fd0a4", "#ffb457", "#ff7b8a"];
+
 /** ค่าสูงสุดของแกนนอน หน่วยไมโครกรัมต่อลูกบาศก์เมตร
  *
  * หยุดที่ 100 เพราะระดับสูงสุดเริ่มที่ 75 และไม่มีขอบบน
@@ -72,9 +80,39 @@ export function DiseaseRisk({ summary }: Props) {
     };
   }, []);
 
+  const groups = data?.by_group ?? [];
   const risk = data?.risk;
   const current = summary?.pm25_avg ?? null;
   if (!risk || current == null) return null;
+
+  const totalCases = groups.reduce((sum, row) => sum + row.cases, 0);
+
+  // ---------- โอกาสเป็นแต่ละโรค ----------
+  //
+  // เป็นโอกาสแบบมีเงื่อนไข คือรู้อยู่แล้วว่าคนนั้นป่วยจากฝุ่น แล้วถามว่าเป็นโรคไหน
+  // ไม่ใช่โอกาสที่คนทั่วไปจะป่วย ซึ่งข้อมูลชุดนี้ตอบไม่ได้เพราะไม่มีตัวหาร
+  // คือไม่รู้ว่าในพื้นที่มีคนทั้งหมดกี่คน รู้แค่คนที่มาหาหมอ
+  //
+  // ความยาวส่วนโค้งคำนวณจากรัศมีจริง ถ้าข้อมูลเปลี่ยนวงแหวนจะปรับตามเอง
+  const RADIUS = 62;
+  const circumference = 2 * Math.PI * RADIUS;
+
+  let walked = 0;
+  const arcs = groups.map((row, index) => {
+    const share = totalCases > 0 ? row.cases / totalCases : 0;
+    const length = circumference * share;
+    const offset = walked;
+    walked += length;
+    // เว้นช่องว่างสองหน่วยระหว่างส่วน ให้เห็นรอยต่อโดยไม่ต้องตีเส้นขอบ
+    const drawn = Math.max(length - 2, 0);
+    return {
+      ...row,
+      color: GROUP_COLORS[index % GROUP_COLORS.length],
+      share,
+      dash: `${drawn} ${circumference - drawn}`,
+      offset: -offset,
+    };
+  });
 
   const peak = excessPct(AXIS_MAX, risk.relative_risk_per_10);
 
@@ -105,6 +143,60 @@ export function DiseaseRisk({ summary }: Props) {
         โรคที่มากับฝุ่น
         <span className="panel-hint">เอาค่าฝุ่นที่วัดได้ตอนนี้มาคำนวณ</span>
       </h2>
+
+      {arcs.length > 0 && (
+        <>
+          <p className="drisk-section">ถ้าป่วยจากฝุ่น โอกาสเป็นโรคไหน</p>
+
+          <div className="drisk-top">
+            <div className="drisk-donut">
+              <svg viewBox="0 0 160 160" role="img" aria-label="วงแหวนโอกาสเป็นแต่ละกลุ่มโรค">
+                {/* หมุนทวนเข็มหนึ่งในสี่รอบ ให้ส่วนแรกเริ่มที่ยอดวงกลม
+                    ถ้าไม่หมุนจะเริ่มที่ขอบขวา ซึ่งอ่านลำดับยากกว่า */}
+                <g transform="rotate(-90 80 80)">
+                  {arcs.map((arc) => (
+                    <circle
+                      key={arc.group}
+                      cx="80"
+                      cy="80"
+                      r={RADIUS}
+                      fill="none"
+                      stroke={arc.color}
+                      strokeWidth="20"
+                      strokeDasharray={arc.dash}
+                      strokeDashoffset={arc.offset}
+                    />
+                  ))}
+                </g>
+                <text className="drisk-donut-value" x="80" y="76" textAnchor="middle">
+                  100%
+                </text>
+                <text className="drisk-donut-unit" x="80" y="95" textAnchor="middle">
+                  ผู้ป่วยจากฝุ่น
+                </text>
+              </svg>
+            </div>
+
+            <ul className="drisk-legend">
+              {arcs.map((arc) => (
+                <li key={arc.group}>
+                  <span className="drisk-swatch" style={{ background: arc.color }} />
+                  <span className="drisk-legend-name">{arc.group}</span>
+                  <span className="drisk-legend-track">
+                    <span
+                      className="drisk-legend-bar"
+                      style={{ width: `${arc.share * 100}%`, background: arc.color }}
+                    />
+                  </span>
+                  <span className="drisk-legend-share">{(arc.share * 100).toFixed(1)}%</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="drisk-section drisk-section-gap">เอาค่าที่วัดได้มาคำนวณ</p>
+        </>
+      )}
 
       {/* บรรทัดนี้ทำให้ตัวตั้งกับผลลัพธ์อยู่ในกล่องเดียวกัน
           ผู้อ่านไม่ต้องเงยกลับขึ้นไปดูการ์ดข้างบนว่าตอนนี้ฝุ่นเท่าไหร่ */}
@@ -186,9 +278,9 @@ export function DiseaseRisk({ summary }: Props) {
         เพราะช่วงเวลาของข้อมูลผู้ป่วยกับค่าฝุ่นที่เก็บได้ไม่ทับกัน
         ตัวเลขที่ได้{risk.note_th}
         <br />
-        ชุดข้อมูลของ{data?.source}{" "}
-        เฝ้าระวังสี่กลุ่มโรค
-        แต่มีเพียง{risk.group_th}ที่มีค่าอ้างอิงตีพิมพ์แล้วรองรับ จึงคำนวณได้กลุ่มเดียว
+        เปอร์เซ็นต์ของแต่ละโรคคำนวณจากผู้ป่วยจริง {totalCases.toLocaleString("th-TH")} ครั้ง
+        ที่{data?.source}บันทึกไว้ เป็นโอกาสเมื่อรู้แล้วว่าป่วยจากฝุ่น
+        ไม่ใช่โอกาสที่คนทั่วไปจะป่วย และเป็นสัดส่วนของทั้งชุดข้อมูล ไม่ขยับตามพื้นที่ที่เลือก
       </p>
     </section>
   );
