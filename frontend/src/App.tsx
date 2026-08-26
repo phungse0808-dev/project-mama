@@ -376,6 +376,9 @@ export default function App() {
             summary={summary}
             onOpenAir={() => goTo("air")}
             province={user.province}
+            provinces={provinces}
+            area={dustProvince}
+            onAreaChange={setDustProvince}
           />
         )}
 

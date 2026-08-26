@@ -9,6 +9,10 @@ type Props = {
   onOpenAir: () => void;
   /** จังหวัดที่ใช้แสดงสภาพอากาศ ว่างได้ จะตกไปใช้ค่าตั้งต้น */
   province: string | null;
+  provinces: string[];
+  /** พื้นที่ที่เลือกดู ค่าว่างแปลว่าทั้งประเทศ */
+  area: string;
+  onAreaChange: (area: string) => void;
 };
 
 /** จังหวัดที่ใช้เมื่อผู้ใช้ยังไม่ได้ตั้ง
@@ -27,9 +31,21 @@ const DEFAULT_PROVINCE = "กรุงเทพฯ";
  * ข้อดีคือทางเข้ามีที่ให้บอกว่าข้างในมีอะไรและตอนนี้ค่าเป็นเท่าไร
  * ผู้ใช้จึงเห็นภาพรวมก่อนกดเข้าไปดูรายละเอียด
  */
-export function HomePage({ summary, onOpenAir, province }: Props) {
+export function HomePage({
+  summary,
+  onOpenAir,
+  province,
+  provinces,
+  area,
+  onAreaChange,
+}: Props) {
   const [weather, setWeather] = useState<WeatherNow | null>(null);
-  const target = province || DEFAULT_PROVINCE;
+
+  // จังหวัดที่ใช้ดึงอากาศ เรียงลำดับความสำคัญจากที่เจาะจงที่สุดลงมา
+  //
+  // เลือกไว้ > จังหวัดในโปรไฟล์ > ค่าตั้งต้น
+  // เพราะอากาศต้องเจาะจงจังหวัดเสมอ ไม่มีตัวเลือกทั้งประเทศให้ตกไปใช้
+  const target = area || province || DEFAULT_PROVINCE;
 
   // ดึงสภาพอากาศของจังหวัดที่เลือก
   //
@@ -59,6 +75,24 @@ export function HomePage({ summary, onOpenAir, province }: Props) {
 
   return (
     <div className="home-entry">
+      {/* วางช่องเลือกไว้นอกการ์ด ไม่ใช่ในหัวการ์ดเหมือนหน้าฝุ่น
+          เพราะการ์ดใบนี้เป็นปุ่มทั้งใบ ถ้าเอาช่องเลือกไปไว้ข้างใน
+          การกดเลือกจะไปโดนปุ่มดักก่อนจนเปลี่ยนหน้าแทนที่จะเปิดรายการ
+          และปุ่มซ้อนในปุ่มยังเป็นโครงสร้างที่ไม่ถูกต้องด้วย */}
+      <div className="home-head">
+        <label className="card-group-picker">
+          <span className="sr-only">เลือกพื้นที่ที่ต้องการดู</span>
+          <select value={area} onChange={(event) => onAreaChange(event.target.value)}>
+            <option value="">ทั้งประเทศ</option>
+            {provinces.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       <button className="panel home-card" onClick={onOpenAir}>
         <h2 className="home-card-title">วัดคุณภาพอากาศ</h2>
         <p className="home-card-detail">
@@ -69,16 +103,18 @@ export function HomePage({ summary, onOpenAir, province }: Props) {
         {/* แบ่งเป็นสองกลุ่มเพราะขอบเขตของตัวเลขต่างกัน
             ค่าฝุ่นเป็นภาพรวมทั้งประเทศ ส่วนอากาศเป็นของจังหวัดเดียว
             ถ้าวางเรียงกันหกช่องรวดจะเข้าใจผิดว่าอุณหภูมิเป็นค่าเฉลี่ยทั้งประเทศด้วย */}
+        {/* อ่านขอบเขตจากคำตอบของเซิร์ฟเวอร์ ไม่ใช่จากค่าที่เลือกไว้
+            เพราะระหว่างที่คำขอใหม่ยังไม่กลับมา ตัวเลขบนจอยังเป็นของขอบเขตเดิม */}
         <p className="home-group">
           <span className="home-group-bar dust" />
-          เรื่องของฝุ่น · ทั้งประเทศ
+          เรื่องของฝุ่น · {summary?.province ?? "ทั้งประเทศ"}
         </p>
 
         <div className="home-stats">
           <div>
             <p className="home-stat-value">{summary?.pm25_avg ?? "—"}</p>
             <p className="home-stat-label">
-              µg/m³ เฉลี่ยทั้งประเทศ
+              µg/m³ {summary?.province ? "เฉลี่ยในจังหวัด" : "เฉลี่ยทั้งประเทศ"}
               {summary?.level ? ` · ระดับ${summary.level.label_th}` : ""}
             </p>
           </div>
