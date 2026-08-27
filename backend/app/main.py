@@ -18,11 +18,7 @@ from sqlmodel import Session, col, desc, func, select
 from app import collector
 from app.config import CORS_ORIGINS
 from app.db import create_db_and_tables, get_session
-from app.health_advice import (
-    RISK_GROUPS,
-    THAI_STANDARD_PM25,
-    WHO_GUIDELINE_PM25,
-)
+from app.health_advice import RISK_GROUPS
 from app.live import refresh_if_stale
 from app.models import Station
 from app.services import (
