@@ -2238,6 +2238,38 @@ button {
   border-top: 1px solid var(--border);
 }
 
+/* แถบบอกว่ากำลังดูค่าเฉลี่ยอยู่ ไม่ใช่ตัวเลขของจังหวัดที่เลือก
+   ใช้สีเหลืองอำพันเพราะเป็นการเตือนให้ระวังการอ่านผิด ไม่ใช่ข้อผิดพลาด
+   ตั้งใจไม่ใช้สีของระดับคุณภาพอากาศ จะได้ไม่ถูกอ่านว่าเป็นระดับฝุ่น */
+.drisk-fallback {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 201, 94, 0.28);
+  border-radius: 10px;
+  background: rgba(255, 201, 94, 0.07);
+  font-size: 12px;
+  line-height: 1.7;
+  color: #ffc95e;
+}
+
+.drisk-fallback-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 7px;
+  border-radius: 50%;
+  flex: none;
+  background: #ffc95e;
+  box-shadow: 0 0 8px #ffc95e;
+}
+
+/* รายชื่อจังหวัดจางลงหนึ่งขั้น เป็นข้อมูลรองจากประโยคหลัก */
+.drisk-fallback-list {
+  color: var(--text-soft);
+}
+
 .drisk-top {
   display: flex;
   align-items: center;

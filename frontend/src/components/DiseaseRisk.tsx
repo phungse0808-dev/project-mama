@@ -155,8 +155,25 @@ export function DiseaseRisk({ summary }: Props) {
         <>
           <p className="drisk-section">
             ถ้าป่วยจากฝุ่น{groupScope ? `ใน${groupScope}` : ""} โอกาสเป็นโรคไหน
-            {groupScope ? "" : ` · เฉลี่ย ${data?.provinces?.length ?? 0} จังหวัดที่มีข้อมูล`}
           </p>
+
+          {/* แถบนี้ต้องสะดุดตา ไม่ใช่หมายเหตุตัวเล็ก
+              เพราะตัวเลขสี่ตัวข้างล่างหน้าตาเหมือนกันหมดไม่ว่าจะเลือกจังหวัดไหน
+              คนที่ไม่เห็นแถบนี้จะคิดว่าระบบพัง ทั้งที่เป็นเพราะต้นทางไม่มีข้อมูล */}
+          {!groupScope && (
+            <p className="drisk-fallback">
+              <span className="drisk-fallback-dot" />
+              <span>
+                {summary?.province
+                  ? `${summary.province}ยังไม่มีข้อมูลโรค กำลังแสดงค่าเฉลี่ยของ ${data?.provinces?.length ?? 0} จังหวัดที่มี`
+                  : `กำลังแสดงค่าเฉลี่ยของ ${data?.provinces?.length ?? 0} จังหวัดที่มีข้อมูล`}
+                <span className="drisk-fallback-list">
+                  {" "}
+                  เลือก{data?.provinces?.join(" ") ?? ""} เพื่อดูตัวเลขของจังหวัดนั้นโดยตรง
+                </span>
+              </span>
+            </p>
+          )}
 
           <div className="drisk-top">
             <div className="drisk-donut">
