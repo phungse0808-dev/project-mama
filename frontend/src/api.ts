@@ -232,6 +232,13 @@ export type DiseaseSummary = {
   risk_note_th?: string;
 };
 
+/** ค่าฝุ่นรายชั่วโมงย้อนหลังของพื้นที่ที่เลือก */
+export type Pm25HourlyPoint = {
+  measured_at: string;
+  label: string;
+  pm25: number;
+};
+
 export type RainChance = {
   available: boolean;
   reason?: string;
@@ -373,6 +380,11 @@ export const api = {
     get<RainChance>("/api/rain-chance/" + encodeURIComponent(province)),
   alerts: () => get<Alerts>("/api/alerts"),
   disease: () => get<DiseaseSummary>("/api/disease"),
+  pm25Hourly: (province: string | null, hours = 24) =>
+    get<Pm25HourlyPoint[]>(
+      `/api/pm25-hourly?hours=${hours}` +
+        (province ? `&province=${encodeURIComponent(province)}` : "")
+    ),
   stations: () => get<StationReading[]>("/api/stations"),
   provinceRanking: () => get<ProvinceRank[]>("/api/provinces/ranking"),
   stationDaily: (code: string, days = 30) =>

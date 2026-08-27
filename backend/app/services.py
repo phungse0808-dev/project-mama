@@ -381,6 +381,43 @@ def measured_hourly(
     return {moment.strftime("%Y-%m-%dT%H:00"): value for moment, value in rows}
 
 
+def pm25_hourly_series(
+    session: Session, province: str | None = None, hours: int = 24
+) -> list[dict]:
+    """ค่าฝุ่นรายชั่วโมงย้อนหลัง เรียงจากเก่าไปใหม่
+
+    ทำไมต้องมีแยกจาก station_history
+        อันนั้นเป็นของสถานีเดียว ส่วนอันนี้เป็นค่าเฉลี่ยของทั้งจังหวัด
+        หรือทั้งประเทศเมื่อไม่ระบุจังหวัด ให้ตรงกับขอบเขตที่ผู้ใช้เลือกไว้บนหน้าเว็บ
+
+    ทำไมนับชั่วโมงจากข้อมูลที่มี ไม่ใช่จากเวลาปัจจุบัน
+        บางชั่วโมงต้นทางไม่ส่งข้อมูล ถ้าตัดด้วยเวลาปัจจุบันลบยี่สิบสี่ชั่วโมง
+        จะได้จุดน้อยกว่าที่ควรและกราฟจะสั้นลงเรื่อย ๆ เมื่อต้นทางล่ม
+        การเอาชั่วโมงล่าสุดที่มีข้อมูลมายี่สิบสี่ชั่วโมงจึงให้กราฟที่เต็มเสมอ
+    """
+    conditions = [col(Reading.pm25).is_not(None)]
+    if province:
+        conditions.append(Station.province == province)
+
+    rows = session.exec(
+        select(Reading.measured_at, func.avg(Reading.pm25))
+        .join(Station, col(Reading.station_id) == col(Station.id))
+        .where(*conditions)
+        .group_by(col(Reading.measured_at))
+        .order_by(desc(col(Reading.measured_at)))
+        .limit(hours)
+    ).all()
+
+    return [
+        {
+            "measured_at": moment.isoformat(),
+            "label": moment.strftime("%H:%M"),
+            "pm25": round(value, 1),
+        }
+        for moment, value in reversed(rows)
+    ]
+
+
 def measuring_stations(session: Session, province: str) -> list[dict]:
     """สถานีที่ส่งค่ามาร่วมคำนวณ พร้อมจำนวนชั่วโมงและค่าเฉลี่ยของแต่ละแห่ง
 

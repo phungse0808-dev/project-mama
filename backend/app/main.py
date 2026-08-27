@@ -39,6 +39,7 @@ from app.services import (
     rain_chance,
     sign_in,
     station_daily,
+    pm25_hourly_series,
     station_history,
     update_profile,
     weather_history,
@@ -151,6 +152,20 @@ def get_stations(
 def get_province_ranking(session: Session = Depends(get_session)) -> list[dict]:
     """อันดับจังหวัดตามค่า PM2.5 เฉลี่ย"""
     return province_ranking(session)
+
+
+@app.get("/api/pm25-hourly", tags=["แดชบอร์ด"])
+def get_pm25_hourly(
+    province: str | None = None,
+    hours: int = 24,
+    session: Session = Depends(get_session),
+) -> list[dict]:
+    """ค่าฝุ่นรายชั่วโมงย้อนหลังของพื้นที่ที่เลือก ไม่ระบุจังหวัดคือทั้งประเทศ
+
+    ใช้วาดกราฟตามเวลาในแผงโรคที่มากับฝุ่น
+    ขอบเขตตรงกับที่ผู้ใช้เลือกไว้ ตัวเลขบนกราฟจึงตรงกับตัวเลขในการ์ดเสมอ
+    """
+    return pm25_hourly_series(session, province, min(max(hours, 2), 168))
 
 
 @app.get("/api/stations/{station_code}/history", tags=["แดชบอร์ด"])

@@ -2266,7 +2266,7 @@ button {
 }
 
 .drisk-section {
-  margin: 16px 0 10px;
+  margin: 16px 0 11px;
   font-family: var(--font-mono);
   font-size: 9.5px;
   letter-spacing: 0.9px;
@@ -2274,117 +2274,44 @@ button {
   color: var(--text-dim);
 }
 
-.drisk-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.drisk-rows li {
+/* กล่องตัวเลขสี่ใบ ยุบจำนวนคอลัมน์ตามความกว้างเอง
+   ไม่บังคับสี่คอลัมน์ เพราะบนมือถือจะเหลือช่องละ 80 พิกเซลจนเลขตัดบรรทัด */
+.drisk-tiles {
   display: grid;
-  grid-template-columns: 9px minmax(0, 190px) 1fr auto;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 0;
+  grid-template-columns: repeat(auto-fit, minmax(146px, 1fr));
+  gap: 10px;
 }
 
-.drisk-rows li + li {
-  border-top: 1px solid var(--border);
+/* ขีดสีด้านบนบอกว่ากล่องนี้คู่กับเส้นไหนบนกราฟ
+   เส้นประแปลว่าผลของกลุ่มนั้นยังไม่ชัดเจนทางสถิติ
+   ใช้สัญลักษณ์เดียวกับเส้นบนกราฟ ผู้อ่านจึงโยงกันได้เอง */
+.drisk-tile {
+  border-top: 2px solid;
+  border-radius: 0 0 10px 10px;
+  background: var(--surface-2);
+  padding: 13px 15px;
 }
 
-.drisk-swatch {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  box-shadow: 0 0 8px currentColor;
+.drisk-tile-value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
-.drisk-row-name {
-  font-size: 13px;
+.drisk-tile-unit {
+  font-size: 15px;
+}
+
+.drisk-tile-name {
+  margin: 5px 0 0;
+  font-size: 12.5px;
   color: var(--text-soft);
 }
 
-/* ป้ายเตือนว่าผลของแถวนี้ยังไม่ชัดเจนทางสถิติ
-   ต้องอยู่ติดชื่อโรค ไม่ใช่ไปรวมท้ายแผง เพราะคนจะโยงกลับไม่ถูกแถว */
-.drisk-uncertain {
-  display: inline-block;
-  margin-left: 7px;
-  padding: 1px 7px;
-  border: 1px solid rgba(255, 201, 94, 0.3);
-  border-radius: 99px;
-  font-size: 9.5px;
-  color: #ffc95e;
-  white-space: nowrap;
-}
-
-.drisk-row-track {
-  height: 7px;
-  border-radius: 99px;
-  background: rgba(120, 150, 190, 0.09);
-  overflow: hidden;
-}
-
-.drisk-row-bar {
-  display: block;
-  height: 100%;
-  border-radius: 99px;
-  opacity: 0.9;
-}
-
-.drisk-row-pct {
-  font-family: var(--font-mono);
-  font-size: 15px;
-  color: var(--text);
-  text-align: right;
-  min-width: 62px;
-}
-
-.drisk-chart {
-  position: relative;
-  height: 132px;
-  margin-top: 18px;
-}
-
-.drisk-chart svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-/* จุดของแต่ละเส้น ขอบสีพื้นหลังทำให้จุดที่อยู่ใกล้กันยังแยกออกจากกันได้ */
-.drisk-now {
-  position: absolute;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  transform: translate(-50%, 50%);
-  border: 2.5px solid var(--bg);
-}
-
-.drisk-axis {
-  position: relative;
-  height: 16px;
-  margin-top: 7px;
-}
-
-.drisk-axis span {
-  position: absolute;
-  transform: translateX(-50%);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  white-space: nowrap;
-}
-
-/* ตัวสุดท้ายชิดขอบขวา ถ้าจัดกึ่งกลางเหมือนตัวอื่นจะล้นออกนอกแผง */
-.drisk-axis-end {
-  right: 0;
-  left: auto;
-  transform: none !important;
-  color: var(--text-dim);
-}
-
 .drisk-source {
-  margin-top: 16px;
+  margin-top: 14px;
   padding-top: 13px;
   border-top: 1px solid var(--border);
 }
@@ -2430,19 +2357,12 @@ button {
     flex-basis: 100%;
   }
 
-  /* ชื่อโรคกับเปอร์เซ็นต์อยู่บรรทัดบน แถบเทียบตกลงมาเต็มความกว้าง
-     เพราะสามคอลัมน์บนจอ 375 ทำให้แถบเหลือสั้นจนเทียบกันไม่ออก */
-  .drisk-rows li {
-    grid-template-columns: 9px 1fr auto;
-    gap: 6px 10px;
+  .drisk-tiles {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .drisk-row-track {
-    grid-column: 1 / -1;
-  }
-
-  .drisk-uncertain {
-    margin-left: 5px;
+  .drisk-tile-value {
+    font-size: 21px;
   }
 
   .drisk-source-list li {

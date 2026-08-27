@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { api } from "../api";
-import type { DiseaseSummary, Summary } from "../api";
+import type { DiseaseSummary, Pm25HourlyPoint, Summary } from "../api";
 
 type Props = {
   /** สรุปค่าฝุ่นของพื้นที่ที่เลือกอยู่ ใช้เป็นตัวตั้งในการคำนวณ */
@@ -13,15 +23,7 @@ type Props = {
  * เพราะสีชุดนั้นแปลว่าอันตรายมากน้อย ถ้าเอามาใช้กับชื่อโรค
  * คนจะอ่านว่าโรคสีแดงร้ายแรงกว่าโรคสีเขียว ซึ่งไม่ใช่สิ่งที่แผงนี้บอก
  */
-const GROUP_COLORS = ["#5ec8ff", "#ff7b8a", "#ffb457", "#5fd0a4"];
-
-/** ค่าสูงสุดของแกนนอน หน่วยไมโครกรัมต่อลูกบาศก์เมตร
- *
- * หยุดที่ 100 เพราะระดับสูงสุดเริ่มที่ 75 และไม่มีขอบบน
- * ถ้าลากแกนตามค่าที่เคยวัดได้จริงซึ่งบางปีทะลุ 200
- * ช่วงที่คนอยู่จริงเกือบตลอดปีจะถูกบีบจนอ่านไม่ออก
- */
-const AXIS_MAX = 100;
+const GROUP_COLORS = ["#5ec8ff", "#ff7b8a", "#f0a326", "#5fd0a4"];
 
 /** เกณฑ์ที่ใช้เทียบ ตรงกับค่าใน backend/app/health_advice.py
  *
@@ -29,14 +31,6 @@ const AXIS_MAX = 100;
  */
 const WHO_GUIDELINE = 15;
 const THAI_STANDARD = 37.5;
-
-/** ขอบของแต่ละระดับคุณภาพอากาศ ใช้ขีดเส้นอ้างอิงบนกราฟ */
-const LEVEL_MARKS = [
-  { at: 15, color: "#00b050" },
-  { at: 25, color: "#ffd400" },
-  { at: 37.5, color: "#ff7e00" },
-  { at: 75, color: "#e2574c" },
-];
 
 /**
  * จำนวนผู้เข้ารักษามากกว่าวันอากาศสะอาดกี่เปอร์เซ็นต์ เมื่อฝุ่นเท่านี้
@@ -62,9 +56,15 @@ function excessPct(pm25: number, rrPer10: number): number {
  *     เพราะช่วงเวลาของข้อมูลผู้ป่วยกับค่าฝุ่นที่เก็บได้ไม่ทับกันเลยสักวัน
  *     แต่ละกลุ่มโรคมาจากคนละงาน น้ำหนักหลักฐานจึงไม่เท่ากัน
  *     แผงนี้เขียนที่มากำกับไว้ทุกแถว ไม่ยุบรวมเป็นตัวเลขชุดเดียวกัน
+ *
+ * ทำไมกราฟใช้แกนเวลา
+ *     ให้เป็นชนิดเดียวกับกราฟย้อนหลังที่เว็บมีอยู่แล้ว คนใช้จึงอ่านเป็นทันที
+ *     และตอบได้ว่าวันนี้ช่วงไหนแย่ที่สุด ซึ่งกราฟที่ลากตามค่าฝุ่นตอบไม่ได้
  */
 export function DiseaseRisk({ summary }: Props) {
   const [data, setData] = useState<DiseaseSummary | null>(null);
+  const [hourly, setHourly] = useState<Pm25HourlyPoint[]>([]);
+  const province = summary?.province ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +81,22 @@ export function DiseaseRisk({ summary }: Props) {
     };
   }, []);
 
+  // ดึงใหม่ทุกครั้งที่เปลี่ยนพื้นที่ กราฟจึงเป็นของจังหวัดที่เลือกเสมอ
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await api.pm25Hourly(province, 24);
+        if (!cancelled) setHourly(result);
+      } catch {
+        if (!cancelled) setHourly([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [province]);
+
   const riskTable = data?.risk_by_group;
   const current = summary?.pm25_avg ?? null;
   if (!riskTable || current == null) return null;
@@ -92,31 +108,22 @@ export function DiseaseRisk({ summary }: Props) {
   const rows = Object.entries(riskTable)
     .map(([group, risk], index) => ({
       group,
+      short: group.replace("กลุ่มโรค", ""),
       risk,
       color: GROUP_COLORS[index % GROUP_COLORS.length],
       pct: excessPct(current, risk.relative_risk_per_10),
-      peak: excessPct(AXIS_MAX, risk.relative_risk_per_10),
     }))
     .sort((a, b) => b.pct - a.pct);
 
-  // ความสูงของกราฟอิงเส้นที่ชันที่สุด ทุกเส้นจึงอยู่ในสเกลเดียวกัน
-  // ถ้าปรับสเกลแยกเส้น เส้นที่ผลน้อยจะดูสูงเท่าเส้นที่ผลมาก ซึ่งหลอกตา
-  const ceiling = Math.max(...rows.map((row) => row.peak));
-
-  /** แปลงค่าฝุ่นเป็นความสูงบนกราฟ เว้นหัวไว้ไม่ให้ชนขอบบน */
-  const heightOf = (pm25: number, rr: number) =>
-    (excessPct(Math.min(pm25, AXIS_MAX), rr) / ceiling) * 88;
-
-  /** วาดเป็นเส้นตรงต่อกันทีละห้าหน่วย ถี่พอจนตาเห็นเป็นเส้นโค้ง */
-  const pointsFor = (rr: number) => {
-    const points: string[] = [];
-    for (let pm25 = 0; pm25 <= AXIS_MAX; pm25 += 5) {
-      points.push(`${(pm25 / AXIS_MAX) * 100},${100 - heightOf(pm25, rr)}`);
+  // แปลงค่าฝุ่นรายชั่วโมงเป็นเปอร์เซ็นต์ของทุกกลุ่มโรคในจุดเดียวกัน
+  // ใช้ชื่อย่อเป็นกุญแจ เพราะเป็นชื่อเดียวกับที่แสดงในคำอธิบายสีของกราฟ
+  const series = hourly.map((point) => {
+    const row: Record<string, number | string> = { label: point.label, pm25: point.pm25 };
+    for (const item of rows) {
+      row[item.short] = Number(excessPct(point.pm25, item.risk.relative_risk_per_10).toFixed(2));
     }
-    return points.join(" ");
-  };
-
-  const currentLeft = Math.min(100, (current / AXIS_MAX) * 100);
+    return row;
+  });
 
   // เทียบกับเกณฑ์ที่เข้มกว่าก่อน ผู้อ่านจะได้รู้ตัวตั้งแต่ยังไม่เกินมาตรฐานไทย
   const standing =
@@ -130,14 +137,14 @@ export function DiseaseRisk({ summary }: Props) {
     <section className="panel drisk">
       <h2 className="panel-title">
         โรคที่มากับฝุ่น
-        <span className="panel-hint">เอาค่าฝุ่นที่วัดได้ตอนนี้มาคำนวณ</span>
+        <span className="panel-hint">เอาค่าฝุ่นที่วัดได้มาคำนวณ</span>
       </h2>
 
       {/* บรรทัดนี้ทำให้ตัวตั้งกับผลลัพธ์อยู่ในกล่องเดียวกัน
           ผู้อ่านไม่ต้องเงยกลับขึ้นไปดูการ์ดข้างบนว่าตอนนี้ฝุ่นเท่าไหร่ */}
       <div className="drisk-source-value">
         <span className="drisk-scope">
-          ฝุ่นที่วัดได้{summary?.province ? `ใน${summary.province}` : "ทั้งประเทศ"}
+          ฝุ่นที่วัดได้{province ? `ใน${province}` : "ทั้งประเทศ"}
         </span>
         <span className="drisk-pm">{current}</span>
         {summary?.level && (
@@ -152,95 +159,87 @@ export function DiseaseRisk({ summary }: Props) {
         </span>
       </div>
 
-      <p className="drisk-section">คนเข้ารักษาเพิ่มขึ้นกี่เปอร์เซ็นต์ เทียบกับวันอากาศสะอาด</p>
+      <p className="drisk-section">คนเข้ารักษาเพิ่มขึ้น เทียบกับวันอากาศสะอาด</p>
 
-      <ul className="drisk-rows">
+      <div className="drisk-tiles">
         {rows.map((row) => (
-          <li key={row.group}>
-            <span className="drisk-swatch" style={{ background: row.color }} />
-            <span className="drisk-row-name">
-              {row.group.replace("กลุ่มโรค", "")}
-              {/* บอกตั้งแต่ในแถวว่าผลของกลุ่มนี้ยังไม่ชัดเจนทางสถิติ
-                  ถ้าเขียนรวมไว้ท้ายแผงจะไม่มีใครโยงกลับมาถูกแถว */}
-              {row.risk.uncertain && <span className="drisk-uncertain">ผลยังไม่ชัดเจน</span>}
-            </span>
-            <span className="drisk-row-track">
-              <span
-                className="drisk-row-bar"
-                style={{
-                  width: `${Math.min(100, (row.pct / ceiling) * 100)}%`,
-                  background: row.color,
-                }}
-              />
-            </span>
-            <span className="drisk-row-pct">+{row.pct.toFixed(2)}%</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="drisk-chart">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          {/* เส้นอ้างอิงตรงขอบของแต่ละระดับคุณภาพอากาศ
-              ช่วยให้อ่านคู่กับแถบสีที่เห็นในหน้าอื่นได้ว่าตอนนี้อยู่ช่วงไหน */}
-          {LEVEL_MARKS.map((mark) => (
-            <line
-              key={mark.at}
-              x1={(mark.at / AXIS_MAX) * 100}
-              x2={(mark.at / AXIS_MAX) * 100}
-              y1="0"
-              y2="100"
-              stroke={mark.color}
-              strokeWidth="1"
-              vectorEffect="non-scaling-stroke"
-              opacity="0.28"
-            />
-          ))}
-
-          {/* เส้นของกลุ่มที่ผลยังไม่ชัดเจนวาดเป็นเส้นประ
-              ให้ต่างจากเส้นที่มีหลักฐานหนักแน่นตั้งแต่มองครั้งแรก */}
-          {rows.map((row) => (
-            <polyline
-              key={row.group}
-              points={pointsFor(row.risk.relative_risk_per_10)}
-              fill="none"
-              stroke={row.color}
-              strokeWidth="2"
-              vectorEffect="non-scaling-stroke"
-              strokeDasharray={row.risk.uncertain ? "4 3" : undefined}
-            />
-          ))}
-        </svg>
-
-        {/* จุดวางเป็น HTML ทับบนกราฟ ไม่ได้วาดไว้ใน svg
-            เพราะ svg ตัวนี้ปิดการรักษาสัดส่วนเพื่อให้ยืดเต็มความกว้างจอ
-            อะไรที่วาดข้างในจึงถูกยืดตามไปด้วย วงกลมจะกลายเป็นวงรี */}
-        {rows.map((row) => (
-          <span
+          <div
             key={row.group}
-            className="drisk-now"
-            style={{
-              left: `${currentLeft}%`,
-              bottom: `${heightOf(current, row.risk.relative_risk_per_10)}%`,
-              background: row.color,
-            }}
-          />
+            className="drisk-tile"
+            style={{ borderTopColor: row.color, borderTopStyle: row.risk.uncertain ? "dashed" : "solid" }}
+          >
+            <p className="drisk-tile-value" style={{ color: row.color }}>
+              +{row.pct.toFixed(2)}
+              <span className="drisk-tile-unit">%</span>
+            </p>
+            <p className="drisk-tile-name">{row.short}</p>
+          </div>
         ))}
       </div>
 
-      <div className="drisk-axis" aria-hidden="true">
-        {LEVEL_MARKS.map((mark) => (
-          <span key={mark.at} style={{ left: `${(mark.at / AXIS_MAX) * 100}%`, color: mark.color }}>
-            {mark.at}
-          </span>
-        ))}
-        <span className="drisk-axis-end">{AXIS_MAX}+ µg/m³</span>
-      </div>
+      {series.length >= 2 && (
+        <div className="chart">
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={series} margin={{ top: 8, right: 16, bottom: 8, left: -8 }}>
+              {/* พื้นไล่สีใต้เส้น ชุดเดียวกับกราฟย้อนหลังของสถานี
+                  ให้ทั้งเว็บใช้ภาษาภาพเดียวกัน ไม่ใช่ต่างหน้าต่างสไตล์ */}
+              <defs>
+                {rows.map((row, index) => (
+                  <linearGradient
+                    key={row.group}
+                    id={`driskFill${index}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="0%" stopColor={row.color} stopOpacity={0.3} />
+                    <stop offset="100%" stopColor={row.color} stopOpacity={0} />
+                  </linearGradient>
+                ))}
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,150,190,.12)" />
+              <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} unit="%" width={64} />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 8,
+                  borderColor: "#2b3d52",
+                  background: "#0d1420",
+                  color: "#eaf6ff",
+                  fontSize: 13,
+                }}
+                labelFormatter={(label) => `เวลา ${label}`}
+                formatter={(value, name) => [`+${value}%`, name]}
+              />
+              <Legend />
+              {rows.map((row, index) => (
+                <Area
+                  key={row.group}
+                  type="monotone"
+                  dataKey={row.short}
+                  name={row.short}
+                  stroke={row.color}
+                  strokeWidth={2}
+                  // เส้นประบอกว่าผลของกลุ่มนี้ยังไม่ชัดเจนทางสถิติ
+                  // ใช้สัญลักษณ์เดียวกับขีดบนกล่องตัวเลขข้างบน
+                  strokeDasharray={row.risk.uncertain ? "6 4" : undefined}
+                  fill={`url(#driskFill${index})`}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                  connectNulls
+                />
+              ))}
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       <div className="drisk-source">
         <p className="drisk-source-lead">
           ค่าที่ใช้คูณมาจากงานวิจัยที่ตีพิมพ์แล้ว ไม่ได้คำนวณจากข้อมูลของระบบนี้
           เพราะช่วงเวลาของข้อมูลผู้ป่วยกับค่าฝุ่นที่เก็บได้ไม่ทับกัน
-          ตัวเลขที่ได้{data?.risk_note_th}
+          ตัวเลขที่ได้{data?.risk_note_th} เส้นประคือกลุ่มที่ผลยังไม่ชัดเจนทางสถิติ
         </p>
 
         {/* แยกที่มาเป็นรายแถว ไม่ยุบเป็นประโยคเดียว
@@ -249,7 +248,7 @@ export function DiseaseRisk({ summary }: Props) {
         <ul className="drisk-source-list">
           {rows.map((row) => (
             <li key={row.group}>
-              <span className="drisk-source-name">{row.group.replace("กลุ่มโรค", "")}</span>
+              <span className="drisk-source-name">{row.short}</span>
               <span className="drisk-source-rr">{row.risk.relative_risk_per_10}</span>
               <span className="drisk-source-from">
                 {row.risk.source_th} · {row.risk.evidence_th}
