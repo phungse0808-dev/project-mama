@@ -215,14 +215,21 @@ export type DiseaseSummary = {
   by_group?: { group: string; cases: number }[];
   /** สัดส่วนกลุ่มโรคแยกรายจังหวัด มีเฉพาะจังหวัดที่อยู่ในชุดข้อมูล */
   groups_by_province?: Record<string, { group: string; cases: number }[]>;
-  /** ค่าความเสี่ยงจากงานวิจัยภายนอก ใช้คำนวณเส้นโค้งจำนวนผู้ป่วยส่วนเกิน */
-  risk?: {
-    relative_risk_per_10: number;
-    outcome_th: string;
-    group_th: string;
-    source: string;
-    note_th: string;
-  };
+  /** ค่าความเสี่ยงจากงานวิจัยภายนอก แยกตามกลุ่มโรค ใช้คำนวณผู้ป่วยส่วนเกิน */
+  risk_by_group?: Record<
+    string,
+    {
+      relative_risk_per_10: number;
+      ci_low: number;
+      ci_high: number;
+      outcome_th: string;
+      source_th: string;
+      evidence_th: string;
+      /** ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ */
+      uncertain: boolean;
+    }
+  >;
+  risk_note_th?: string;
 };
 
 export type RainChance = {

@@ -2221,172 +2221,6 @@ button {
 
 /* ---------- โรคที่มากับฝุ่น ---------- */
 
-/* หัวข้อย่อยคั่นสองส่วนของแผง
-   ส่วนบนเป็นสัดส่วนคงที่ ส่วนล่างขยับตามพื้นที่ ต้องบอกให้รู้ว่าคนละเรื่องกัน */
-.drisk-section {
-  margin: 15px 0 10px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.9px;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.drisk-section-gap {
-  margin-top: 22px;
-  padding-top: 15px;
-  border-top: 1px solid var(--border);
-}
-
-/* แถบบอกว่ากำลังดูค่าเฉลี่ยอยู่ ไม่ใช่ตัวเลขของจังหวัดที่เลือก
-   ใช้สีเหลืองอำพันเพราะเป็นการเตือนให้ระวังการอ่านผิด ไม่ใช่ข้อผิดพลาด
-   ตั้งใจไม่ใช้สีของระดับคุณภาพอากาศ จะได้ไม่ถูกอ่านว่าเป็นระดับฝุ่น */
-.drisk-fallback {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  margin: 0 0 14px;
-  padding: 9px 12px;
-  border: 1px solid rgba(255, 201, 94, 0.28);
-  border-radius: 10px;
-  background: rgba(255, 201, 94, 0.07);
-  font-size: 12px;
-  line-height: 1.7;
-  color: #ffc95e;
-}
-
-.drisk-fallback-dot {
-  width: 7px;
-  height: 7px;
-  margin-top: 7px;
-  border-radius: 50%;
-  flex: none;
-  background: #ffc95e;
-  box-shadow: 0 0 8px #ffc95e;
-}
-
-/* รายชื่อจังหวัดจางลงหนึ่งขั้น เป็นข้อมูลรองจากประโยคหลัก */
-.drisk-fallback-list {
-  color: var(--text-soft);
-}
-
-.drisk-top {
-  display: flex;
-  align-items: center;
-  gap: 26px;
-}
-
-.drisk-donut {
-  flex: none;
-  width: 158px;
-}
-
-.drisk-donut svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-/* ตัวหนังสือกลางวงแหวนวาดอยู่ใน svg จึงกำหนดขนาดเป็นหน่วยของ viewBox
-   ไม่ใช่พิกเซลจริง เลขจะย่อขยายไปพร้อมวงแหวนเสมอ */
-.drisk-donut-value {
-  fill: var(--text);
-  font-family: var(--font-mono);
-  font-size: 27px;
-  font-weight: 600;
-}
-
-.drisk-donut-unit {
-  fill: var(--text-dim);
-  font-size: 10px;
-}
-
-.drisk-legend {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  flex: 1;
-  min-width: 0;
-}
-
-.drisk-legend li {
-  display: grid;
-  grid-template-columns: 9px minmax(0, 170px) 1fr auto;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-}
-
-.drisk-legend li + li {
-  border-top: 1px solid var(--border);
-}
-
-.drisk-swatch {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  box-shadow: 0 0 8px currentColor;
-}
-
-.drisk-legend-name {
-  font-size: 12.5px;
-  color: var(--text-soft);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* แถบเทียบโอกาส เรียงเป็นแถวจึงเทียบกันได้ตรงกว่าการกะขนาดส่วนโค้ง */
-.drisk-legend-track {
-  height: 6px;
-  border-radius: 99px;
-  background: rgba(120, 150, 190, 0.09);
-  overflow: hidden;
-}
-
-.drisk-legend-bar {
-  display: block;
-  height: 100%;
-  border-radius: 99px;
-  opacity: 0.85;
-}
-
-.drisk-legend-share {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  color: var(--text);
-  text-align: right;
-  min-width: 52px;
-}
-
-/* จอแคบ วงแหวนกับรายการวางเคียงกันไม่พอ ย้ายวงแหวนขึ้นไปบรรทัดบน
-   และตัดแถบเทียบออก เหลือชื่อกับเปอร์เซ็นต์ซึ่งจำเป็นกว่า */
-@media (max-width: 620px) {
-  .drisk-top {
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .drisk-donut {
-    width: 140px;
-  }
-
-  .drisk-legend {
-    width: 100%;
-  }
-
-  .drisk-legend li {
-    grid-template-columns: 9px 1fr auto;
-  }
-
-  .drisk-legend-track {
-    display: none;
-  }
-
-  .drisk-legend-name {
-    white-space: normal;
-  }
-}
 /* บรรทัดตัวตั้ง วางค่าฝุ่นที่วัดได้ไว้เหนือผลลัพธ์
    ผู้อ่านจะได้เห็นทั้งตัวตั้งและผลในสายตาเดียว */
 .drisk-source-value {
@@ -2431,31 +2265,84 @@ button {
   color: var(--text-dim);
 }
 
-.drisk-headline {
-  display: flex;
+.drisk-section {
+  margin: 16px 0 10px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.drisk-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.drisk-rows li {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 190px) 1fr auto;
   align-items: center;
   gap: 12px;
-  margin: 15px 0 12px;
+  padding: 9px 0;
 }
 
-.drisk-headline-name {
-  flex: 1;
-  min-width: 0;
-  font-size: 14.5px;
-  color: var(--text);
+.drisk-rows li + li {
+  border-top: 1px solid var(--border);
 }
 
-.drisk-headline-value {
-  font-family: var(--font-mono);
-  font-size: 27px;
-  font-weight: 600;
-  color: var(--accent);
+.drisk-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.drisk-row-name {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+/* ป้ายเตือนว่าผลของแถวนี้ยังไม่ชัดเจนทางสถิติ
+   ต้องอยู่ติดชื่อโรค ไม่ใช่ไปรวมท้ายแผง เพราะคนจะโยงกลับไม่ถูกแถว */
+.drisk-uncertain {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 1px 7px;
+  border: 1px solid rgba(255, 201, 94, 0.3);
+  border-radius: 99px;
+  font-size: 9.5px;
+  color: #ffc95e;
   white-space: nowrap;
+}
+
+.drisk-row-track {
+  height: 7px;
+  border-radius: 99px;
+  background: rgba(120, 150, 190, 0.09);
+  overflow: hidden;
+}
+
+.drisk-row-bar {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  opacity: 0.9;
+}
+
+.drisk-row-pct {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--text);
+  text-align: right;
+  min-width: 62px;
 }
 
 .drisk-chart {
   position: relative;
-  height: 128px;
+  height: 132px;
+  margin-top: 18px;
 }
 
 .drisk-chart svg {
@@ -2464,15 +2351,14 @@ button {
   height: 100%;
 }
 
+/* จุดของแต่ละเส้น ขอบสีพื้นหลังทำให้จุดที่อยู่ใกล้กันยังแยกออกจากกันได้ */
 .drisk-now {
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   transform: translate(-50%, 50%);
-  background: var(--text);
   border: 2.5px solid var(--bg);
-  box-shadow: 0 0 12px rgba(234, 246, 255, 0.75);
 }
 
 .drisk-axis {
@@ -2498,15 +2384,45 @@ button {
 }
 
 .drisk-source {
-  margin: 16px 0 0;
+  margin-top: 16px;
   padding-top: 13px;
   border-top: 1px solid var(--border);
+}
+
+.drisk-source-lead {
+  margin: 0 0 10px;
   font-size: 11px;
   line-height: 1.8;
   color: var(--text-dim);
 }
 
-@media (max-width: 560px) {
+/* ที่มาแยกรายแถว เพราะแต่ละกลุ่มโรคมาจากคนละงานวิจัย
+   น้ำหนักหลักฐานไม่เท่ากัน จะยุบเป็นประโยคเดียวไม่ได้ */
+.drisk-source-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.drisk-source-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 130px) 58px 1fr;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+
+.drisk-source-name {
+  color: var(--text-soft);
+}
+
+.drisk-source-rr {
+  font-family: var(--font-mono);
+  color: var(--text-soft);
+}
+
+@media (max-width: 620px) {
   /* จอแคบ ข้อความเทียบเกณฑ์ยาวเกินกว่าจะอยู่ท้ายบรรทัดเดียวกับตัวเลข
      ให้ตกลงมาเป็นบรรทัดของตัวเองแล้วชิดซ้ายตามปกติ */
   .drisk-standing {
@@ -2514,7 +2430,26 @@ button {
     flex-basis: 100%;
   }
 
-  .drisk-headline-value {
-    font-size: 23px;
+  /* ชื่อโรคกับเปอร์เซ็นต์อยู่บรรทัดบน แถบเทียบตกลงมาเต็มความกว้าง
+     เพราะสามคอลัมน์บนจอ 375 ทำให้แถบเหลือสั้นจนเทียบกันไม่ออก */
+  .drisk-rows li {
+    grid-template-columns: 9px 1fr auto;
+    gap: 6px 10px;
+  }
+
+  .drisk-row-track {
+    grid-column: 1 / -1;
+  }
+
+  .drisk-uncertain {
+    margin-left: 5px;
+  }
+
+  .drisk-source-list li {
+    grid-template-columns: 1fr auto;
+  }
+
+  .drisk-source-from {
+    grid-column: 1 / -1;
   }
 }
