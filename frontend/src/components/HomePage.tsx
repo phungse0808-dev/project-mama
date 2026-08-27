@@ -119,10 +119,6 @@ export function HomePage({
             </p>
           </div>
           <div>
-            <p className="home-stat-value">{summary?.stations_reporting ?? "—"}</p>
-            <p className="home-stat-label">สถานีที่รายงานข้อมูล</p>
-          </div>
-          <div>
             <p className="home-stat-value">{summary?.pm25_max ?? "—"}</p>
             <p className="home-stat-label">
               สูงสุด{summary?.worst_station ? ` · ${summary.worst_station.province}` : ""}
@@ -150,20 +146,6 @@ export function HomePage({
                   </p>
                   <p className="home-stat-label">{now.condition}</p>
                 </div>
-              </div>
-
-              <div>
-                {now.temp_min != null && now.temp_max != null ? (
-                  <p className="home-stat-value">
-                    <span className="temp-low">{Math.round(now.temp_min)}</span>
-                    <span className="temp-dash">–</span>
-                    <span className="temp-high">{Math.round(now.temp_max)}</span>
-                    <span className="home-stat-unit"> °C</span>
-                  </p>
-                ) : (
-                  <p className="home-stat-value">—</p>
-                )}
-                <p className="home-stat-label">ช่วงอุณหภูมิวันนี้</p>
               </div>
 
               <div>
