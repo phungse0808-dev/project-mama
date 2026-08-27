@@ -41,8 +41,7 @@ project mama/
 │  │  ├─ airquality.db         ฐานข้อมูล SQLite
 │  │  ├─ hourly/               ไฟล์ CSV ที่บอทเก็บทุกชั่วโมง แยกตามวัน
 │  │  └─ raw/                  ไฟล์ JSON ดิบจากต้นทาง
-│  ├─ requirements.txt         รายการไลบรารีของ Python
-│  └─ run_api.bat              เปิดเฉพาะเซิร์ฟเวอร์ API ตอนพัฒนา
+│  └─ requirements.txt         รายการไลบรารีของ Python
 │
 ├─ frontend/                   หน้าเว็บ (React + TypeScript + Vite)
 │  ├─ src/
@@ -50,8 +49,7 @@ project mama/
 │  │  ├─ api.ts                เรียก REST API และประกาศชนิดข้อมูลทุกตัว
 │  │  ├─ App.css               สไตล์ทั้งหมดของแดชบอร์ด
 │  │  └─ components/           แต่ละแผงบนหน้าเว็บ หนึ่งไฟล์ต่อหนึ่งแผง
-│  ├─ dist/                    ไฟล์ที่ build แล้ว เซิร์ฟเวอร์เสิร์ฟจากที่นี่
-│  └─ run_web.bat              เปิดเฉพาะหน้าเว็บโหมดพัฒนา
+│  └─ dist/                    ไฟล์ที่ build แล้ว เซิร์ฟเวอร์เสิร์ฟจากที่นี่
 │
 ├─ docs/
 │  └─ related-work.md         ตารางเปรียบเทียบกับระบบที่มีอยู่ สำหรับบทที่ 2
