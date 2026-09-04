@@ -343,6 +343,7 @@ export default function App() {
                 ranking={ranking}
                 picked={pickedProvince}
                 onPick={setPickedProvince}
+                levels={summary?.levels ?? []}
               />
               <ProvinceRanking ranking={ranking} />
             </div>

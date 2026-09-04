@@ -55,7 +55,8 @@ export type Summary = {
   pm25_min: number | null;
   level: AqiLevel | null;
   level_counts: Record<string, number>;
-  levels: { key: string; label_th: string; color: string }[];
+  /** ceiling เป็นค่าสูงสุดของระดับนั้น ระดับสุดท้ายไม่มีขอบบนจึงเป็นค่าว่าง */
+  levels: { key: string; label_th: string; color: string; ceiling: number | null }[];
   worst_station: StationReading | null;
   weather: {
     observed_on: string;

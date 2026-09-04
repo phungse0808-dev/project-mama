@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 
 from sqlmodel import Session, col, desc, func, select
 
-from app.aqi import LEVELS, describe, level_from_aqi, level_from_pm25
+from app.aqi import LEVELS, describe, level_ceiling_pm25, level_from_aqi, level_from_pm25
 from app.health_advice import (
     RISK_GROUPS,
     THAI_STANDARD_PM25,
@@ -118,7 +118,13 @@ def national_summary(session: Session, province: str | None = None) -> dict:
         "pm25_min": round(min(values), 1) if values else None,
         "level_counts": counts,
         "levels": [
-            {"key": lv.key, "label_th": lv.label_th, "color": lv.color} for lv in LEVELS
+            {
+                "key": lv.key,
+                "label_th": lv.label_th,
+                "color": lv.color,
+                "ceiling": level_ceiling_pm25(lv.key),
+            }
+            for lv in LEVELS
         ],
         "worst_station": station_payload(*worst) if worst else None,
         # ขอบเขตของตัวเลขชุดนี้ ให้หน้าเว็บเขียนกำกับได้ตรงกับที่คำนวณจริง

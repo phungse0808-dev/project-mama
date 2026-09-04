@@ -58,6 +58,18 @@ _AQI_UPPER = (25, 50, 100, 200)
 _PM25_UPPER = (15.0, 25.0, 37.5, 75.0)
 
 
+def level_ceiling_pm25(level_key: str) -> float | None:
+    """ค่า PM2.5 สูงสุดที่ยังอยู่ในระดับนั้น ระดับสุดท้ายไม่มีขอบบนจึงคืนค่าว่าง
+
+    ใช้เขียนคำอธิบายสีบนแผนที่ ให้ตัวเลขบนหน้าเว็บมาจากที่เดียวกับที่ใช้ตัดสินระดับจริง
+    ไม่ใช่พิมพ์ซ้ำไว้ในหน้าเว็บ ซึ่งจะเพี้ยนถ้าวันหลังเกณฑ์เปลี่ยน
+    """
+    for index, level in enumerate(LEVELS):
+        if level.key == level_key:
+            return _PM25_UPPER[index] if index < len(_PM25_UPPER) else None
+    return None
+
+
 def level_from_aqi(aqi: int | None) -> AqiLevel | None:
     """แปลงค่า AQI เป็นระดับคุณภาพอากาศ"""
     if aqi is None or aqi < 0:
