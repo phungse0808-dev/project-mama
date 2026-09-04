@@ -21,14 +21,40 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  // ลบของเก่าที่ค้างจากรุ่นก่อน ไม่งั้นพื้นที่จะบวมขึ้นเรื่อยๆ ทุกครั้งที่อัปเดต
   event.waitUntil(
     caches
       .keys()
-      .then((names) => Promise.all(names.filter((n) => n !== CACHE).map((n) => caches.delete(n))))
-      .then(() => self.clients.claim()),
+      .then((names) => {
+        // จำไว้ว่ามีของรุ่นก่อนค้างอยู่หรือไม่ ก่อนจะลบทิ้ง
+        const hadOld = names.some((n) => n !== CACHE);
+        // ลบของเก่าที่ค้างจากรุ่นก่อน ไม่งั้นพื้นที่จะบวมขึ้นเรื่อย ๆ ทุกครั้งที่อัปเดต
+        return Promise.all(names.filter((n) => n !== CACHE).map((n) => caches.delete(n)))
+          .then(() => self.clients.claim())
+          .then(() => hadOld && refreshOpenPages());
+      }),
   );
 });
+
+/** สั่งให้หน้าที่เปิดค้างอยู่โหลดตัวเองใหม่ หลังเปลี่ยนมาใช้รุ่นนี้
+ *
+ * ทำไมต้องมี
+ *     รุ่นก่อนหน้าตั้งให้หยิบ index.html จากในเครื่องก่อนเสมอ
+ *     คนที่เคยเปิดเว็บไปแล้วจึงติดอยู่กับหน้าเก่าที่ชี้ไปยังโค้ดรุ่นเก่า
+ *     และโค้ดที่แก้ปัญหานี้ก็อยู่ในไฟล์ที่เขาไม่มีวันโหลด กลายเป็นวงจรที่หลุดเองไม่ได้
+ *
+ *     ไฟล์ตัวช่วยนี้เป็นไฟล์เดียวที่เบราว์เซอร์ไปดึงจากเซิร์ฟเวอร์เสมอ
+ *     ทางออกจึงต้องอยู่ในไฟล์นี้ คือพอรุ่นใหม่เริ่มทำงานก็สั่งให้หน้าโหลดใหม่
+ *     รอบนั้นจะได้ index.html สดจากเซิร์ฟเวอร์ตามกติกาใหม่
+ *
+ *     สั่งเฉพาะตอนพบว่ามีของรุ่นก่อนค้างอยู่ ผู้ใช้ใหม่จึงไม่โดนโหลดซ้ำโดยไม่จำเป็น
+ */
+function refreshOpenPages() {
+  return self.clients.matchAll({ type: "window" }).then((pages) => {
+    pages.forEach((page) => {
+      if ("navigate" in page) page.navigate(page.url).catch(() => {});
+    });
+  });
+}
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
