@@ -146,11 +146,18 @@ export function StationMap({ stations, onSelect, ranking }: Props) {
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
           scrollWheelZoom
-          className="map"
+          className="map map-dark"
         >
           {/* ไม่กำหนด bounds ที่ชั้นภาพแผนที่ ไม่เช่นนั้นภาพจะโหลดเฉพาะในกรอบที่กำหนด
               แล้วเหลือพื้นที่ว่างเปล่าที่ขอบซ้ายขวาของกรอบแผนที่
               การจำกัดการเลื่อนทำที่ระดับแผนที่ด้วย maxBounds และตัวดึงจุดกลางกลับอยู่แล้ว */}
+          {/* ยังใช้ภาพจาก OpenStreetMap เหมือนเดิม แล้วกลับสีให้เป็นพื้นมืดด้วย CSS
+              ที่ .map-dark ในไฟล์สไตล์ ไม่ได้เปลี่ยนไปใช้ผู้ให้บริการอื่น
+
+              ทำไมไม่ใช้ชุดแผนที่พื้นมืดสำเร็จรูป
+                  เคยลองของ CARTO แล้ว ตอนนี้เขาบังคับให้ใช้กุญแจ
+                  ภาพที่ได้มีลายน้ำ API KEY REQUIRED พาดทั้งแผ่น
+                  การกลับสีเองจึงเป็นทางที่ไม่ต้องพึ่งใครและไม่มีวันหมดอายุ */}
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
