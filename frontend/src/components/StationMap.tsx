@@ -1,12 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
-import type { StationReading } from "../api";
+import type { ProvinceRank, StationReading } from "../api";
 import { formatThaiDateTime } from "../api";
+import { ProvinceLayer } from "./ProvinceLayer";
 
 type Props = {
   stations: StationReading[];
   onSelect: (code: string) => void;
+  /** ค่าเฉลี่ยรายจังหวัด ใช้ระบายสีเมื่อสลับไปโหมดรายจังหวัด */
+  ranking: ProvinceRank[];
 };
+
+/** สองวิธีมองข้อมูลชุดเดียวกัน */
+type MapMode = "stations" | "provinces";
 
 // กรอบครอบคลุมประเทศไทย ตั้งแต่ปลายสุดของนราธิวาสถึงเหนือสุดของเชียงราย
 // และจากชายแดนตะวันตกของแม่ฮ่องสอนถึงตะวันออกสุดของอุบลราชธานี
@@ -86,17 +92,38 @@ function radiusFor(pm25: number | null): number {
   return Math.min(18, 4 + pm25 / 6);
 }
 
-export function StationMap({ stations, onSelect }: Props) {
+export function StationMap({ stations, onSelect, ranking }: Props) {
+  const [mode, setMode] = useState<MapMode>("stations");
+
   return (
     <section className="panel">
       {/* บอกจำนวนหมุดที่แสดงจริง เพราะสถานีที่ข้อมูลค้างจะไม่ขึ้นบนแผนที่
           ตัวเลขนี้จึงน้อยกว่าจำนวนสถานีทั้งหมดในแผงคุณภาพข้อมูล */}
       <h2 className="panel-title">
-        แผนที่สถานีตรวจวัด
+        แผนที่คุณภาพอากาศ
         <span className="panel-hint">
-          {stations.length} สถานีที่ยังส่งข้อมูล · คลิกที่หมุดเพื่อดูรายละเอียด
+          {mode === "stations"
+            ? `${stations.length} สถานีที่ยังส่งข้อมูล · คลิกที่หมุดเพื่อดูรายละเอียด`
+            : `${ranking.length} จังหวัดที่มีข้อมูล · เอาเมาส์ชี้ที่จังหวัดเพื่อดูค่า`}
         </span>
       </h2>
+
+      {/* ปุ่มสลับสองมุมมองของข้อมูลชุดเดียวกัน
+          หมุดตอบว่าค่าที่จุดวัดเป็นเท่าไร สีตอบว่าภูมิภาคไหนหนักกว่ากัน */}
+      <div className="map-modes" role="group" aria-label="เลือกวิธีแสดงแผนที่">
+        <button
+          className={mode === "stations" ? "map-mode on" : "map-mode"}
+          onClick={() => setMode("stations")}
+        >
+          หมุดรายสถานี
+        </button>
+        <button
+          className={mode === "provinces" ? "map-mode on" : "map-mode"}
+          onClick={() => setMode("provinces")}
+        >
+          ระบายสีรายจังหวัด
+        </button>
+      </div>
       <div className="map-wrapper">
         <MapContainer
           bounds={boundsOf(stations)}
@@ -118,7 +145,9 @@ export function StationMap({ stations, onSelect }: Props) {
             maxZoom={MAX_ZOOM}
           />
           <KeepInsideThailand />
-          {stations.map((station) => (
+          {mode === "provinces" && <ProvinceLayer ranking={ranking} />}
+          {mode === "stations" &&
+            stations.map((station) => (
             <CircleMarker
               key={station.station_code}
               center={[station.latitude, station.longitude]}

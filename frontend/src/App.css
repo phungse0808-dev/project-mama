@@ -790,6 +790,39 @@ button {
 
 /* ---------- แผนที่ ---------- */
 
+/* ปุ่มสลับมุมมองแผนที่ ทรงเดียวกับปุ่มอื่นในเว็บ
+   ตัวที่เลือกอยู่ใช้สีเน้นเป็นพื้น ไม่ใช่แค่ขอบ เพราะขอบอย่างเดียว
+   บนพื้นมืดแยกยากว่าอันไหนถูกเลือก */
+.map-modes {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+
+.map-mode {
+  font-family: inherit;
+  font-size: 12.5px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 99px;
+  background: var(--surface-2);
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.map-mode:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.map-mode.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
 .map-wrapper {
   border-radius: 10px;
   overflow: hidden;

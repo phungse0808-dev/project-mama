@@ -333,7 +333,7 @@ export default function App() {
             </h2>
 
             <div className="two-column">
-              <StationMap stations={stations} onSelect={selectStation} />
+              <StationMap stations={stations} onSelect={selectStation} ranking={ranking} />
               <ProvinceRanking ranking={ranking} />
             </div>
 
