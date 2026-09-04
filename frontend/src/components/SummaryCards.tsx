@@ -7,8 +7,8 @@ type Props = { summary: Summary };
 type CardProps = Props & {
   weatherNow: WeatherNow | null;
   provinces: string[];
+  /** จังหวัดที่ใช้แสดงสภาพอากาศ มาจากช่องเลือกเดียวของหน้า ไม่มีช่องของตัวเอง */
   weatherProvince: string;
-  onWeatherProvinceChange: (province: string) => void;
   /** ค่าว่างแปลว่าทั้งประเทศ */
   dustProvince: string;
   onDustProvinceChange: (province: string) => void;
@@ -124,7 +124,6 @@ export function SummaryCards({
   weatherNow,
   provinces,
   weatherProvince,
-  onWeatherProvinceChange,
   dustProvince,
   onDustProvinceChange,
 }: CardProps) {
@@ -245,21 +244,11 @@ export function SummaryCards({
       <section className="card-group">
         <header className="card-group-head">
           <h2 className="card-group-title">สภาพอากาศ</h2>
-          {/* ช่องเลือกอยู่ที่หัวกลุ่ม ไม่ใช่ในการ์ดใบใดใบหนึ่ง
-              เพราะจังหวัดที่เลือกมีผลกับทุกใบในกลุ่มนี้ */}
-          <label className="card-group-picker">
-            <span className="sr-only">เลือกจังหวัดที่ต้องการดูสภาพอากาศ</span>
-            <select
-              value={weatherProvince}
-              onChange={(event) => onWeatherProvinceChange(event.target.value)}
-            >
-              {provinces.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
+          {/* กลุ่มนี้ไม่มีช่องเลือกของตัวเอง ใช้ช่องเดียวกับกลุ่มฝุ่นข้างบน
+              แต่ต้องบอกชื่อจังหวัดไว้ เพราะเมื่อเลือกทั้งประเทศ
+              ค่าฝุ่นเป็นของทั้งประเทศ ส่วนอากาศเป็นของจังหวัดเดียว
+              ถ้าไม่บอกจะเข้าใจว่าอุณหภูมินี้เป็นค่าเฉลี่ยทั้งประเทศ */}
+          <span className="card-group-scope">{weatherProvince}</span>
         </header>
 
         {now ? (

@@ -239,6 +239,18 @@ body {
   background: linear-gradient(180deg, #e59500, #f5c04a);
 }
 
+/* ชื่อจังหวัดที่หัวกลุ่มสภาพอากาศ กลุ่มนี้ไม่มีช่องเลือกของตัวเองแล้ว
+   จัดทรงให้สูงเท่าช่องเลือกของกลุ่มฝุ่น หัวสองกลุ่มจะได้อยู่ระดับเดียวกัน
+   แต่ไม่ตีกรอบ เพราะเป็นข้อความบอกสถานะ ไม่ใช่ปุ่มที่กดได้ */
+.card-group-scope {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
 .card-group-picker select {
   font-family: inherit;
   font-size: 13px;

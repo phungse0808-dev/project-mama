@@ -55,13 +55,20 @@ export default function App() {
   const [provinces, setProvinces] = useState<string[]>([]);
   // จังหวัดที่กำลังดูสภาพอากาศ แยกจากจังหวัดที่ผู้ใช้ตั้งไว้ในโปรไฟล์
   // เพราะผู้ใช้อาจอยากดูที่อื่นชั่วคราวโดยไม่ต้องไปแก้โปรไฟล์ตัวเอง
-  const [weatherProvince, setWeatherProvince] = useState<string | null>(null);
   // จังหวัดที่กำลังดูค่าฝุ่น ค่าว่างแปลว่าทั้งประเทศ
   //
   // แยกจากจังหวัดของสภาพอากาศ เพราะสองเรื่องนี้คนละขอบเขตกันโดยธรรมชาติ
   // ค่าฝุ่นดูภาพรวมทั้งประเทศได้และเป็นค่าตั้งต้นที่มีความหมาย
   // ส่วนสภาพอากาศต้องเจาะจงจังหวัดเสมอ เพราะอุณหภูมิเฉลี่ยทั้งประเทศไม่มีความหมาย
   const [dustProvince, setDustProvince] = useState<string>("");
+
+  // จังหวัดที่ใช้ดึงสภาพอากาศ มาจากช่องเลือกเดียวกับค่าฝุ่น
+  //
+  // ทำไมต้องมีตัวสำรอง
+  //     ช่องเลือกมีตัวเลือกทั้งประเทศ ซึ่งใช้กับค่าฝุ่นได้เพราะค่าเฉลี่ยรวมมีความหมาย
+  //     แต่ใช้กับอากาศไม่ได้ อุณหภูมิเฉลี่ยของทั้งประเทศไม่ได้บอกอะไรกับใคร
+  //     เมื่อเลือกทั้งประเทศจึงตกไปใช้จังหวัดในโปรไฟล์ แล้วค่อยตกไปที่ค่าตั้งต้น
+  const weatherTarget = dustProvince || user?.province || "กรุงเทพฯ";
   const [history, setHistory] = useState<StationHistory | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -163,12 +170,11 @@ export default function App() {
   // ต้นทางอัปเดตทุก 15 นาที จึงดึงซ้ำทุก 10 นาทีก็เพียงพอ
   useEffect(() => {
     if (!user) return;
-    const province = weatherProvince ?? user.province ?? "กรุงเทพฯ";
     let cancelled = false;
 
     const load = async () => {
       try {
-        const result = await api.weatherNow(province);
+        const result = await api.weatherNow(weatherTarget);
         if (!cancelled) setWeatherNow(result);
       } catch {
         if (!cancelled) setWeatherNow(null);
@@ -181,7 +187,7 @@ export default function App() {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [user, weatherProvince]);
+  }, [user, weatherTarget]);
 
   const handleSignedIn = useCallback((signed: AppUser) => {
     localStorage.setItem(USER_KEY, JSON.stringify(signed));
@@ -313,8 +319,7 @@ export default function App() {
                 summary={summary}
                 weatherNow={weatherNow}
                 provinces={provinces}
-                weatherProvince={weatherProvince ?? user.province ?? "กรุงเทพฯ"}
-                onWeatherProvinceChange={setWeatherProvince}
+                weatherProvince={weatherTarget}
                 dustProvince={dustProvince}
                 onDustProvinceChange={setDustProvince}
               />
