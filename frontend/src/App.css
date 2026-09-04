@@ -808,6 +808,18 @@ button {
   background: var(--bg);
 }
 
+/* แผนที่ล็อกไว้เลื่อนไม่ได้ จึงไม่ควรขึ้นเป็นรูปมือลาก
+   ไลบรารีใส่รูปมือให้เองผ่านคลาส leaflet-grab ต้องเขียนทับ
+   ส่วนรูปจังหวัดยังเป็นรูปมือชี้ เพราะกดได้จริง */
+.map-plain.leaflet-grab,
+.map-plain .leaflet-grab {
+  cursor: default;
+}
+
+.map-plain .leaflet-interactive {
+  cursor: pointer;
+}
+
 /* ปุ่มย่อขยายกับป้ายบอกที่มา ค่าตั้งต้นเป็นพื้นขาว ซึ่งสว่างเกินบนพื้นมืด */
 .map-plain .leaflet-control-zoom a {
   background: var(--surface-2);
