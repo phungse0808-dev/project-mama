@@ -7,6 +7,9 @@ import { PROVINCE_BY_CODE } from "../provinceCodes";
 
 type Props = {
   ranking: ProvinceRank[];
+  /** จังหวัดที่กดเลือกอยู่ ใช้ตีกรอบให้เห็นว่ากำลังดูอันไหน */
+  selected: string | null;
+  onSelect: (province: string) => void;
 };
 
 /** สีของจังหวัดที่ไม่มีสถานีตรวจวัด
@@ -33,7 +36,7 @@ const NO_DATA_COLOR = "#3a4757";
  *     ไฟล์ใหญ่เกือบห้าแสนไบต์ ถ้าฝังรวมไปกับโค้ดหลัก
  *     คนที่ไม่ได้เปิดโหมดนี้ก็ต้องโหลดตามไปด้วยทุกครั้ง
  */
-export function ProvinceLayer({ ranking }: Props) {
+export function ProvinceLayer({ ranking, selected, onSelect }: Props) {
   const [shapes, setShapes] = useState<FeatureCollection | null>(null);
 
   useEffect(() => {
@@ -62,14 +65,21 @@ export function ProvinceLayer({ ranking }: Props) {
     return name ? byProvince.get(name) : undefined;
   };
 
+  const nameOf = (feature?: Feature<Geometry, unknown>) => {
+    const code = (feature?.properties as { code?: string } | undefined)?.code;
+    return code ? PROVINCE_BY_CODE[code] : undefined;
+  };
+
   const styleOf = (feature?: Feature<Geometry, unknown>): PathOptions => {
     const row = rowOf(feature);
+    const isPicked = nameOf(feature) === selected;
     return {
-      // เส้นขอบสีพื้นหลัง ทำให้จังหวัดที่สีเดียวกันยังแยกออกจากกันได้
-      color: "#0a0e14",
-      weight: 0.8,
+      // จังหวัดที่กดเลือกใช้ขอบขาวหนา ที่เหลือใช้ขอบสีพื้นหลังบาง ๆ
+      // ซึ่งยังทำให้จังหวัดที่สีเดียวกันแยกออกจากกันได้
+      color: isPicked ? "#eaf6ff" : "#0a0e14",
+      weight: isPicked ? 2.4 : 0.8,
       fillColor: row ? row.level.color : NO_DATA_COLOR,
-      fillOpacity: row ? 0.72 : 0.3,
+      fillOpacity: row ? (isPicked ? 0.92 : 0.72) : 0.3,
     };
   };
 
@@ -85,22 +95,33 @@ export function ProvinceLayer({ ranking }: Props) {
       { sticky: true },
     );
 
+    const picked = name === selected;
+
     // เน้นขอบตอนเอาเมาส์ชี้ ให้รู้ว่ากำลังอ่านจังหวัดไหนอยู่
+    // ตอนเมาส์ออกต้องคืนค่าตามสถานะที่เลือกไว้ ไม่ใช่คืนเป็นค่าปกติเสมอ
+    // ไม่งั้นกรอบของจังหวัดที่กดเลือกจะหายไปเมื่อเอาเมาส์ผ่าน
     layer.on({
       mouseover: () => {
         (layer as Layer & { setStyle: (s: PathOptions) => void }).setStyle({
-          weight: 2,
+          weight: 2.4,
           color: "#eaf6ff",
         });
       },
       mouseout: () => {
         (layer as Layer & { setStyle: (s: PathOptions) => void }).setStyle({
-          weight: 0.8,
-          color: "#0a0e14",
+          weight: picked ? 2.4 : 0.8,
+          color: picked ? "#eaf6ff" : "#0a0e14",
         });
+      },
+      click: () => {
+        if (name) onSelect(name);
       },
     });
   };
 
-  return <GeoJSON data={shapes} style={styleOf} onEachFeature={attach} />;
+  // ใส่ key ตามจังหวัดที่เลือก เพื่อบังคับให้วาดชั้นนี้ใหม่เมื่อสลับจังหวัด
+  //
+  // ชั้น GeoJSON ของ react-leaflet สร้างครั้งเดียวแล้วไม่อ่าน style กับ onEachFeature ซ้ำ
+  // ถ้าไม่บังคับ กรอบขาวจะไม่ย้ายตามจังหวัดที่กดใหม่
+  return <GeoJSON key={selected ?? "none"} data={shapes} style={styleOf} onEachFeature={attach} />;
 }

@@ -3,6 +3,7 @@ import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaf
 import type { ProvinceRank, StationReading } from "../api";
 import { formatThaiDateTime } from "../api";
 import { ProvinceLayer } from "./ProvinceLayer";
+import { ProvinceDetail } from "./ProvinceDetail";
 
 type Props = {
   stations: StationReading[];
@@ -94,6 +95,15 @@ function radiusFor(pm25: number | null): number {
 
 export function StationMap({ stations, onSelect, ranking }: Props) {
   const [mode, setMode] = useState<MapMode>("stations");
+  const [picked, setPicked] = useState<string | null>(null);
+
+  // สถานีของจังหวัดที่กดเลือก เรียงจากค่าสูงไปต่ำ
+  // เรียงแบบนี้เพราะจุดที่แย่ที่สุดคือสิ่งที่ควรเห็นก่อน ไม่ใช่ตามชื่อ
+  const pickedStations = picked
+    ? stations
+        .filter((station) => station.province === picked)
+        .sort((a, b) => (b.pm25 ?? -1) - (a.pm25 ?? -1))
+    : [];
 
   return (
     <section className="panel">
@@ -113,7 +123,10 @@ export function StationMap({ stations, onSelect, ranking }: Props) {
       <div className="map-modes" role="group" aria-label="เลือกวิธีแสดงแผนที่">
         <button
           className={mode === "stations" ? "map-mode on" : "map-mode"}
-          onClick={() => setMode("stations")}
+          onClick={() => {
+            setMode("stations");
+            setPicked(null);
+          }}
         >
           หมุดรายสถานี
         </button>
@@ -124,7 +137,7 @@ export function StationMap({ stations, onSelect, ranking }: Props) {
           ระบายสีรายจังหวัด
         </button>
       </div>
-      <div className="map-wrapper">
+      <div className={picked ? "map-wrapper with-detail" : "map-wrapper"}>
         <MapContainer
           bounds={boundsOf(stations)}
           boundsOptions={{ padding: [24, 24] }}
@@ -145,7 +158,9 @@ export function StationMap({ stations, onSelect, ranking }: Props) {
             maxZoom={MAX_ZOOM}
           />
           <KeepInsideThailand />
-          {mode === "provinces" && <ProvinceLayer ranking={ranking} />}
+          {mode === "provinces" && (
+            <ProvinceLayer ranking={ranking} selected={picked} onSelect={setPicked} />
+          )}
           {mode === "stations" &&
             stations.map((station) => (
             <CircleMarker
@@ -199,6 +214,16 @@ export function StationMap({ stations, onSelect, ranking }: Props) {
             </CircleMarker>
           ))}
         </MapContainer>
+
+        {picked && (
+          <ProvinceDetail
+            province={picked}
+            rank={ranking.find((row) => row.province === picked)}
+            stations={pickedStations}
+            onClose={() => setPicked(null)}
+            onSelectStation={onSelect}
+          />
+        )}
       </div>
     </section>
   );
