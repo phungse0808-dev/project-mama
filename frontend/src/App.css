@@ -790,39 +790,6 @@ button {
 
 /* ---------- แผนที่ ---------- */
 
-/* ปุ่มสลับมุมมองแผนที่ ทรงเดียวกับปุ่มอื่นในเว็บ
-   ตัวที่เลือกอยู่ใช้สีเน้นเป็นพื้น ไม่ใช่แค่ขอบ เพราะขอบอย่างเดียว
-   บนพื้นมืดแยกยากว่าอันไหนถูกเลือก */
-.map-modes {
-  display: flex;
-  gap: 8px;
-  margin: 12px 0 10px;
-}
-
-.map-mode {
-  font-family: inherit;
-  font-size: 12.5px;
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--border-strong);
-  border-radius: 99px;
-  background: var(--surface-2);
-  color: var(--text-soft);
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-
-.map-mode:hover {
-  border-color: var(--accent);
-  color: var(--text);
-}
-
-.map-mode.on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--text);
-}
-
 .map-wrapper {
   border-radius: 10px;
   overflow: hidden;
@@ -832,6 +799,29 @@ button {
 .map {
   height: 560px;
   width: 100%;
+}
+
+/* แผนที่ไม่มีภาพถนนเป็นฉากหลัง พื้นที่ว่างรอบรูปจังหวัดจึงต้องเป็นสีของเว็บ
+   ไม่งั้นจะเห็นแถบเทาอ่อนซึ่งเป็นค่าตั้งต้นของไลบรารีแผนที่ */
+.map-plain {
+  background: var(--bg);
+}
+
+/* ปุ่มย่อขยายกับป้ายบอกที่มา ค่าตั้งต้นเป็นพื้นขาว ซึ่งสว่างเกินบนพื้นมืด */
+.map-plain .leaflet-control-zoom a {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text-soft);
+}
+
+.map-plain .leaflet-control-zoom a:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.map-plain .leaflet-control-attribution {
+  background: rgba(13, 20, 32, 0.82);
+  color: var(--text-dim);
 }
 
 /* เมื่อกดเลือกจังหวัด แผนที่แบ่งครึ่งกับแผงรายละเอียด
@@ -1018,110 +1008,6 @@ button {
     border-top: 1px solid var(--border);
     max-height: none;
   }
-}
-
-/* กลับสีภาพแผนที่ให้เป็นพื้นมืด ให้เข้ากับธีมของเว็บ
- *
- * ทำไมต้องมืด
- *     หมุดสีกับพื้นที่ระบายสีคือสิ่งที่ต้องอ่าน ส่วนถนนกับชื่อเมืองเป็นฉากหลัง
- *     ภาพสว่างมีรายละเอียดแย่งสายตาจนหมุดจมหาย พื้นมืดดันสีของข้อมูลขึ้นมาแทน
- *     และภาพขาวก้อนใหญ่กลางหน้าจอที่เหลือเป็นธีมมืดทั้งหมดดูแปลกแยก
- *
- * ทำไมกลับสีเองแทนที่จะใช้ชุดแผนที่พื้นมืดสำเร็จรูป
- *     ผู้ให้บริการชุดพื้นมืดที่นิยมใช้กันบังคับให้ใช้กุญแจแล้ว
- *     ภาพที่ได้จะมีลายน้ำพาดทั้งแผ่น การกลับสีเองไม่ต้องพึ่งใครและไม่มีวันหมดอายุ
- *
- * ทำไมต้องหมุนเฉดสีครึ่งวง
- *     การกลับสีอย่างเดียวจะทำให้ทะเลกลายเป็นสีส้มและป่ากลายเป็นสีชมพู
- *     การหมุนเฉดสีไปครึ่งวงหลังกลับสี ดึงให้ทะเลกลับมาเป็นโทนฟ้าและป่าเป็นโทนเขียว
- *
- * ใส่ที่ตัวภาพ ไม่ใช่ที่กรอบแผนที่ ไม่งั้นหมุดกับพื้นที่ระบายสีจะโดนกลับสีไปด้วย
- */
-.map-dark .leaflet-tile {
-  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.7);
-}
-
-/* พื้นที่ว่างรอบแผ่นภาพ ให้เป็นสีเดียวกับพื้นหลังเว็บ
-   ไม่งั้นตอนเลื่อนแผนที่จะเห็นแถบเทาอ่อนซึ่งเป็นค่าตั้งต้นของไลบรารี */
-.map-dark {
-  background: var(--bg);
-}
-
-/* ปุ่มย่อขยายกับป้ายบอกที่มา ค่าตั้งต้นเป็นพื้นขาว ซึ่งสว่างเกินบนแผนที่มืด */
-.map-dark .leaflet-control-zoom a {
-  background: var(--surface-2);
-  border-color: var(--border);
-  color: var(--text-soft);
-}
-
-.map-dark .leaflet-control-zoom a:hover {
-  background: var(--surface);
-  color: var(--text);
-}
-
-.map-dark .leaflet-control-attribution {
-  background: rgba(13, 20, 32, 0.82);
-  color: var(--text-dim);
-}
-
-.map-dark .leaflet-control-attribution a {
-  color: var(--text-soft);
-}
-
-.popup strong {
-  font-size: 14px;
-  display: block;
-  margin-bottom: 2px;
-}
-
-.popup-province {
-  margin: 0 0 8px;
-  color: var(--text-soft);
-  font-size: 12px;
-}
-
-.popup-level {
-  display: inline-block;
-  margin: 0 0 8px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.popup-table {
-  width: 100%;
-  font-size: 12px;
-  border-collapse: collapse;
-}
-
-.popup-table td {
-  padding: 2px 0;
-}
-
-.popup-table td:last-child {
-  text-align: right;
-  font-weight: 600;
-}
-
-.popup-time {
-  margin: 8px 0 6px;
-  font-size: 11px;
-  color: var(--text-soft);
-}
-
-.popup-button {
-  width: 100%;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 7px;
-  padding: 7px;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
 }
 
 
@@ -2183,7 +2069,6 @@ button {
   background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 70%);
   pointer-events: none;
 }
-
 
 
 .card-hero .card-label {

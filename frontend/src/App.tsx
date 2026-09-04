@@ -61,6 +61,10 @@ export default function App() {
   // ส่วนสภาพอากาศต้องเจาะจงจังหวัดเสมอ เพราะอุณหภูมิเฉลี่ยทั้งประเทศไม่มีความหมาย
   const [dustProvince, setDustProvince] = useState<string>("");
 
+  // จังหวัดที่กดเลือกบนแผนที่ เก็บไว้ที่นี่ไม่ใช่ในแผนที่
+  // เพราะต้องล้างทิ้งเมื่อสลับหน้า ไม่งั้นกลับมาแล้วแผงยังค้างอยู่
+  const [pickedProvince, setPickedProvince] = useState<string | null>(null);
+
   // จังหวัดที่ใช้ดึงสภาพอากาศ มาจากช่องเลือกเดียวกับค่าฝุ่น
   //
   // ทำไมต้องมีตัวสำรอง
@@ -333,7 +337,13 @@ export default function App() {
             </h2>
 
             <div className="two-column">
-              <StationMap stations={stations} onSelect={selectStation} ranking={ranking} />
+              <StationMap
+                stations={stations}
+                onSelect={selectStation}
+                ranking={ranking}
+                picked={pickedProvince}
+                onPick={setPickedProvince}
+              />
               <ProvinceRanking ranking={ranking} />
             </div>
 

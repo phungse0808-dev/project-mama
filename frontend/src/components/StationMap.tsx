@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
-import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
+import { useEffect } from "react";
+import { MapContainer, useMap } from "react-leaflet";
 import type { ProvinceRank, StationReading } from "../api";
-import { formatThaiDateTime } from "../api";
 import { ProvinceLayer } from "./ProvinceLayer";
 import { ProvinceDetail } from "./ProvinceDetail";
 
 type Props = {
+  /** สถานีทั้งหมด ใช้แสดงรายชื่อในแผงของจังหวัดที่กดเลือก */
   stations: StationReading[];
   onSelect: (code: string) => void;
-  /** ค่าเฉลี่ยรายจังหวัด ใช้ระบายสีเมื่อสลับไปโหมดรายจังหวัด */
+  /** ค่าเฉลี่ยรายจังหวัด ใช้กำหนดสีของแต่ละจังหวัด */
   ranking: ProvinceRank[];
+  /** จังหวัดที่กดเลือกอยู่ ว่างแปลว่ายังไม่ได้เลือก */
+  picked: string | null;
+  onPick: (province: string | null) => void;
 };
-
-/** สองวิธีมองข้อมูลชุดเดียวกัน */
-type MapMode = "stations" | "provinces";
 
 // กรอบครอบคลุมประเทศไทย ตั้งแต่ปลายสุดของนราธิวาสถึงเหนือสุดของเชียงราย
 // และจากชายแดนตะวันตกของแม่ฮ่องสอนถึงตะวันออกสุดของอุบลราชธานี
@@ -23,7 +23,7 @@ const THAILAND_BOUNDS: [[number, number], [number, number]] = [
 ];
 
 // ขอบเขตที่อนุญาตให้เลื่อนแผนที่ เผื่อจากกรอบประเทศไว้เล็กน้อย
-// เพื่อให้สถานีที่อยู่ริมขอบยังเลื่อนเข้ามากลางจอได้
+// เพื่อให้จังหวัดที่อยู่ริมขอบยังเลื่อนเข้ามากลางจอได้
 const PAN_LIMIT: [[number, number], [number, number]] = [
   [4.5, 95.5],
   [21.5, 107.5],
@@ -32,26 +32,8 @@ const PAN_LIMIT: [[number, number], [number, number]] = [
 // ระดับซูมต่ำสุดที่ยังเห็นประเทศไทยเต็มประเทศ ต่ำกว่านี้จะเริ่มเห็นประเทศอื่น
 const MIN_ZOOM = 5;
 
-// ซูมเข้าได้ลึกสุดถึงระดับถนน พอสำหรับดูว่าสถานีตั้งอยู่บริเวณใด
-const MAX_ZOOM = 15;
-
-/** คำนวณกรอบแผนที่จากตำแหน่งสถานีจริง
- *
- * ใช้วิธีนี้แทนการกำหนดจุดกึ่งกลางกับระดับซูมตายตัว เพราะระดับซูมที่พอดี
- * ขึ้นกับขนาดของกรอบแผนที่ซึ่งต่างกันไปตามหน้าจอ ถ้ากำหนดตายตัว
- * บนจอแคบจะเห็นทะเลมากกว่าแผ่นดิน
- */
-function boundsOf(
-  stations: StationReading[],
-): [[number, number], [number, number]] {
-  if (stations.length === 0) return THAILAND_BOUNDS;
-  const lats = stations.map((s) => s.latitude);
-  const lngs = stations.map((s) => s.longitude);
-  return [
-    [Math.min(...lats), Math.min(...lngs)],
-    [Math.max(...lats), Math.max(...lngs)],
-  ];
-}
+// ซูมเข้าได้ลึกสุดถึงระดับอำเภอ พอสำหรับดูรูปร่างจังหวัดเล็ก ๆ อย่างสมุทรสงคราม
+const MAX_ZOOM = 12;
 
 /** บังคับให้จุดกลางของแผนที่อยู่ในประเทศไทยเสมอ
  *
@@ -87,16 +69,23 @@ function KeepInsideThailand() {
   return null;
 }
 
-/** ขนาดหมุดสะท้อนความรุนแรง ค่าฝุ่นยิ่งสูงหมุดยิ่งใหญ่ */
-function radiusFor(pm25: number | null): number {
-  if (pm25 === null) return 4;
-  return Math.min(18, 4 + pm25 / 6);
-}
-
-export function StationMap({ stations, onSelect, ranking }: Props) {
-  const [mode, setMode] = useState<MapMode>("stations");
-  const [picked, setPicked] = useState<string | null>(null);
-
+/**
+ * แผนที่ระบายสีค่าฝุ่นรายจังหวัด
+ *
+ * ทำไมไม่มีภาพถนนเป็นฉากหลัง
+ *     รูปจังหวัดบอกตำแหน่งในตัวมันเองอยู่แล้ว ภาพถนนจึงกลายเป็นลายรบกวน
+ *     ใต้สีที่ต้องอ่าน และยังทำให้สีเพี้ยนเพราะพื้นที่ระบายเป็นสีโปร่ง
+ *     ลายข้างล่างทะลุขึ้นมาปนกัน
+ *
+ *     ผลพลอยได้คือแผนที่นี้ไม่ต้องโหลดภาพจากอินเทอร์เน็ตเลยสักแผ่น
+ *     ขึ้นทันทีไม่ต้องรอ และเปิดได้แม้เน็ตไม่ติด
+ *
+ * ความต่างภายในจังหวัดหายไปไหน
+ *     สีของจังหวัดมาจากค่าเฉลี่ย ซึ่งกลบความต่างภายใน
+ *     การกดเข้าไปดูรายละเอียดจะเห็นสถานีทุกแห่งพร้อมค่าของแต่ละแห่ง
+ *     ซึ่งเป็นที่ที่ความต่างนั้นถูกเปิดเผย
+ */
+export function StationMap({ stations, onSelect, ranking, picked, onPick }: Props) {
   // สถานีของจังหวัดที่กดเลือก เรียงจากค่าสูงไปต่ำ
   // เรียงแบบนี้เพราะจุดที่แย่ที่สุดคือสิ่งที่ควรเห็นก่อน ไม่ใช่ตามชื่อ
   const pickedStations = picked
@@ -107,128 +96,26 @@ export function StationMap({ stations, onSelect, ranking }: Props) {
 
   return (
     <section className="panel">
-      {/* บอกจำนวนหมุดที่แสดงจริง เพราะสถานีที่ข้อมูลค้างจะไม่ขึ้นบนแผนที่
-          ตัวเลขนี้จึงน้อยกว่าจำนวนสถานีทั้งหมดในแผงคุณภาพข้อมูล */}
       <h2 className="panel-title">
         แผนที่คุณภาพอากาศ
         <span className="panel-hint">
-          {mode === "stations"
-            ? `${stations.length} สถานีที่ยังส่งข้อมูล · คลิกที่หมุดเพื่อดูรายละเอียด`
-            : `${ranking.length} จังหวัดที่มีข้อมูล · เอาเมาส์ชี้ที่จังหวัดเพื่อดูค่า`}
+          {ranking.length} จังหวัดที่มีข้อมูล · กดที่จังหวัดเพื่อดูรายละเอียด
         </span>
       </h2>
 
-      {/* ปุ่มสลับสองมุมมองของข้อมูลชุดเดียวกัน
-          หมุดตอบว่าค่าที่จุดวัดเป็นเท่าไร สีตอบว่าภูมิภาคไหนหนักกว่ากัน */}
-      <div className="map-modes" role="group" aria-label="เลือกวิธีแสดงแผนที่">
-        <button
-          className={mode === "stations" ? "map-mode on" : "map-mode"}
-          onClick={() => {
-            setMode("stations");
-            setPicked(null);
-          }}
-        >
-          หมุดรายสถานี
-        </button>
-        <button
-          className={mode === "provinces" ? "map-mode on" : "map-mode"}
-          onClick={() => setMode("provinces")}
-        >
-          ระบายสีรายจังหวัด
-        </button>
-      </div>
       <div className={picked ? "map-wrapper with-detail" : "map-wrapper"}>
         <MapContainer
-          bounds={boundsOf(stations)}
+          bounds={THAILAND_BOUNDS}
           boundsOptions={{ padding: [24, 24] }}
           maxBounds={PAN_LIMIT}
           maxBoundsViscosity={1}
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
           scrollWheelZoom
-          className="map map-dark"
+          className="map map-plain"
         >
-          {/* ไม่กำหนด bounds ที่ชั้นภาพแผนที่ ไม่เช่นนั้นภาพจะโหลดเฉพาะในกรอบที่กำหนด
-              แล้วเหลือพื้นที่ว่างเปล่าที่ขอบซ้ายขวาของกรอบแผนที่
-              การจำกัดการเลื่อนทำที่ระดับแผนที่ด้วย maxBounds และตัวดึงจุดกลางกลับอยู่แล้ว */}
-          {/* ภาพถนนใส่เฉพาะโหมดหมุด เพราะหมุดเป็นจุดลอย ๆ
-              ต้องมีถนนกับชื่อเมืองเป็นฉากหลังถึงจะรู้ว่าจุดนั้นอยู่ตรงไหน
-
-              โหมดระบายสีไม่ใส่ เพราะรูปจังหวัดบอกตำแหน่งในตัวเองอยู่แล้ว
-              ภาพถนนกลายเป็นลายรบกวนใต้สีที่ต้องอ่าน และยังทำให้สีเพี้ยน
-              เพราะพื้นที่ระบายทับเป็นสีโปร่ง เห็นลายข้างล่างทะลุขึ้นมา
-
-              ผลพลอยได้คือโหมดนี้ไม่ต้องโหลดภาพจากอินเทอร์เน็ตเลยสักแผ่น
-              เปิดได้แม้เน็ตไม่ติด และขึ้นทันทีไม่ต้องรอ
-
-              ภาพที่ใช้ยังเป็นของ OpenStreetMap เหมือนเดิม แล้วกลับสีเป็นพื้นมืด
-              ด้วย CSS ที่ .map-dark ไม่ได้เปลี่ยนไปใช้ผู้ให้บริการอื่น
-              เคยลองชุดพื้นมืดของ CARTO แล้ว ตอนนี้เขาบังคับให้ใช้กุญแจ
-              ภาพที่ได้มีลายน้ำ API KEY REQUIRED พาดทั้งแผ่น */}
-          {mode === "stations" && (
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              minZoom={MIN_ZOOM}
-              maxZoom={MAX_ZOOM}
-            />
-          )}
           <KeepInsideThailand />
-          {mode === "provinces" && (
-            <ProvinceLayer ranking={ranking} selected={picked} onSelect={setPicked} />
-          )}
-          {mode === "stations" &&
-            stations.map((station) => (
-            <CircleMarker
-              key={station.station_code}
-              center={[station.latitude, station.longitude]}
-              radius={radiusFor(station.pm25)}
-              pathOptions={{
-                color: "#ffffff",
-                weight: 1,
-                fillColor: station.level.color,
-                fillOpacity: 0.85,
-              }}
-            >
-              <Popup>
-                <div className="popup">
-                  <strong>{station.name_th}</strong>
-                  <p className="popup-province">จังหวัด{station.province}</p>
-                  <p
-                    className="popup-level"
-                    style={{ background: station.level.color }}
-                  >
-                    {station.level.label_th}
-                  </p>
-                  <table className="popup-table">
-                    <tbody>
-                      <tr>
-                        <td>PM2.5</td>
-                        <td>{station.pm25 ?? "-"} µg/m³</td>
-                      </tr>
-                      <tr>
-                        <td>PM10</td>
-                        <td>{station.pm10 ?? "-"} µg/m³</td>
-                      </tr>
-                      <tr>
-                        <td>AQI</td>
-                        <td>{station.aqi ?? "-"}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <p className="popup-time">
-                    {formatThaiDateTime(station.measured_at)}
-                  </p>
-                  <button
-                    className="popup-button"
-                    onClick={() => onSelect(station.station_code)}
-                  >
-                    ดูกราฟย้อนหลัง
-                  </button>
-                </div>
-              </Popup>
-            </CircleMarker>
-          ))}
+          <ProvinceLayer ranking={ranking} selected={picked} onSelect={onPick} />
         </MapContainer>
 
         {picked && (
@@ -236,7 +123,7 @@ export function StationMap({ stations, onSelect, ranking }: Props) {
             province={picked}
             rank={ranking.find((row) => row.province === picked)}
             stations={pickedStations}
-            onClose={() => setPicked(null)}
+            onClose={() => onPick(null)}
             onSelectStation={onSelect}
           />
         )}
