@@ -53,12 +53,21 @@ const TOTAL_PROVINCES = 77;
  *
  * ปิดแป้นพิมพ์ด้วย เพราะปุ่มลูกศรของไลบรารีคือการเลื่อนแผนที่
  * ถ้าเปิดไว้จะเลื่อนได้ทางแป้นพิมพ์ทั้งที่ปิดการลากไปแล้ว
+ *
+ * ทุกวิธีซูมตั้งเป็น center คือยึดจุดกลางของกล่องเป็นหลัก
+ *     ค่าตั้งต้นของไลบรารีคือซูมเข้าหาตำแหน่งเมาส์หรือนิ้ว
+ *     ซึ่งทำให้จุดกลางของแผนที่เลื่อนออกไปเรื่อย ๆ ทุกครั้งที่ซูม
+ *     พอแผนที่ล็อกไว้เลื่อนเองไม่ได้ ผู้ใช้จึงไม่มีทางดึงกลับมา
+ *     ประเทศจะค้างอยู่มุมจอจนกว่าจะย่อสุดแล้วเริ่มใหม่
+ *
+ *     การยึดจุดกลางทำให้ซูมเข้าออกกี่ครั้งก็ยังอยู่ตรงกลางเสมอ
  */
 const LOCKED = {
   dragging: false,
   keyboard: false,
-  touchZoom: true,
-  doubleClickZoom: true,
+  touchZoom: "center",
+  doubleClickZoom: "center",
+  scrollWheelZoom: "center",
 } as const;
 
 /** บอกแผนที่ให้วัดกล่องใหม่และจัดประเทศให้พอดีเมื่อกล่องเปลี่ยนขนาด
@@ -180,7 +189,6 @@ export function StationMap({ stations, onSelect, ranking, picked, onPick, levels
           {...LOCKED}
           minZoom={ZOOM_FLOOR}
           maxZoom={MAX_ZOOM}
-          scrollWheelZoom
           className="map map-plain"
         >
           <FitOnResize trigger={picked} />
