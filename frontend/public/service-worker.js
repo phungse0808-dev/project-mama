@@ -9,7 +9,7 @@
  *     ซึ่งอันตรายกว่าการไม่เห็นอะไรเลย เพราะเป็นข้อมูลที่ใช้ตัดสินใจเรื่องสุขภาพ
  */
 
-const CACHE = "pm25-shell-v1";
+const CACHE = "pm25-shell-v2";
 
 // เก็บเฉพาะโครงของหน้าเว็บ ไฟล์ที่เหลือจะถูกเก็บตอนถูกเรียกใช้จริง
 const SHELL = ["/", "/index.html", "/app-icon.svg", "/manifest.webmanifest"];
@@ -43,9 +43,37 @@ self.addEventListener("fetch", (event) => {
   // ไฟล์จากที่อื่น เช่น ฟอนต์และภาพแผนที่ ปล่อยให้เบราว์เซอร์จัดการเอง
   if (url.origin !== self.location.origin) return;
 
+  // ตัวหน้าเว็บต้องไปเอาจากเซิร์ฟเวอร์ก่อนเสมอ ใช้ของในเครื่องเฉพาะตอนเน็ตไม่ติด
+  //
+  // ทำไมต้องแยกกรณีนี้ออกมา
+  //     index.html เป็นตัวชี้ว่าให้โหลดไฟล์โค้ดชื่ออะไร ซึ่งชื่อเปลี่ยนทุกครั้งที่อัปเดต
+  //     ถ้าหยิบ index.html เก่าในเครื่องมาใช้ มันจะชี้ไปยังไฟล์โค้ดรุ่นเก่า
+  //     ผู้ใช้จึงเห็นเว็บรุ่นเก่าทั้งที่เซิร์ฟเวอร์มีของใหม่รออยู่แล้ว
+  //     และจะเห็นของใหม่ก็ต่อเมื่อเปิดซ้ำอีกรอบ ซึ่งไม่มีใครรู้ว่าต้องทำแบบนั้น
+  const wantsPage =
+    request.mode === "navigate" ||
+    url.pathname === "/" ||
+    url.pathname === "/index.html";
+
+  if (wantsPage) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((hit) => hit || caches.match("/index.html"))),
+    );
+    return;
+  }
+
+  // ไฟล์โค้ดกับรูปภาพใช้ของในเครื่องก่อนได้ เพราะชื่อไฟล์มีรหัสรุ่นติดอยู่แล้ว
+  // ไฟล์ชื่อเดิมจึงมีเนื้อหาเดิมเสมอ ไม่มีทางได้ของเก่าผิดรุ่น
   event.respondWith(
     caches.match(request).then((hit) => {
-      // มีในเครื่องก็ใช้เลย แล้วค่อยไปดึงรุ่นใหม่มาเก็บไว้ใช้คราวหน้า
       const fresh = fetch(request)
         .then((response) => {
           if (response.ok) {
