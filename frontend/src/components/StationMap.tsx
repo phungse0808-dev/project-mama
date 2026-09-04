@@ -151,19 +151,28 @@ export function StationMap({ stations, onSelect, ranking }: Props) {
           {/* ไม่กำหนด bounds ที่ชั้นภาพแผนที่ ไม่เช่นนั้นภาพจะโหลดเฉพาะในกรอบที่กำหนด
               แล้วเหลือพื้นที่ว่างเปล่าที่ขอบซ้ายขวาของกรอบแผนที่
               การจำกัดการเลื่อนทำที่ระดับแผนที่ด้วย maxBounds และตัวดึงจุดกลางกลับอยู่แล้ว */}
-          {/* ยังใช้ภาพจาก OpenStreetMap เหมือนเดิม แล้วกลับสีให้เป็นพื้นมืดด้วย CSS
-              ที่ .map-dark ในไฟล์สไตล์ ไม่ได้เปลี่ยนไปใช้ผู้ให้บริการอื่น
+          {/* ภาพถนนใส่เฉพาะโหมดหมุด เพราะหมุดเป็นจุดลอย ๆ
+              ต้องมีถนนกับชื่อเมืองเป็นฉากหลังถึงจะรู้ว่าจุดนั้นอยู่ตรงไหน
 
-              ทำไมไม่ใช้ชุดแผนที่พื้นมืดสำเร็จรูป
-                  เคยลองของ CARTO แล้ว ตอนนี้เขาบังคับให้ใช้กุญแจ
-                  ภาพที่ได้มีลายน้ำ API KEY REQUIRED พาดทั้งแผ่น
-                  การกลับสีเองจึงเป็นทางที่ไม่ต้องพึ่งใครและไม่มีวันหมดอายุ */}
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            minZoom={MIN_ZOOM}
-            maxZoom={MAX_ZOOM}
-          />
+              โหมดระบายสีไม่ใส่ เพราะรูปจังหวัดบอกตำแหน่งในตัวเองอยู่แล้ว
+              ภาพถนนกลายเป็นลายรบกวนใต้สีที่ต้องอ่าน และยังทำให้สีเพี้ยน
+              เพราะพื้นที่ระบายทับเป็นสีโปร่ง เห็นลายข้างล่างทะลุขึ้นมา
+
+              ผลพลอยได้คือโหมดนี้ไม่ต้องโหลดภาพจากอินเทอร์เน็ตเลยสักแผ่น
+              เปิดได้แม้เน็ตไม่ติด และขึ้นทันทีไม่ต้องรอ
+
+              ภาพที่ใช้ยังเป็นของ OpenStreetMap เหมือนเดิม แล้วกลับสีเป็นพื้นมืด
+              ด้วย CSS ที่ .map-dark ไม่ได้เปลี่ยนไปใช้ผู้ให้บริการอื่น
+              เคยลองชุดพื้นมืดของ CARTO แล้ว ตอนนี้เขาบังคับให้ใช้กุญแจ
+              ภาพที่ได้มีลายน้ำ API KEY REQUIRED พาดทั้งแผ่น */}
+          {mode === "stations" && (
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              minZoom={MIN_ZOOM}
+              maxZoom={MAX_ZOOM}
+            />
+          )}
           <KeepInsideThailand />
           {mode === "provinces" && (
             <ProvinceLayer ranking={ranking} selected={picked} onSelect={setPicked} />
