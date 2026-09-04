@@ -15,7 +15,6 @@ import type {
 import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
-import { DiseasePanel } from "./components/DiseasePanel";
 import { HomePage } from "./components/HomePage";
 import { NavBar } from "./components/NavBar";
 import type { SectionKey } from "./components/NavBar";
@@ -352,8 +351,6 @@ export default function App() {
             />
 
             {alertData && <AlertPanel alerts={alertData} />}
-
-            <DiseasePanel />
 
             {provinces.length > 0 && (
               <ForecastPanel provinces={provinces} defaultProvince={user.province} />

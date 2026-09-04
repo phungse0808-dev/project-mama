@@ -1651,12 +1651,6 @@ button {
   color: var(--text-soft);
 }
 
-.disease-table {
-  margin-top: 14px;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
 /* หน้าหลักเหลือทางเข้าเดียว จึงให้กินเต็มความกว้างแทนการอยู่ครึ่งเดียว
    กล่องใบเดียวที่กว้างครึ่งจอจะดูเหมือนอีกใบหายไป */
 .home-entry {
