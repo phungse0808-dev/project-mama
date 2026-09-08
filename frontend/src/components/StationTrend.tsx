@@ -276,8 +276,8 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                   <stop offset="100%" stopColor="#0b6bcb" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="pm10Fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#a86308" stopOpacity={0.22} />
-                  <stop offset="100%" stopColor="#a86308" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#9c5c07" stopOpacity={0.22} />
+                  <stop offset="100%" stopColor="#9c5c07" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf1" />
@@ -303,7 +303,7 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                 type="monotone"
                 dataKey="pm10"
                 name="PM10"
-                stroke="#a86308"
+                stroke="#9c5c07"
                 strokeWidth={2}
                 fill="url(#pm10Fill)"
                 dot={false}

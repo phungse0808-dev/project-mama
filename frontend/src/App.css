@@ -2099,6 +2099,35 @@ button {
   background: linear-gradient(180deg, #a8620a, #d99a2b);
 }
 
+/* กลุ่มลมใช้สีเขียว แยกจากฟ้าของฝุ่นและส้มของอากาศ
+   สามกลุ่มจึงบอกได้จากแถบสีโดยไม่ต้องอ่านหัวข้อ */
+.home-group-bar.wind {
+  background: linear-gradient(180deg, #0d7e5a, #12a05f);
+}
+
+/* เข็มทิศย่อบนหน้าหลัก ขนาดเท่าไอคอนสภาพอากาศที่อยู่ช่องข้างกัน
+   จะได้เรียงเป็นแถวเดียวกันพอดี ไม่ใช่ใบหนึ่งสูงกว่าอีกใบ */
+.home-wind-dial {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+
+.home-wind-dial circle {
+  fill: var(--surface);
+  stroke: var(--border);
+}
+
+.home-wind-dial line {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.home-wind-dial path {
+  fill: var(--accent);
+}
+
 /* ไอคอนกับตัวเลขอยู่บรรทัดเดียวกัน ต่างจากช่องอื่นที่มีแต่ตัวเลข */
 .home-weather-now {
   display: flex;

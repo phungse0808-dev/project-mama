@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import type { Summary, WeatherNow } from "../api";
+import type { Summary, WeatherNow, Wind } from "../api";
 import { DiseaseRisk } from "./DiseaseRisk";
 import { WeatherIcon } from "./WeatherIcon";
 
@@ -40,6 +40,7 @@ export function HomePage({
   onAreaChange,
 }: Props) {
   const [weather, setWeather] = useState<WeatherNow | null>(null);
+  const [wind, setWind] = useState<Wind | null>(null);
 
   // จังหวัดที่ใช้ดึงอากาศ เรียงลำดับความสำคัญจากที่เจาะจงที่สุดลงมา
   //
@@ -71,7 +72,32 @@ export function HomePage({
     };
   }, [target]);
 
+  // ดึงลมของจังหวัดเดียวกันกับอากาศ ใช้จังหวะเดียวกันด้วย
+  //
+  // แยก effect ออกจากอากาศเพราะเป็นคนละเส้นทาง ถ้าเส้นใดเส้นหนึ่งล่ม
+  // อีกเส้นต้องยังแสดงได้ตามปกติ ไม่ใช่หายไปทั้งคู่
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const result = await api.wind(target, 24);
+        if (!cancelled) setWind(result);
+      } catch {
+        if (!cancelled) setWind(null);
+      }
+    };
+
+    void load();
+    const timer = setInterval(() => void load(), 10 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [target]);
+
   const now = weather?.available ? weather : null;
+  const air = wind?.available ? wind : null;
 
   return (
     <div className="home-entry">
@@ -154,6 +180,60 @@ export function HomePage({
                   <span className="home-stat-unit"> %</span>
                 </p>
                 <p className="home-stat-label">โอกาสฝนตกวันนี้</p>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ลมเป็นกลุ่มของตัวเอง ไม่ใช่ช่องหนึ่งในกลุ่มสภาพอากาศ
+            เพราะตอบคนละคำถาม อุณหภูมิกับฝนบอกว่าวันนี้อากาศเป็นอย่างไร
+            ส่วนลมบอกว่าฝุ่นจะระบายออกไหม ซึ่งเป็นเรื่องเดียวกับกลุ่มฝุ่นข้างบน
+
+            ซ่อนทั้งกลุ่มเมื่อดึงไม่ได้ ด้วยเหตุผลเดียวกับกลุ่มสภาพอากาศ */}
+        {air && (
+          <>
+            <p className="home-group">
+              <span className="home-group-bar wind" />
+              ลม · {air.province ?? target}
+            </p>
+
+            <div className="home-stats">
+              <div className="home-weather-now">
+                {/* เข็มทิศชี้ทางที่ลมพัดไป ส่วนองศาที่ต้นทางส่งมาคือทิศที่ลมพัดมาจาก
+                    สองอย่างนี้ตรงข้ามกันเสมอ จึงหมุนเพิ่มอีกร้อยแปดสิบองศา */}
+                <svg className="home-wind-dial" viewBox="0 0 40 40" aria-hidden="true">
+                  <circle cx="20" cy="20" r="17" />
+                  {air.wind_direction != null && (
+                    <g transform={`rotate(${air.wind_direction + 180} 20 20)`}>
+                      <line x1="20" y1="29" x2="20" y2="13" />
+                      <path d="M20 9 L24 17 L20 15 L16 17 Z" />
+                    </g>
+                  )}
+                </svg>
+                <div>
+                  <p className="home-stat-value">
+                    {air.wind_speed ?? "—"}
+                    <span className="home-stat-unit"> km/h</span>
+                  </p>
+                  <p className="home-stat-label">
+                    {air.level?.label_th ?? "ไม่ทราบระดับ"}
+                    {air.wind_direction_th ? ` · จากทิศ${air.wind_direction_th}` : ""}
+                  </p>
+                </div>
+              </div>
+
+              {/* ชั่วโมงที่ลมสงบเป็นตัวเลขที่เชื่อมลมกับฝุ่นโดยตรง
+                  ลมอ่อนแปลว่าอากาศแทบไม่ถ่ายเท ฝุ่นที่ปล่อยออกมาจึงค้างอยู่ที่เดิม */}
+              <div>
+                <p className="home-stat-value">
+                  {air.calm_hours ?? 0}
+                  <span className="home-stat-unit"> ชม.</span>
+                </p>
+                <p className="home-stat-label">
+                  {air.calm_hours
+                    ? "ลมสงบใน 24 ชม. · ช่วงที่ฝุ่นสะสม"
+                    : "ไม่มีช่วงลมสงบใน 24 ชม."}
+                </p>
               </div>
             </div>
           </>
