@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Pm25HourlyPoint, ProvinceRank, StationReading } from "../api";
+import { levelInk } from "../levelInk";
 
 type Props = {
   province: string;
@@ -88,7 +89,7 @@ export function ProvinceDetail({ province, rank, stations, onClose, onSelectStat
                   เพราะประเด็นของตัวเลขนี้คือจุดที่แย่ที่สุดแย่แค่ไหน */}
               <p
                 className="pdetail-value"
-                style={{ color: stations[0]?.level.color ?? rank.level.color }}
+                style={{ color: levelInk(stations[0]?.level.color ?? rank.level.color) }}
               >
                 {rank.pm25_max}
               </p>
@@ -124,15 +125,15 @@ export function ProvinceDetail({ province, rank, stations, onClose, onSelectStat
               >
                 <defs>
                   <linearGradient id="pdetailFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#5ec8ff" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#5ec8ff" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#0b6bcb" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#0b6bcb" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <polygon points={`0,30 ${points} 100,30`} fill="url(#pdetailFill)" />
                 <polyline
                   points={points}
                   fill="none"
-                  stroke="#5ec8ff"
+                  stroke="#0b6bcb"
                   strokeWidth="1.6"
                   vectorEffect="non-scaling-stroke"
                 />

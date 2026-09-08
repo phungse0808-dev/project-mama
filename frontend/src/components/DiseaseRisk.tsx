@@ -23,7 +23,7 @@ type Props = {
  * เพราะสีชุดนั้นแปลว่าอันตรายมากน้อย ถ้าเอามาใช้กับชื่อโรค
  * คนจะอ่านว่าโรคสีแดงร้ายแรงกว่าโรคสีเขียว ซึ่งไม่ใช่สิ่งที่แผงนี้บอก
  */
-const GROUP_COLORS = ["#5ec8ff", "#ff7b8a", "#f0a326", "#5fd0a4"];
+const GROUP_COLORS = ["#0b6bcb", "#c62b45", "#a86308", "#0d7e5a"];
 
 /** เกณฑ์ที่ใช้เทียบ ตรงกับค่าใน backend/app/health_advice.py
  *
@@ -198,15 +198,15 @@ export function DiseaseRisk({ summary }: Props) {
                   </linearGradient>
                 ))}
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,150,190,.12)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf1" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} unit="%" width={64} />
               <Tooltip
                 contentStyle={{
                   borderRadius: 8,
-                  borderColor: "#2b3d52",
-                  background: "#0d1420",
-                  color: "#eaf6ff",
+                  borderColor: "#ccd6e0",
+                  background: "#ffffff",
+                  color: "#131a24",
                   fontSize: 13,
                 }}
                 labelFormatter={(label) => `เวลา ${label}`}

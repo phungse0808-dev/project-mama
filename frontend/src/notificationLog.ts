@@ -37,10 +37,10 @@ export type Notice = {
 };
 
 export const LEVEL_COLORS: Record<NoticeLevel, string> = {
-  info: "#5ec8ff",
-  good: "#7dd8a0",
-  moderate: "#ffd400",
-  unhealthy: "#ff7e00",
+  info: "#0b6bcb",
+  good: "#0d7e5a",
+  moderate: "#887100",
+  unhealthy: "#b15700",
 };
 
 /** ลำดับความแรง ใช้เลือกสีของระฆังจากรายการที่แรงที่สุด */

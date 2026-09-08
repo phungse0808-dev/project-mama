@@ -4,8 +4,9 @@
   position: fixed;
   inset: 0;
   z-index: 900;
-  background: rgba(13, 22, 38, 0.44);
-  backdrop-filter: blur(3px);
+  /* ฉากหลังตอนเปิดช่องค้นหา ใช้ดำโปร่งบาง ๆ ไม่ใช้เบลอ
+     บนพื้นขาวการเบลอแทบไม่เห็นผล แต่ต้องวาดใหม่ทุกเฟรม */
+  background: rgba(20, 30, 45, 0.32);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -20,7 +21,7 @@
 .search-input {
   width: 100%;
   padding: 18px 22px;
-  font-size: 16px;
+  font-size: 18px;
   font-family: inherit;
   color: var(--text);
   border: none;
@@ -49,19 +50,19 @@
   padding: 14px 20px;
   background: #f4f8fd;
   border-bottom: 1px solid #eef1f6;
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--text-soft);
 }
 
 .search-summary strong {
   color: var(--text);
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .search-empty {
   margin: 0;
   padding: 26px 18px;
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--text-soft);
   text-align: center;
 }
@@ -112,7 +113,7 @@
 }
 
 .search-name small {
-  font-size: 11.5px;
+  font-size: 13.5px;
   color: var(--text-soft);
 }
 
@@ -120,13 +121,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .search-value small {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-soft);
 }
@@ -134,6 +135,6 @@
 .search-hint {
   margin: 14px 0 0;
   text-align: center;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 13.5px;
+  color: var(--text-dim);
 }

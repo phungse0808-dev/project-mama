@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Pm25Forecast } from "../api";
+import { levelInk } from "../levelInk";
 
 type Props = {
   provinces: string[];
@@ -220,7 +221,7 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
 
             <span
               className="forecast-level"
-              style={{ backgroundColor: `${day.level.color}22`, color: day.level.color }}
+              style={{ backgroundColor: `${day.level.color}14`, color: levelInk(day.level.color) }}
             >
               {day.level.label_th}
             </span>

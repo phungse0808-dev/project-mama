@@ -17,8 +17,12 @@ type Props = {
  * ใช้เทาจาง ไม่ใช่สีของระดับใดระดับหนึ่ง เพราะเราไม่รู้ค่าของจังหวัดนั้นจริง ๆ
  * ถ้าระบายเป็นสีฟ้าเหมือนระดับดีมาก คนจะเข้าใจว่าอากาศที่นั่นสะอาด
  * ทั้งที่ความจริงคือไม่มีใครวัด
+ *
+ * บนธีมพื้นขาวต้องเป็นเทาอ่อน ไม่ใช่เทาเข้มอย่างตอนเป็นธีมมืด
+ * เพราะบนพื้นขาว สียิ่งเข้มยิ่งอ่านว่าค่ายิ่งสูง จังหวัดที่ไม่มีข้อมูล
+ * จะกลายเป็นดูเหมือนจังหวัดที่อากาศแย่ที่สุดในประเทศทันที
  */
-const NO_DATA_COLOR = "#3a4757";
+const NO_DATA_COLOR = "#d9dee6";
 
 /**
  * ชั้นระบายสีรายจังหวัดบนแผนที่
@@ -74,12 +78,19 @@ export function ProvinceLayer({ ranking, selected, onSelect }: Props) {
     const row = rowOf(feature);
     const isPicked = nameOf(feature) === selected;
     return {
-      // จังหวัดที่กดเลือกใช้ขอบขาวหนา ที่เหลือใช้ขอบสีพื้นหลังบาง ๆ
+      // จังหวัดที่กดเลือกใช้ขอบเข้มหนา ที่เหลือใช้ขอบดำโปร่งบาง ๆ
       // ซึ่งยังทำให้จังหวัดที่สีเดียวกันแยกออกจากกันได้
-      color: isPicked ? "#eaf6ff" : "#0a0e14",
+      //
+      // เดิมจังหวัดที่เลือกใช้ขอบขาว ซึ่งใช้ได้ตอนพื้นหลังเป็นสีมืด
+      // แต่ขอบขาวบนรูปจังหวัดที่ระบายเหลืองวัดได้ 1.08:1 คือมองไม่เห็นเลย
+      // และบนพื้นขาวยิ่งกลืนไปกับพื้นหน้า
+      color: isPicked ? "#131a24" : "rgba(0, 0, 0, 0.35)",
       weight: isPicked ? 2.4 : 0.8,
       fillColor: row ? row.level.color : NO_DATA_COLOR,
-      fillOpacity: row ? (isPicked ? 0.92 : 0.72) : 0.3,
+      // ทึบขึ้นกว่าตอนเป็นธีมมืด
+      // ค่าโปร่งบนพื้นมืดทำให้สีเข้มลงซึ่งยังแยกระดับกันออก
+      // แต่บนพื้นขาวมันผสมไปทางขาว สีทั้งห้าระดับจึงจางเข้าหากันจนแยกยากขึ้น
+      fillOpacity: row ? (isPicked ? 1 : 0.88) : 0.7,
     };
   };
 
@@ -104,13 +115,13 @@ export function ProvinceLayer({ ranking, selected, onSelect }: Props) {
       mouseover: () => {
         (layer as Layer & { setStyle: (s: PathOptions) => void }).setStyle({
           weight: 2.4,
-          color: "#eaf6ff",
+          color: "#131a24",
         });
       },
       mouseout: () => {
         (layer as Layer & { setStyle: (s: PathOptions) => void }).setStyle({
           weight: picked ? 2.4 : 0.8,
-          color: picked ? "#eaf6ff" : "#0a0e14",
+          color: picked ? "#131a24" : "rgba(0, 0, 0, 0.35)",
         });
       },
       click: () => {

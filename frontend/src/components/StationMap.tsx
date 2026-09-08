@@ -212,7 +212,7 @@ export function StationMap({ stations, onSelect, ranking, picked, onPick, levels
               </div>
             ))}
             <div className="map-legend-row none">
-              <span className="map-legend-swatch" style={{ background: "#3a4757" }} />
+              <span className="map-legend-swatch" style={{ background: "#d9dee6" }} />
               <span className="map-legend-name">ไม่มีสถานี</span>
               <span className="map-legend-count">{noStation}</span>
             </div>
