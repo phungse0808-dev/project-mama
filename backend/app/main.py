@@ -40,6 +40,7 @@ from app.services import (
     update_profile,
     weather_history,
     weather_now,
+    wind_now,
 )
 
 
@@ -271,6 +272,23 @@ def get_weather_now(province: str, session: Session = Depends(get_session)) -> d
     จึงบอกสภาพอากาศปัจจุบันไม่ได้
     """
     return weather_now(session, province)
+
+
+@app.get("/api/wind/{province}", tags=["ข้อมูลอากาศ"])
+def get_wind(
+    province: str,
+    hours: int = Query(24, ge=1, le=48, description="จำนวนชั่วโมงข้างหน้าที่ต้องการ"),
+    session: Session = Depends(get_session),
+) -> dict:
+    """ลม ณ ขณะนี้ และลมรายชั่วโมงข้างหน้า
+
+    ลมเป็นตัวพาฝุ่นออกจากพื้นที่ ช่วงที่ลมอ่อนอากาศแทบไม่ถ่ายเท ฝุ่นจึงสะสม
+    ระดับความแรงลมใช้มาตราโบฟอร์ตซึ่งเป็นมาตรฐานสากล ไม่ใช่เกณฑ์ที่ตั้งขึ้นเอง
+
+    ไม่ได้บอกว่าค่าฝุ่นจะเป็นเท่าไร เพราะข้อมูลลมกับข้อมูลฝุ่นที่ระบบเก็บไว้
+    ทับกันแค่วันเดียว ยังคำนวณความสัมพันธ์จากข้อมูลของเราเองไม่ได้
+    """
+    return wind_now(session, province, hours)
 
 
 @app.get("/api/rain-chance/{province}", tags=["ข้อมูลอากาศ"])

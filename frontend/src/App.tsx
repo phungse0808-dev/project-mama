@@ -30,6 +30,7 @@ import { LevelBar, SummaryCards } from "./components/SummaryCards";
 import { loadSettings, sendIfDue } from "./dailyDigest";
 import { recordAlerts } from "./noticeRecorder";
 import { WeatherPanel } from "./components/WeatherPanel";
+import { WindPanel } from "./components/WindPanel";
 
 // เก็บผู้ใช้ไว้ในเบราว์เซอร์ เพื่อไม่ต้องกรอกชื่อใหม่ทุกครั้งที่เปิดโปรแกรม
 const USER_KEY = "pm25_user";
@@ -366,6 +367,11 @@ export default function App() {
             {provinces.length > 0 && (
               <ForecastPanel provinces={provinces} defaultProvince={user.province} />
             )}
+
+            {/* ลมอยู่ต่อจากพยากรณ์ฝุ่น เพราะตอบคำถามต่อเนื่องกัน
+                พยากรณ์บอกว่าฝุ่นจะเท่าไร ลมบอกว่าอากาศจะถ่ายเทหรือจะนิ่ง
+                ใช้จังหวัดเดียวกับช่องเลือกของหน้า ไม่มีช่องเลือกของตัวเอง */}
+            <WindPanel province={weatherTarget} />
 
             {provinces.length > 0 && (
               <RainPanel provinces={provinces} defaultProvince={user.province} />

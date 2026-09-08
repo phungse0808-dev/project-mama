@@ -314,6 +314,41 @@ export type Pm25Forecast = {
   }[];
 };
 
+export type WindLevel = { key: string; label_th: string };
+
+export type WindHour = {
+  time: string;
+  label: string;
+  wind_speed: number;
+  wind_direction: number | null;
+  /** ลมต่ำกว่าเกณฑ์ที่ถือว่าอากาศแทบไม่ถ่ายเท */
+  calm: boolean;
+};
+
+export type Wind = {
+  available: boolean;
+  reason?: string;
+  province?: string;
+  source?: string;
+  observed_at?: string;
+  minutes_behind?: number | null;
+  wind_speed?: number | null;
+  /** องศาที่ลมพัดมาจาก ศูนย์คือทิศเหนือ */
+  wind_direction?: number | null;
+  wind_direction_th?: string | null;
+  wind_gusts?: number | null;
+  level?: WindLevel | null;
+  levels?: { key: string; label_th: string; upper_kmh: number | null }[];
+  calm_threshold_kmh?: number;
+  /** จำนวนชั่วโมงที่ลมสงบทั้งหมด อาจกระจายอยู่หลายช่วง */
+  calm_hours?: number;
+  /** ช่วงที่ลมสงบติดกันยาวที่สุด ต่างจาก calm_hours เมื่อสงบหลายช่วง */
+  calm_run_hours?: number;
+  calm_from?: string | null;
+  calm_to?: string | null;
+  hourly?: WindHour[];
+};
+
 export type WeatherNow = {
   available: boolean;
   reason?: string;
@@ -377,6 +412,8 @@ export const api = {
     ),
   weatherNow: (province: string) =>
     get<WeatherNow>("/api/weather-now/" + encodeURIComponent(province)),
+  wind: (province: string, hours = 24) =>
+    get<Wind>(`/api/wind/${encodeURIComponent(province)}?hours=${hours}`),
   rainChance: (province: string) =>
     get<RainChance>("/api/rain-chance/" + encodeURIComponent(province)),
   alerts: () => get<Alerts>("/api/alerts"),

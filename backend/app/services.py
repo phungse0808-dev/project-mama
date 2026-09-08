@@ -13,7 +13,7 @@ from app.health_advice import (
     advice_for,
     compare_standards,
 )
-from app.forecast import fetch_now, fetch_pm25_forecast
+from app.forecast import fetch_now, fetch_pm25_forecast, fetch_wind
 from app.live import minutes_behind
 from app.models import AppUser, CollectionLog, DiseaseDaily, Reading, Station, WeatherDaily
 
@@ -236,6 +236,32 @@ def weather_now(session: Session, province: str) -> dict:
         return {
             "available": False,
             "reason": "เรียกข้อมูลสภาพอากาศปัจจุบันไม่สำเร็จ อาจเป็นเพราะไม่มีอินเทอร์เน็ต",
+        }
+
+    return {"available": True, "province": province, **data}
+
+
+def wind_now(session: Session, province: str, hours: int = 24) -> dict:
+    """ลมปัจจุบันและลมรายชั่วโมงข้างหน้าของจังหวัดนั้น
+
+    ลมสำคัญกับเรื่องฝุ่นเพราะเป็นตัวพาฝุ่นออกจากพื้นที่
+    เมื่อลมอ่อนอากาศแทบไม่ถ่ายเท ฝุ่นที่ปล่อยออกมาจึงค้างอยู่ที่เดิมและสะสมขึ้นเรื่อย ๆ
+
+    ข้อจำกัดที่ต้องบอกผู้ใช้ทุกครั้ง
+        ความสัมพันธ์นี้เป็นหลักอุตุนิยมวิทยาทั่วไป ไม่ได้พิสูจน์จากข้อมูลของระบบนี้เอง
+        เพราะข้อมูลลมย้อนหลังมาจาก NASA POWER ซึ่งตามหลังปัจจุบันหลายสัปดาห์
+        ส่วนค่าฝุ่นเพิ่งเริ่มเก็บกลางเดือนสิงหาคม สองชุดทับกันแค่วันเดียว
+        คำนวณค่าสหสัมพันธ์ไม่ได้ ห้ามแสดงผลราวกับว่าคำนวณมาแล้ว
+    """
+    coords = province_coordinates(session).get(province)
+    if coords is None:
+        return {"available": False, "reason": f"ไม่มีพิกัดของจังหวัด{province}"}
+
+    data = fetch_wind(*coords, hours=hours)
+    if data is None:
+        return {
+            "available": False,
+            "reason": "เรียกข้อมูลลมไม่สำเร็จ อาจเป็นเพราะไม่มีอินเทอร์เน็ต",
         }
 
     return {"available": True, "province": province, **data}

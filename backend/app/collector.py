@@ -28,7 +28,7 @@ import logging
 from contextlib import suppress
 from datetime import datetime
 
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.db import engine
 
@@ -60,6 +60,67 @@ def seconds_until_next_run(now: datetime | None = None) -> float:
     return 3600 - seconds_into_hour + SETTLE_SECONDS
 
 
+def record_wind(session: Session) -> int:
+    """บันทึกลมของทุกจังหวัด ณ ชั่วโมงนี้ คืนจำนวนแถวที่เพิ่มใหม่
+
+    ทำไมเก็บพร้อมรอบเดียวกับค่าฝุ่น
+        ข้อมูลลมย้อนหลังที่มีอยู่มาจาก NASA POWER ซึ่งตามหลังปัจจุบันหลายสัปดาห์
+        จึงทับกับช่วงที่ระบบเก็บค่าฝุ่นได้แค่วันเดียว คำนวณความสัมพันธ์ไม่ได้
+        การเก็บลมพร้อมกันในรอบเดียวกันทำให้สองชุดอยู่บนแกนเวลาเดียวกันตั้งแต่ต้น
+        อีกไม่กี่สัปดาห์จะมีข้อมูลพอให้คำนวณจากของเราเองได้จริง
+
+    ปัดเวลาลงเป็นต้นชั่วโมง เพราะต้นทางอัปเดตทุกสิบห้านาที
+    ถ้าเก็บตามเวลาที่ได้มาจริงจะได้หลายแถวในชั่วโมงเดียวกันซึ่งเทียบกับค่าฝุ่นรายชั่วโมงยาก
+
+    กลืนข้อผิดพลาดของส่วนนี้ทั้งหมด เพราะเป็นข้อมูลเสริม
+    ถ้าดึงลมไม่ได้ก็ไม่ควรทำให้รอบเก็บค่าฝุ่นซึ่งเป็นงานหลักล้มไปด้วย
+    """
+    from app.forecast import fetch_wind_many
+    from app.models import WindHourly
+    from app.services import province_coordinates
+
+    points = [
+        (province, lat, lon)
+        for province, (lat, lon) in sorted(province_coordinates(session).items())
+    ]
+    rows = fetch_wind_many(points)
+    if not rows:
+        return 0
+
+    existing = {
+        (province, moment)
+        for province, moment in session.exec(
+            select(WindHourly.province, WindHourly.observed_at)
+        ).all()
+    }
+
+    added = 0
+    for row in rows:
+        try:
+            moment = datetime.fromisoformat(row["observed_at"]).replace(
+                minute=0, second=0, microsecond=0
+            )
+        except (TypeError, ValueError):
+            continue
+        if (row["province"], moment) in existing:
+            continue
+        session.add(
+            WindHourly(
+                province=row["province"],
+                observed_at=moment,
+                wind_speed=row["wind_speed"],
+                wind_direction=row["wind_direction"],
+                wind_gusts=row["wind_gusts"],
+            )
+        )
+        existing.add((row["province"], moment))
+        added += 1
+
+    if added:
+        session.commit()
+    return added
+
+
 def collect_once() -> int:
     """เก็บข้อมูลหนึ่งรอบ คืนจำนวนค่าตรวจวัดที่บันทึกใหม่
 
@@ -69,6 +130,15 @@ def collect_once() -> int:
 
     with Session(engine) as session:
         log = collect(session)
+
+        try:
+            winds = record_wind(session)
+        except Exception:
+            logger.warning("บันทึกลมรายชั่วโมงไม่สำเร็จ ข้ามรอบนี้", exc_info=True)
+        else:
+            if winds:
+                logger.info("บันทึกลมรายชั่วโมงเพิ่ม %s จังหวัด", winds)
+
         return log.records_new
 
 

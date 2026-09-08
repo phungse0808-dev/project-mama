@@ -88,6 +88,39 @@ class WeatherDaily(SQLModel, table=True):
     collected_at: datetime = Field(default_factory=_now)
 
 
+class WindHourly(SQLModel, table=True):
+    """ลมรายชั่วโมงรายจังหวัด เก็บไว้ให้เทียบกับค่าฝุ่นได้ในอนาคต
+
+    ทำไมต้องมีตารางนี้ ทั้งที่ WeatherDaily มี wind_speed อยู่แล้ว
+        WeatherDaily มาจาก NASA POWER ซึ่งเผยแพร่ช้ากว่าปัจจุบันหลายสัปดาห์
+        พอเอาไปเทียบกับค่าฝุ่นที่ระบบเริ่มเก็บกลางเดือนสิงหาคม 2569
+        สองชุดทับกันแค่วันเดียวคือ 17 กรกฎาคม 2569 ซึ่งคำนวณอะไรไม่ได้เลย
+
+        ตารางนี้เก็บลมพร้อมกันกับรอบที่เก็บค่าฝุ่น สองชุดจึงอยู่บนแกนเวลาเดียวกัน
+        เก็บไปเรื่อย ๆ อีกไม่กี่สัปดาห์จะมีข้อมูลทับกันมากพอ
+        ให้คำนวณความสัมพันธ์ระหว่างลมกับฝุ่นจากข้อมูลของระบบเองได้จริง
+
+    เป็นรายชั่วโมงไม่ใช่รายวัน เพราะลมเปลี่ยนภายในวันเดียวได้หลายเท่า
+    ค่าเฉลี่ยรายวันจะกลบช่วงลมสงบตอนกลางคืนซึ่งเป็นช่วงที่ฝุ่นสะสมมากที่สุด
+    """
+
+    __table_args__ = (UniqueConstraint("province", "observed_at", name="uq_wind_province_hour"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    province: str = Field(index=True)
+    observed_at: datetime = Field(index=True)
+
+    wind_speed: float | None = None
+    """ความเร็วลม หน่วยกิโลเมตรต่อชั่วโมง ตามที่ต้นทางส่งมา"""
+
+    wind_direction: float | None = None
+    """องศาที่ลมพัดมาจาก ศูนย์คือทิศเหนือ ตามธรรมเนียมอุตุนิยมวิทยา"""
+
+    wind_gusts: float | None = None
+
+    collected_at: datetime = Field(default_factory=_now)
+
+
 class AppUser(SQLModel, table=True):
     """ผู้ใช้งานระบบ ระบุตัวตนด้วยชื่อเท่านั้น
 

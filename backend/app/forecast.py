@@ -37,6 +37,7 @@ CACHE_SECONDS = 600
 
 _cache: dict[tuple[float, float], tuple[float, dict]] = {}
 _pm25_cache: dict[tuple[float, float, int, int], tuple[float, list[dict]]] = {}
+_wind_cache: dict[tuple[float, float, int], tuple[float, dict]] = {}
 
 # รหัสสภาพอากาศตามมาตรฐาน WMO แปลเป็นคำอธิบายภาษาไทย
 # ต้นทางส่งมาเป็นตัวเลข ถ้าไม่แปลผู้ใช้จะเห็นแค่เลขที่ไม่มีความหมาย
@@ -97,7 +98,10 @@ def fetch_now(latitude: float, longitude: float) -> dict | None:
             params={
                 "latitude": latitude,
                 "longitude": longitude,
-                "current": "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code",
+                "current": (
+                    "temperature_2m,relative_humidity_2m,precipitation,"
+                    "wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code"
+                ),
                 "daily": "precipitation_probability_max,temperature_2m_max,temperature_2m_min,precipitation_sum",
                 "forecast_days": 1,
                 "timezone": "Asia/Bangkok",
@@ -127,6 +131,10 @@ def fetch_now(latitude: float, longitude: float) -> dict | None:
         "humidity": current.get("relative_humidity_2m"),
         "precipitation": current.get("precipitation"),
         "wind_speed": current.get("wind_speed_10m"),
+        # ทิศทางเป็นองศาที่ลม "พัดมาจาก" ตามธรรมเนียมอุตุนิยมวิทยา
+        # ศูนย์องศาคือลมจากทิศเหนือ เก้าสิบคือลมจากทิศตะวันออก
+        "wind_direction": current.get("wind_direction_10m"),
+        "wind_gusts": current.get("wind_gusts_10m"),
         "weather_code": current.get("weather_code"),
         "condition": describe_code(current.get("weather_code")),
         "rain_chance_pct": first("precipitation_probability_max"),
@@ -206,4 +214,225 @@ def fetch_pm25_forecast(
         return None
 
     _pm25_cache[key] = (time.time(), result)
+    return result
+
+
+# ระดับความแรงลมตามมาตราโบฟอร์ต ซึ่งเป็นมาตรฐานสากลขององค์การอุตุนิยมวิทยาโลก
+#
+# ทำไมใช้มาตรฐานสำเร็จรูป ไม่ตั้งเกณฑ์เอง
+#     เหตุผลเดียวกับที่ระดับคุณภาพอากาศใช้เกณฑ์ของกรมควบคุมมลพิษ
+#     ถ้าตั้งเกณฑ์เองจะต้องอธิบายให้ได้ว่าเอาตัวเลขมาจากไหน ซึ่งอธิบายไม่ได้
+#
+# ย่อจากสิบสามระดับเหลือห้า เพราะประเทศไทยแทบไม่เจอลมเกินระดับหก
+# และห้าระดับเท่ากับจำนวนระดับคุณภาพอากาศพอดี หน้าเว็บจึงอ่านเป็นภาษาเดียวกัน
+# ขอบเขตยังเป็นของโบฟอร์ตทุกตัว ไม่ได้ขยับ
+WIND_LEVELS: list[dict] = [
+    {"key": "calm", "label_th": "ลมสงบ", "upper_kmh": 1.0},
+    {"key": "light_air", "label_th": "ลมเบา", "upper_kmh": 5.0},
+    {"key": "light_breeze", "label_th": "ลมอ่อน", "upper_kmh": 11.0},
+    {"key": "gentle_breeze", "label_th": "ลมโชย", "upper_kmh": 19.0},
+    {"key": "moderate", "label_th": "ลมปานกลางขึ้นไป", "upper_kmh": None},
+]
+
+# ลมที่ต่ำกว่านี้ถือว่าอากาศแทบไม่ถ่ายเท
+#
+# ตรงกับขอบบนของระดับลมเบาในมาตราโบฟอร์ต ไม่ใช่ตัวเลขที่ตั้งขึ้นเอง
+# ใช้เป็นเส้นบอกช่วงเวลาที่ฝุ่นมีแนวโน้มสะสม ไม่ใช่คำทำนายว่าฝุ่นจะสูงเท่าไร
+CALM_THRESHOLD_KMH = 5.0
+
+# ทิศทางลมสิบหกทิศ แปลงจากองศาเป็นชื่อที่คนอ่านรู้เรื่อง
+_COMPASS = [
+    "เหนือ", "เหนือค่อนตะวันออก", "ตะวันออกเฉียงเหนือ", "ตะวันออกค่อนเหนือ",
+    "ตะวันออก", "ตะวันออกค่อนใต้", "ตะวันออกเฉียงใต้", "ใต้ค่อนตะวันออก",
+    "ใต้", "ใต้ค่อนตะวันตก", "ตะวันตกเฉียงใต้", "ตะวันตกค่อนใต้",
+    "ตะวันตก", "ตะวันตกค่อนเหนือ", "ตะวันตกเฉียงเหนือ", "เหนือค่อนตะวันตก",
+]
+
+
+def describe_direction(degrees: float | None) -> str | None:
+    """แปลงองศาเป็นชื่อทิศที่ลมพัดมาจาก คืน None เมื่อไม่มีค่า"""
+    if degrees is None:
+        return None
+    # บวกครึ่งช่วงก่อนหาร เพื่อให้ปัดเข้าทิศที่ใกล้ที่สุด ไม่ใช่ปัดลงเสมอ
+    return _COMPASS[int((float(degrees) + 11.25) % 360 // 22.5)]
+
+
+def describe_wind_level(speed_kmh: float | None) -> dict | None:
+    """ระดับความแรงลมตามมาตราโบฟอร์ต คืน None เมื่อไม่มีค่า"""
+    if speed_kmh is None:
+        return None
+    for level in WIND_LEVELS:
+        upper = level["upper_kmh"]
+        if upper is None or speed_kmh < upper:
+            return {"key": level["key"], "label_th": level["label_th"]}
+    return None
+
+
+def fetch_wind(latitude: float, longitude: float, hours: int = 24) -> dict | None:
+    """ลมปัจจุบันและลมรายชั่วโมงข้างหน้าของพิกัดหนึ่งจุด
+
+    ทำไมต้องเป็นค่าปัจจุบันกับพยากรณ์ ไม่ใช่ค่าย้อนหลัง
+        ข้อมูลลมย้อนหลังที่ระบบเก็บไว้มาจาก NASA POWER ซึ่งตามหลังปัจจุบันหลายสัปดาห์
+        พอเอาไปเทียบกับค่าฝุ่นที่เพิ่งเริ่มเก็บกลางเดือนสิงหาคม สองชุดทับกันแค่วันเดียว
+        จึงคำนวณความสัมพันธ์ระหว่างลมกับฝุ่นจากข้อมูลของระบบเองไม่ได้เลยในตอนนี้
+        แผงนี้จึงตอบว่าลมตอนนี้เป็นอย่างไรและอีกยี่สิบสี่ชั่วโมงจะเป็นอย่างไร
+        ซึ่งเป็นคำถามที่ตอบได้จริงจากข้อมูลที่มี
+
+    คืน None เมื่อเรียกไม่สำเร็จ เพราะเป็นส่วนเสริมเหมือนพยากรณ์อื่น ๆ
+    """
+    key = (round(latitude, 2), round(longitude, 2), hours)
+    cached = _wind_cache.get(key)
+    if cached and time.time() - cached[0] < CACHE_SECONDS:
+        return cached[1]
+
+    try:
+        response = requests.get(
+            OPEN_METEO_URL,
+            params={
+                "latitude": latitude,
+                "longitude": longitude,
+                "current": "wind_speed_10m,wind_direction_10m,wind_gusts_10m",
+                "hourly": "wind_speed_10m,wind_direction_10m",
+                # ขอสองวันเพราะยี่สิบสี่ชั่วโมงข้างหน้าคร่อมเที่ยงคืนเสมอ
+                # ถ้าขอวันเดียวจะได้ไม่ครบเมื่อเรียกตอนบ่ายหรือเย็น
+                "forecast_days": 2,
+                "timezone": "Asia/Bangkok",
+            },
+            timeout=REQUEST_TIMEOUT,
+            verify=CA_BUNDLE,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except (requests.RequestException, ValueError):
+        return None
+
+    current = payload.get("current") or {}
+    hourly = payload.get("hourly") or {}
+    times = hourly.get("time") or []
+    speeds = hourly.get("wind_speed_10m") or []
+    directions = hourly.get("wind_direction_10m") or []
+
+    # ตัดชั่วโมงที่ผ่านไปแล้วออก ต้นทางส่งมาตั้งแต่เที่ยงคืนของวันนี้เสมอ
+    # ถ้าไม่ตัด ผู้ใช้ที่เปิดตอนบ่ายจะเห็นลมของเมื่อเช้าปนอยู่ในคำว่า "ข้างหน้า"
+    now = current.get("time")
+    series: list[dict] = []
+    for moment, speed, direction in zip(times, speeds, directions):
+        if now and moment < now[:13]:
+            continue
+        if speed is None:
+            continue
+        series.append(
+            {
+                "time": moment,
+                "label": moment[11:16],
+                "wind_speed": speed,
+                "wind_direction": direction,
+                "calm": speed < CALM_THRESHOLD_KMH,
+            }
+        )
+        if len(series) >= hours:
+            break
+
+    if not series:
+        return None
+
+    speed_now = current.get("wind_speed_10m")
+    direction_now = current.get("wind_direction_10m")
+
+    # หาช่วงลมสงบที่ยาวที่สุดที่ติดกันจริง ไม่ใช่ชั่วโมงแรกกับชั่วโมงสุดท้ายที่สงบ
+    #
+    # เอาชั่วโมงแรกกับสุดท้ายมาคู่กันจะได้ช่วงที่ผิด เพราะชั่วโมงที่ลมสงบไม่จำเป็นต้องติดกัน
+    # กรุงเทพฯ วันที่ทดสอบมีชั่วโมงสงบเจ็ดชั่วโมง แต่กระจายอยู่คนละช่วง
+    # ถ้ารายงานว่า "ลมสงบ 18:00 – 11:00" จะกลายเป็นบอกว่าสงบยาวสิบเจ็ดชั่วโมงติด ซึ่งไม่จริง
+    calm_count = sum(1 for point in series if point["calm"])
+    best_start = best_len = run_start = run_len = 0
+    for index, point in enumerate(series):
+        if point["calm"]:
+            if run_len == 0:
+                run_start = index
+            run_len += 1
+            if run_len > best_len:
+                best_start, best_len = run_start, run_len
+        else:
+            run_len = 0
+
+    result = {
+        "source": SOURCE,
+        "observed_at": now,
+        "minutes_behind": _minutes_since(now),
+        "wind_speed": speed_now,
+        "wind_direction": direction_now,
+        "wind_direction_th": describe_direction(direction_now),
+        "wind_gusts": current.get("wind_gusts_10m"),
+        "level": describe_wind_level(speed_now),
+        "levels": [
+            {"key": item["key"], "label_th": item["label_th"], "upper_kmh": item["upper_kmh"]}
+            for item in WIND_LEVELS
+        ],
+        "calm_threshold_kmh": CALM_THRESHOLD_KMH,
+        # จำนวนชั่วโมงที่ลมสงบทั้งหมด กับช่วงที่สงบติดกันยาวที่สุด เป็นคนละตัวเลข
+        # สองอย่างนี้ต่างกันเมื่อชั่วโมงสงบกระจายอยู่หลายช่วง จึงต้องส่งไปทั้งคู่
+        "calm_hours": calm_count,
+        "calm_run_hours": best_len,
+        "calm_from": series[best_start]["label"] if best_len else None,
+        "calm_to": series[best_start + best_len - 1]["label"] if best_len else None,
+        "hourly": series,
+    }
+
+    _wind_cache[key] = (time.time(), result)
+    return result
+
+
+def fetch_wind_many(points: list[tuple[str, float, float]]) -> list[dict]:
+    """ลมปัจจุบันของหลายจังหวัดพร้อมกันในคำขอเดียว
+
+    ทำไมต้องรวมเป็นคำขอเดียว
+        ถ้าถามทีละจังหวัด เจ็ดสิบสี่จังหวัดคูณยี่สิบสี่รอบต่อวัน
+        เท่ากับยิงคำขอไปหาต้นทาง 1,776 ครั้งทุกวัน โดยได้ข้อมูลเท่าเดิม
+        Open-Meteo รับพิกัดหลายจุดคั่นด้วยจุลภาคในคำขอเดียวและตอบกลับเป็นรายการ
+        เหลือวันละยี่สิบสี่ครั้ง เบาต่อทั้งเราและต้นทาง
+
+    คืนรายการว่างเมื่อเรียกไม่สำเร็จ เพราะเป็นงานเบื้องหลัง
+    เก็บพลาดหนึ่งรอบไม่ควรทำให้รอบเก็บค่าฝุ่นทั้งรอบล้มไปด้วย
+    """
+    if not points:
+        return []
+
+    try:
+        response = requests.get(
+            OPEN_METEO_URL,
+            params={
+                "latitude": ",".join(str(lat) for _, lat, _ in points),
+                "longitude": ",".join(str(lon) for _, _, lon in points),
+                "current": "wind_speed_10m,wind_direction_10m,wind_gusts_10m",
+                "timezone": "Asia/Bangkok",
+            },
+            timeout=REQUEST_TIMEOUT,
+            verify=CA_BUNDLE,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except (requests.RequestException, ValueError):
+        return []
+
+    # ต้นทางตอบเป็นรายการเมื่อขอหลายพิกัด แต่ตอบเป็นวัตถุเดียวเมื่อขอจุดเดียว
+    # ต้องรับทั้งสองแบบ ไม่งั้นจะพังเมื่อเหลือจังหวัดเดียวที่มีพิกัด
+    entries = payload if isinstance(payload, list) else [payload]
+    if len(entries) != len(points):
+        return []
+
+    result: list[dict] = []
+    for (province, _, _), entry in zip(points, entries):
+        current = (entry or {}).get("current") or {}
+        if current.get("time") is None:
+            continue
+        result.append(
+            {
+                "province": province,
+                "observed_at": current["time"],
+                "wind_speed": current.get("wind_speed_10m"),
+                "wind_direction": current.get("wind_direction_10m"),
+                "wind_gusts": current.get("wind_gusts_10m"),
+            }
+        )
     return result
