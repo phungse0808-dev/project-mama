@@ -143,16 +143,31 @@ export function SummaryCards({
   const worst = summary.worst_station;
   const now = weatherNow?.available ? weatherNow : null;
 
-  // สถานีของจังหวัดที่เลือกอยู่ เรียงตามชื่อไทยเพื่อให้ไล่หาในรายการยาวได้
+  // สถานีที่เลือกได้ เรียงตามชื่อไทยเพื่อให้ไล่หาในรายการยาวได้
   //
-  // ช่องนี้โผล่เฉพาะตอนที่จังหวัดนั้นมีมากกว่าหนึ่งสถานี
-  // เพราะ 61 จาก 74 จังหวัดมีสถานีเดียว ถ้าขึ้นตลอดจะได้ช่องที่กดแล้วไม่เปลี่ยนอะไร
-  // ตอนดูทั้งประเทศก็ไม่ขึ้น เพราะ 174 ตัวเลือกในช่องเดียวหาไม่เจอ
-  const stationChoices = dustProvince
-    ? stations
-        .filter((item) => item.province === dustProvince)
-        .sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
-    : [];
+  // เลือกจังหวัดไว้ก็ได้เฉพาะสถานีในจังหวัดนั้น ดูทั้งประเทศก็ได้ทุกสถานี
+  // โดยจัดกลุ่มตามจังหวัดให้ ไม่ใช่เรียงยาวรวดเดียว 174 บรรทัด
+  //
+  // เดิมตั้งใจซ่อนช่องนี้ตอนดูทั้งประเทศ เพราะคิดว่ารายการยาวเกินไป
+  // แต่ผลคือคนเปิดหน้ามาครั้งแรกเจอ ทั้งประเทศ เป็นค่าตั้งต้น แล้วไม่เห็นช่องเลย
+  // จึงอ่านว่าระบบเสีย ไม่ได้อ่านว่าต้องเลือกจังหวัดก่อน
+  // ช่องที่หายไปเงียบ ๆ แยกไม่ออกจากของที่พัง การจัดกลุ่มแก้ปัญหาความยาวได้ตรงกว่า
+  const stationChoices = [...(dustProvince
+    ? stations.filter((item) => item.province === dustProvince)
+    : stations)].sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
+
+  // จัดกลุ่มตามจังหวัดสำหรับตอนดูทั้งประเทศ เรียงชื่อจังหวัดตามลำดับไทย
+  const stationsByProvince = dustProvince
+    ? []
+    : [...new Set(stationChoices.map((item) => item.province))]
+        .sort((a, b) => a.localeCompare(b, "th"))
+        .map((province) => ({
+          province,
+          items: stationChoices.filter((item) => item.province === province),
+        }));
+
+  // ยังซ่อนอยู่กรณีเดียว คือจังหวัดที่มีสถานีเดียวจริง ๆ
+  // ตรงนั้นช่องเลือกมีตัวเลือกเดียว กดแล้วไม่เปลี่ยนอะไร จึงไม่ใช่ของที่หายไป
   const canPickStation = stationChoices.length > 1;
 
   // ใช้ค่าของสถานีต่อเมื่อโหลดมาแล้วจริง ระหว่างรอยังแสดงค่าของทั้งจังหวัดไปก่อน
@@ -188,10 +203,10 @@ export function SummaryCards({
               </select>
             </label>
 
-            {/* ช่องเลือกสถานี ขึ้นเฉพาะจังหวัดที่มีมากกว่าหนึ่งสถานี
-                ตัวเลือกแรกเป็นทั้งจังหวัด ซึ่งเป็นค่าตั้งต้นและเป็นทางกลับ
-                ผู้ใช้จึงถอยออกจากการเจาะดูสถานีได้ในช่องเดียวกัน
-                ไม่ต้องหาปุ่มยกเลิกที่อื่น */}
+            {/* ช่องเลือกสถานี
+                ตัวเลือกแรกเป็นภาพรวมของขอบเขตที่เลือกไว้ ซึ่งเป็นทั้งค่าตั้งต้น
+                และเป็นทางกลับ ผู้ใช้จึงถอยออกจากการเจาะดูสถานีได้ในช่องเดียวกัน
+                ไม่ต้องไปหาปุ่มยกเลิกที่อื่น */}
             {canPickStation && (
               <label className="card-group-picker">
                 <span className="sr-only">เลือกสถานีตรวจวัดที่ต้องการเจาะดู</span>
@@ -199,12 +214,24 @@ export function SummaryCards({
                   value={dustStation}
                   onChange={(event) => onDustStationChange(event.target.value)}
                 >
-                  <option value="">ทุกสถานีในจังหวัด</option>
-                  {stationChoices.map((item) => (
-                    <option key={item.station_code} value={item.station_code}>
-                      {item.name_th}
-                    </option>
-                  ))}
+                  <option value="">
+                    {dustProvince ? "ทุกสถานีในจังหวัด" : "ทุกสถานีทั่วประเทศ"}
+                  </option>
+                  {dustProvince
+                    ? stationChoices.map((item) => (
+                        <option key={item.station_code} value={item.station_code}>
+                          {item.name_th}
+                        </option>
+                      ))
+                    : stationsByProvince.map((group) => (
+                        <optgroup key={group.province} label={group.province}>
+                          {group.items.map((item) => (
+                            <option key={item.station_code} value={item.station_code}>
+                              {item.name_th}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
                 </select>
               </label>
             )}
