@@ -18,7 +18,6 @@ import { DataHealth } from "./components/DataHealth";
 import { HomePage } from "./components/HomePage";
 import { NavBar } from "./components/NavBar";
 import type { SectionKey } from "./components/NavBar";
-import { PersonalPanel } from "./components/PersonalPanel";
 import { ProvinceRanking } from "./components/ProvinceRanking";
 import { ForecastPanel } from "./components/ForecastPanel";
 import { RainPanel } from "./components/RainPanel";
@@ -30,7 +29,6 @@ import { LevelBar, SummaryCards } from "./components/SummaryCards";
 import { loadSettings, sendIfDue } from "./dailyDigest";
 import { recordAlerts } from "./noticeRecorder";
 import { WeatherPanel } from "./components/WeatherPanel";
-import { WindPanel } from "./components/WindPanel";
 
 // เก็บผู้ใช้ไว้ในเบราว์เซอร์ เพื่อไม่ต้องกรอกชื่อใหม่ทุกครั้งที่เปิดโปรแกรม
 const USER_KEY = "pm25_user";
@@ -160,7 +158,7 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     const check = () => {
-      void sendIfDue(loadSettings(), user.province ?? "", user.id);
+      void sendIfDue(loadSettings(), user.province ?? "");
     };
     check();
     const timer = setInterval(check, 5 * 60 * 1000);
@@ -196,11 +194,6 @@ export default function App() {
   const handleSignedIn = useCallback((signed: AppUser) => {
     localStorage.setItem(USER_KEY, JSON.stringify(signed));
     setUser(signed);
-  }, []);
-
-  const handleProfileChange = useCallback((updated: AppUser) => {
-    localStorage.setItem(USER_KEY, JSON.stringify(updated));
-    setUser(updated);
   }, []);
 
   const handleSignOut = useCallback(() => {
@@ -295,6 +288,8 @@ export default function App() {
         onSearch={() => setSearching(true)}
         onHome={() => goTo(HOME)}
         onSignOut={handleSignOut}
+        provinces={provinces}
+        fallbackProvince={user.province ?? ""}
       />
 
       {searching && (
@@ -329,8 +324,6 @@ export default function App() {
               />
             )}
             {summary && <LevelBar summary={summary} />}
-
-            <PersonalPanel user={user} onProfileChange={handleProfileChange} />
 
             <h2 className="section-heading">
               สถานการณ์ตอนนี้
@@ -367,11 +360,6 @@ export default function App() {
             {provinces.length > 0 && (
               <ForecastPanel provinces={provinces} defaultProvince={user.province} />
             )}
-
-            {/* ลมอยู่ต่อจากพยากรณ์ฝุ่น เพราะตอบคำถามต่อเนื่องกัน
-                พยากรณ์บอกว่าฝุ่นจะเท่าไร ลมบอกว่าอากาศจะถ่ายเทหรือจะนิ่ง
-                ใช้จังหวัดเดียวกับช่องเลือกของหน้า ไม่มีช่องเลือกของตัวเอง */}
-            <WindPanel province={weatherTarget} />
 
             {provinces.length > 0 && (
               <RainPanel provinces={provinces} defaultProvince={user.province} />

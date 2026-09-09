@@ -2,6 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { formatThaiDateTime } from "../api";
 import { LEVEL_COLORS, list, markAllRead, worstOf } from "../notificationLog";
 import type { Notice } from "../notificationLog";
+import { DigestSettings } from "./DigestSettings";
+import { loadSettings } from "../dailyDigest";
+import type { DigestSettings as Settings } from "../dailyDigest";
+
+type Props = {
+  provinces: string[];
+  /** จังหวัดในโปรไฟล์ ใช้เมื่อผู้ใช้ยังไม่ได้เลือกพื้นที่ของสรุปประจำวันเจาะจง */
+  fallbackProvince: string;
+};
 
 /** บอกเวลาแบบสั้น วันนี้บอกแค่เวลา วันก่อนหน้าบอกวันด้วย
  *
@@ -37,9 +46,10 @@ function shortTime(iso: string, now: Date): string {
  *     และต้องขออนุญาตจากเบราว์เซอร์ก่อน ซึ่งคนส่วนใหญ่กดปฏิเสธ
  *     ระฆังไม่ต้องขออนุญาตอะไร ทุกคนใช้ได้ทันทีและย้อนดูได้
  */
-export function NotificationBell() {
+export function NotificationBell({ provinces, fallbackProvince }: Props) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notice[]>([]);
+  const [digest, setDigest] = useState<Settings>(() => loadSettings());
   const boxRef = useRef<HTMLDivElement>(null);
 
   // อ่านรายการใหม่ทุกครั้งที่เปิด และเป็นระยะขณะเปิดค้างไว้
@@ -147,6 +157,17 @@ export function NotificationBell() {
           )}
 
           <p className="bell-foot">เก็บย้อนหลัง 7 วัน</p>
+
+          {/* สรุปประจำวันอยู่ท้ายแผงเดียวกัน เพราะเป็นเรื่องแจ้งเตือนเหมือนกัน
+              ต่างกันแค่อันบนเป็นของที่เกิดไปแล้ว อันนี้เป็นการตั้งว่าจะให้แจ้งอะไรต่อไป */}
+          <div className="bell-digest">
+            <DigestSettings
+              settings={digest}
+              onChange={setDigest}
+              provinces={provinces}
+              fallbackProvince={fallbackProvince}
+            />
+          </div>
         </div>
       )}
     </div>

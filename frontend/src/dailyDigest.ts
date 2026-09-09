@@ -21,7 +21,7 @@
  */
 
 import { api } from "./api";
-import type { PersonalSummary, Pm25Forecast, RainChance, Summary, WeatherNow } from "./api";
+import type { Pm25Forecast, RainChance, Summary, WeatherNow } from "./api";
 import { recordDigest } from "./noticeRecorder";
 
 const SETTINGS_KEY = "pm25.digest.settings";
@@ -142,7 +142,6 @@ type DigestSource = {
   forecast: Pm25Forecast | null;
   weather: WeatherNow | null;
   rain: RainChance | null;
-  personal: PersonalSummary | null;
   /** ใช้เฉพาะตอนไม่มีจังหวัด เพราะพยากรณ์รายจังหวัดใช้ไม่ได้ */
   national: Summary | null;
 };
@@ -156,7 +155,7 @@ export type DigestMessage = { title: string; body: string };
  * และเพื่อให้เห็นชัดว่าข้อความที่ผู้ใช้เห็นประกอบขึ้นจากอะไรบ้าง
  */
 export function buildMessage(source: DigestSource): DigestMessage | null {
-  const { province, forecast, weather, rain, personal, national } = source;
+  const { province, forecast, weather, rain, national } = source;
 
   const today = forecast?.available ? forecast.days?.find((day) => day.is_today) : undefined;
   const now = weather?.available ? weather : null;
@@ -172,9 +171,8 @@ export function buildMessage(source: DigestSource): DigestMessage | null {
     if (national?.pm25_avg == null) return null;
     const lines = [`ทั้งประเทศ · จาก ${national.stations_reporting} สถานี`];
     if (national.level) lines[0] = `ทั้งประเทศ · ระดับ${national.level.label_th}`;
-    const advice = personal?.my_advice?.advice_th;
-    if (advice) lines.push(advice);
-    lines.push("ตั้งจังหวัดของคุณในแผงคำแนะนำ เพื่อดูค่าของพื้นที่ตัวเองแทนค่าเฉลี่ยรวม");
+    if (national.level?.advice_th) lines.push(national.level.advice_th);
+    lines.push("ตั้งพื้นที่ของคุณได้ที่แผงระฆังแจ้งเตือน เพื่อดูค่าของพื้นที่ตัวเองแทนค่าเฉลี่ยรวม");
     return { title: `ฝุ่นทั้งประเทศ ${national.pm25_avg}`, body: lines.join("\n") };
   }
 
@@ -229,8 +227,14 @@ export function buildMessage(source: DigestSource): DigestMessage | null {
     if (coldDiff >= UNUSUAL_TEMP_DIFF) lines.push("คืนที่เย็นจัดทำให้ฝุ่นสะสมใกล้พื้น");
   }
 
-  const advice = personal?.my_advice?.advice_th;
-  if (advice) lines.push(advice);
+  // คำแนะนำตามระดับคุณภาพอากาศ ไม่ใช่ตามกลุ่มเสี่ยงของผู้ใช้อย่างที่เคยเป็น
+  //
+  // เปลี่ยนเพราะช่องเลือกกลุ่มเสี่ยงถูกเอาออกจากหน้าไปแล้ว
+  // ถ้ายังใช้คำแนะนำตามกลุ่มต่อ ข้อความจะค้างอยู่ที่กลุ่มที่ตั้งไว้ตอนสมัครตลอดไป
+  // โดยที่ผู้ใช้แก้ไม่ได้และไม่รู้ตัวด้วยซ้ำว่ากำลังอ่านคำแนะนำของกลุ่มไหนอยู่
+  //
+  // คำแนะนำตามระดับไม่ต้องตั้งค่าอะไรเลย และมาพร้อมกับค่าฝุ่นที่ดึงมาอยู่แล้ว
+  if (today?.level.advice_th) lines.push(today.level.advice_th);
 
   return {
     title: titleParts.length > 0 ? titleParts.join(" · ") : `สรุปวันนี้ · ${province}`,
@@ -266,7 +270,6 @@ function canPopUp(settings: DigestSettings): boolean {
 export async function sendIfDue(
   settings: DigestSettings,
   fallbackProvince: string,
-  userId: number | null,
   now: Date = new Date(),
 ): Promise<boolean> {
   if (!isDue(settings, now)) return false;
@@ -279,20 +282,15 @@ export async function sendIfDue(
   markSent(now);
 
   try {
-    const [forecast, weather, rain, personal, national] = await Promise.all([
+    const [forecast, weather, rain, national] = await Promise.all([
       province ? api.pm25Forecast(province, null).catch(() => null) : Promise.resolve(null),
       province ? api.weatherNow(province).catch(() => null) : Promise.resolve(null),
       province ? api.rainChance(province).catch(() => null) : Promise.resolve(null),
-      // คำแนะนำตามกลุ่มเสี่ยงที่ผู้ใช้ตั้งไว้ ถ้ายังไม่ได้เข้าระบบก็ข้ามไป
-      // ข้อความยังใช้ได้อยู่ แค่ไม่มีบรรทัดคำแนะนำเฉพาะตัว
-      userId != null
-        ? api.personalSummary(userId).catch(() => null)
-        : Promise.resolve(null as PersonalSummary | null),
       // ดึงเฉพาะตอนไม่มีจังหวัด จะได้ไม่เรียกเซิร์ฟเวอร์เกินจำเป็น
       province ? Promise.resolve(null) : api.summary(null).catch(() => null),
     ]);
 
-    const message = buildMessage({ province, forecast, weather, rain, personal, national });
+    const message = buildMessage({ province, forecast, weather, rain, national });
     if (!message) {
       clearLastSent();
       return false;

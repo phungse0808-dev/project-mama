@@ -12,6 +12,7 @@ from app.health_advice import (
     WHO_GUIDELINE_PM25,
     advice_for,
     compare_standards,
+    protection_for,
 )
 from app.forecast import fetch_now, fetch_pm25_forecast, fetch_wind
 from app.live import minutes_behind
@@ -114,6 +115,16 @@ def national_summary(session: Session, province: str | None = None) -> dict:
         # ระดับคุณภาพอากาศของค่าเฉลี่ยทั้งประเทศ ใช้ให้การ์ดสรุปเปลี่ยนสีตามระดับ
         # เพื่อให้อ่านสถานการณ์ได้จากสีก่อนอ่านตัวเลข
         "level": describe(None, statistics.fmean(values)) if values else None,
+        # วิธีป้องกันตัวของระดับที่ค่าเฉลี่ยนี้ตกอยู่
+        #
+        # ส่งมาพร้อมกับค่าที่คำนวณ ไม่ใช่ให้หน้าเว็บไปถามอีกเส้นทาง
+        # เพราะสองอย่างนี้ต้องตรงกันเสมอ ถ้าแยกกันดึงจะมีจังหวะที่ค่าเปลี่ยนแล้ว
+        # แต่คำแนะนำยังเป็นของระดับเดิมค้างอยู่ ซึ่งอ่านแล้วเข้าใจผิดได้
+        "protection": (
+            protection_for(describe(None, statistics.fmean(values))["key"])
+            if values
+            else []
+        ),
         "pm25_max": round(max(values), 1) if values else None,
         "pm25_min": round(min(values), 1) if values else None,
         "level_counts": counts,

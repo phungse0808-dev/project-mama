@@ -588,7 +588,6 @@ button {
 .forecast-number,
 .rain-figure strong,
 .rain-stat-value,
-.personal-value,
 .health-value,
 .ranking-value,
 .alert-count,
@@ -606,9 +605,6 @@ button {
    ความเด่นจึงมาจากขนาดกับน้ำหนักตัวอักษรอย่างเดียว */
 .card-hero .card-value,
 .forecast-number,
-.personal-value {
-  letter-spacing: -1.2px;
-}
 
 /* ---------- หัวข้อแบบเครื่องมือวัด ---------- */
 
@@ -1471,135 +1467,20 @@ button {
   padding-top: 16px;
 }
 
-/* ---------- แผงคำแนะนำเฉพาะบุคคล ---------- */
 
-.personal {
-  border-top: 4px solid var(--accent);
-}
 
-.personal-top {
-  display: grid;
-  grid-template-columns: 148px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-}
 
-@media (max-width: 720px) {
-  .personal-top {
-    grid-template-columns: 1fr;
-  }
-}
 
-.personal-reading {
-  border-radius: 12px;
-  padding: 18px 14px;
-  text-align: center;
-  color: var(--text);
-  /* พื้นโปร่งกับขอบเรือง ส่งมาจากโค้ดพร้อมสีของระดับ
-     ทำให้เห็นกริดผ่านและตัวเลขอ่านง่ายกว่าตัวขาวบนพื้นสีจัด */
-  border: 1px solid rgba(11, 107, 203, 0.32);
-}
 
-.personal-value {
-  margin: 0;
-  font-size: 44px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -1.5px;
-}
 
-.personal-unit {
-  margin: 3px 0 10px;
-  font-size: 13.5px;
-  opacity: 0.92;
-}
 
-.personal-level {
-  margin: 0;
-  font-size: 14.5px;
-  font-weight: 700;
-}
 
-.personal-group {
-  margin: 0 0 8px;
-  font-size: 15.5px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  flex-wrap: wrap;
-}
 
-.badge-sensitive {
-  background: #fff3e0;
-  color: #a8620a;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 2px 9px;
-  border-radius: 999px;
-}
 
-.personal-text {
-  margin: 0 0 16px;
-  font-size: 17px;
-  line-height: 1.7;
-}
 
-.standard-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  font-size: 14.5px;
-  color: var(--text-soft);
-}
 
-.standard-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 6px;
-}
 
-.standard-list .over {
-  color: #c0392b;
-}
 
-.standard-list .under {
-  color: #1a7f4b;
-}
-
-.personal-settings {
-  display: flex;
-  gap: 20px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  margin-top: 22px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-
-.personal-settings label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-soft);
-}
-
-.personal-settings select {
-  font-family: inherit;
-  font-size: 15.5px;
-  color: var(--text);
-  padding: 9px 12px;
-  border: 1px solid var(--border-strong);
-  border-radius: 9px;
-  background: var(--surface-2);
-  min-width: 190px;
-}
 
 .link-button {
   background: none;
@@ -1612,37 +1493,9 @@ button {
   padding: 9px 0;
 }
 
-.group-list {
-  list-style: none;
-  margin: 22px 0 0;
-  padding: 20px 0 0;
-  border-top: 1px solid var(--border);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 18px;
-}
 
-.group-name {
-  margin: 0 0 3px;
-  font-size: 15.5px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
 
-.group-detail {
-  margin: 0 0 6px;
-  font-size: 13.5px;
-  color: var(--text-soft);
-}
 
-.group-advice {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.65;
-}
 
 /* ---------- อื่นๆ ---------- */
 
@@ -2663,211 +2516,148 @@ button {
   }
 }
 
-/* ---------- ลมกับการพัดฝุ่น ---------- */
+/* ---------- แถบวิธีป้องกันตัว ---------- */
 
-.wind-empty {
-  margin: 0;
-  font-size: 14.5px;
+.protect {
+  margin-top: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 13px 16px;
+}
+
+.protect-head {
+  margin: 0 0 9px;
+  font-size: 14px;
   color: var(--text-soft);
 }
 
-.wind-now {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px;
-  gap: 18px;
-  align-items: center;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--border);
+/* เรียงลงเป็นแถว ไม่ใช่สามคอลัมน์
+   กลุ่มนี้อยู่ในคอลัมน์ซ้ายของหน้าซึ่งกว้างราวหกร้อยพิกเซล
+   ถ้าแบ่งสามคอลัมน์จะเหลือช่องละสองร้อย ซึ่งไม่พอกับข้อที่ยาวที่สุด
+   คือข้อของ N95 ที่มีคำอธิบายเรื่องหน้ากากผ้าต่อท้าย จะตัดเป็นสี่ห้าบรรทัด
+   เรียงลงแทน ทุกข้อจึงอยู่บรรทัดเดียวและแถบเตี้ยกว่าเดิมด้วย */
+.protect-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 
-.wind-value {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 44px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -2px;
-}
-
-.wind-unit {
-  margin-left: 10px;
-  font-family: "Sarabun", "Noto Sans Thai", sans-serif;
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--text-soft);
-}
-
-.wind-detail {
-  margin: 9px 0 0;
+.protect-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
   font-size: 14.5px;
   line-height: 1.65;
+  color: var(--text);
+}
+
+.protect-item svg {
+  flex: none;
+  /* ดันลงเล็กน้อยให้กึ่งกลางไอคอนตรงกับบรรทัดแรกของข้อความ
+     ไม่ใช่ตรงกับขอบบนของกล่องข้อความ ซึ่งจะดูลอยสูงกว่าตัวหนังสือ */
+  margin-top: 2px;
+}
+
+/* กล่องสรุปประจำวันท้ายแผงระฆัง
+   แยกจากรายการแจ้งเตือนด้วยเส้นกับพื้นสีจาง ให้เห็นว่าเป็นคนละเรื่อง
+   อันบนคือของที่เกิดไปแล้ว อันนี้คือการตั้งว่าจะให้แจ้งอะไรต่อไป */
+.bell-digest {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+/* แผงระฆังกว้างแค่ 320px ช่องเลือกจึงต้องวางเป็นสองช่องเท่ากันแล้วขึ้นบรรทัดใหม่
+   ต่างจากตอนอยู่ในแผงกลางหน้าที่มีที่ให้เรียงยาวได้ */
+.bell-digest .digest-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.bell-digest .digest-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
   color: var(--text-soft);
 }
 
-.wind-compass {
-  width: 120px;
-  height: 120px;
-  justify-self: center;
+.bell-digest .digest-controls select {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 5px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
 }
 
-.wind-compass-face {
+.bell-digest .digest-test {
+  grid-column: 1 / -1;
+}
+
+.bell-digest .digest-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+/* ลมในการ์ดอากาศตอนนี้ อยู่คู่กับอุณหภูมิ คั่นด้วยเส้นตั้ง */
+.weather-now-wind {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-left: auto;
+}
+
+.weather-now-divider {
+  width: 1px;
+  height: 44px;
+  background: var(--border);
+  margin-right: 3px;
+}
+
+.weather-wind-dial {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+
+.weather-wind-dial circle {
   fill: var(--surface-2);
   stroke: var(--border);
-  stroke-width: 1;
 }
 
-.wind-compass text {
-  font-size: 13px;
-  fill: var(--text-dim);
-}
-
-.wind-compass-pin {
-  fill: var(--text);
-}
-
-.wind-arrow {
+.weather-wind-dial line {
   stroke: var(--accent);
-  stroke-width: 4;
+  stroke-width: 3;
   stroke-linecap: round;
 }
 
-.wind-arrow-head {
+.weather-wind-dial path {
   fill: var(--accent);
 }
 
-.wind-scale {
-  margin-top: 18px;
-}
-
-.wind-scale-bar {
-  display: flex;
-  height: 12px;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-/* ทุกช่วงใช้สีเน้นสีเดียว ต่างกันที่ความทึบ
-   ไม่ใช้สีคนละสีเหมือนระดับคุณภาพอากาศ เพราะลมแรงไม่ได้แปลว่าอันตราย
-   ถ้าไล่จากเขียวไปแดงคนจะอ่านว่าลมแรงคือเรื่องร้าย ซึ่งกลับด้านกับความจริง */
-.wind-scale-bar i {
-  flex: 1;
-  background: var(--accent);
-}
-
-.wind-scale-mark {
-  position: relative;
-  height: 44px;
-}
-
-.wind-scale-mark span {
-  position: absolute;
-  top: 0;
-  transform: translateX(-50%);
-  text-align: center;
-}
-
-.wind-scale-mark span::before {
-  content: "";
-  display: block;
-  width: 2px;
-  height: 8px;
-  margin: 0 auto 4px;
-  border-radius: 2px;
-  background: var(--text);
-}
-
-.wind-scale-mark b {
-  display: block;
-  font-size: 14.5px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.wind-scale-mark small {
-  display: block;
-  font-size: 13px;
-  color: var(--text-dim);
-}
-
-.wind-scale-ticks {
-  display: flex;
-  font-size: 12.5px;
-  color: var(--text-dim);
-}
-
-.wind-scale-ticks i {
-  flex: 1;
-  text-align: center;
-  font-style: normal;
-}
-
-.wind-section {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 20px 0 12px;
-  font-size: 15.5px;
-  font-weight: 600;
-}
-
-.wind-section span {
-  font-size: 14.5px;
-  font-weight: 400;
-  color: var(--text-soft);
-}
-
-.wind-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 96px;
-}
-
-.wind-bar {
-  flex: 1;
-  border-radius: 3px 3px 0 0;
-  background: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--level-edge);
-}
-
-/* ชั่วโมงที่ลมต่ำกว่าเกณฑ์ใช้สีส้ม ให้เห็นช่วงที่ฝุ่นมีแนวโน้มสะสมตั้งแต่กวาดสายตา
-   ไม่ใช่สีของระดับคุณภาพอากาศ เพราะนี่เป็นเรื่องลม ไม่ใช่ค่าฝุ่นที่วัดได้ */
-.wind-bar.calm {
-  background: #e08a2e;
-}
-
-.wind-bars-axis {
-  display: flex;
-  gap: 3px;
-  margin-top: 6px;
-  font-size: 12.5px;
-  color: var(--text-dim);
-}
-
-.wind-bars-axis i {
-  flex: 1;
-  font-style: normal;
-  white-space: nowrap;
-}
-
-.wind-note {
-  margin: 18px 0 0;
-  padding: 12px 14px;
-  border-radius: 9px;
-  background: var(--surface-2);
-  font-size: 14px;
-  line-height: 1.75;
-  color: var(--text-soft);
-}
-
-@media (max-width: 620px) {
-  .wind-now {
-    grid-template-columns: 1fr;
+/* จอแคบให้ลมตกลงมาอยู่บรรทัดใหม่ใต้อุณหภูมิ พร้อมย้ายเส้นคั่นจากด้านซ้ายมาไว้ด้านบน
+   ถ้าฝืนให้อยู่บรรทัดเดียวกัน ตัวเลขสองชุดจะเบียดกันจนอ่านไม่ออก */
+@media (max-width: 560px) {
+  .weather-now-main {
+    flex-wrap: wrap;
   }
 
-  .wind-compass {
-    justify-self: start;
+  .weather-now-wind {
+    margin: 10px 0 0;
+    width: 100%;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .weather-now-divider {
+    display: none;
   }
 }

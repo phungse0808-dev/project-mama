@@ -135,6 +135,14 @@ def fetch_now(latitude: float, longitude: float) -> dict | None:
         # ศูนย์องศาคือลมจากทิศเหนือ เก้าสิบคือลมจากทิศตะวันออก
         "wind_direction": current.get("wind_direction_10m"),
         "wind_gusts": current.get("wind_gusts_10m"),
+        # แปลงเป็นชื่อทิศกับระดับความแรงให้เสร็จตั้งแต่ตรงนี้
+        #
+        # ทำที่นี่เพราะการ์ดสภาพอากาศบนหน้าเว็บต้องแสดงลมด้วย
+        # ถ้าไม่ส่งมาให้ หน้าเว็บต้องยิงไปที่ /api/wind อีกเส้นทางเพื่อเอาแค่สองค่านี้
+        # ซึ่งได้ค่าลมชุดเดียวกันจากต้นทางเดียวกัน แต่เสียคำขอเพิ่มหนึ่งครั้งเปล่า ๆ
+        # และมีจังหวะที่สองเส้นทางได้ค่าคนละรอบจนตัวเลขบนจอไม่ตรงกันเอง
+        "wind_direction_th": describe_direction(current.get("wind_direction_10m")),
+        "wind_level": describe_wind_level(current.get("wind_speed_10m")),
         "weather_code": current.get("weather_code"),
         "condition": describe_code(current.get("weather_code")),
         "rain_chance_pct": first("precipitation_probability_max"),

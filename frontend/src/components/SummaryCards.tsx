@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Summary, WeatherNow } from "../api";
 import { formatThaiDateTime } from "../api";
+import { levelInk } from "../levelInk";
+import { ProtectIcon } from "./ProtectIcon";
 import { WeatherIcon } from "./WeatherIcon";
 
 type Props = { summary: Summary };
@@ -235,6 +237,39 @@ export function SummaryCards({
         </p>
           </article>
         </div>
+
+        {/* วิธีป้องกันตัวที่ระดับนี้
+            เปลี่ยนทั้งแถบตามค่าฝุ่นที่วัดได้ ทั้งสีขอบซ้าย สีไอคอน และข้อความ
+
+            ทำไมเป็นแถบใต้การ์ด ไม่ใส่ไว้ในการ์ดใหญ่
+                การ์ดใหญ่ทำหน้าที่เป็นคำตอบหลักที่อ่านได้จากระยะไกลตอนนำเสนอ
+                ถ้าเพิ่มสามบรรทัดเข้าไป ตัวเลขจะไม่เด่นเท่าเดิม
+                แถบนี้ใช้ความกว้างที่มีอยู่แล้วเรียงสามคอลัมน์ จึงกินความสูงน้อยกว่า
+
+            สีไอคอนใช้เฉดเข้มจาก levelInk ไม่ใช่สีพื้นของระดับ
+            เพราะเหลือง #ffd400 บนพื้นขาววัดได้ 1.43:1 คืออ่านไม่ออก
+            ส่วนขอบซ้ายยังเป็นสีมาตรฐานเดิม เพราะเป็นพื้นสีไม่ใช่ตัวหนังสือ */}
+        {summary.level && summary.protection.length > 0 && (
+          <div
+            className="protect"
+            style={{ boxShadow: `inset 4px 0 0 ${summary.level.color}` }}
+          >
+            <p className="protect-head">
+              ป้องกันตัวอย่างไรที่ระดับ{summary.level.label_th}
+            </p>
+            <div className="protect-list">
+              {summary.protection.map((item) => (
+                <div className="protect-item" key={item.text_th}>
+                  <ProtectIcon
+                    name={item.icon}
+                    color={levelInk(summary.level?.color) ?? "currentColor"}
+                  />
+                  <span>{item.text_th}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* สภาพอากาศ ณ ขณะนี้ ของจังหวัดที่เลือก
@@ -269,6 +304,38 @@ export function SummaryCards({
                       จึงให้เด่นพอกับตัวเลข ไม่ใช่ตัวเล็กปนกับข้อมูลอื่นเหมือนเดิม */}
                   <p className="weather-now-condition">{now.condition}</p>
                 </div>
+
+                {/* ลมอยู่คู่กับอุณหภูมิ คั่นด้วยเส้นตั้ง
+                    เดิมลมซ่อนอยู่ในบรรทัดเล็กใต้โอกาสฝนตก เป็นตัวประกอบของการ์ดฝน
+                    ทั้งที่เป็นคนละเรื่องกัน ฝนบอกว่าจะเปียกไหม ลมบอกว่าอากาศถ่ายเทไหม
+
+                    ซ่อนทั้งก้อนเมื่อไม่มีค่าลม ดีกว่าโชว์ขีดกลางข้างเข็มทิศที่ไม่ชี้ไปไหน */}
+                {now.wind_speed != null && (
+                  <div className="weather-now-wind">
+                    <span className="weather-now-divider" />
+                    {/* เข็มชี้ทางที่ลมพัดไป ส่วนองศาที่ต้นทางส่งมาคือทิศที่ลมพัดมาจาก
+                        สองอย่างนี้ตรงข้ามกันเสมอ จึงหมุนเพิ่มอีกร้อยแปดสิบองศา */}
+                    <svg className="weather-wind-dial" viewBox="0 0 40 40" aria-hidden="true">
+                      <circle cx="20" cy="20" r="17" />
+                      {now.wind_direction != null && (
+                        <g transform={`rotate(${now.wind_direction + 180} 20 20)`}>
+                          <line x1="20" y1="28" x2="20" y2="14" />
+                          <path d="M20 10 L24 18 L20 16 L16 18 Z" />
+                        </g>
+                      )}
+                    </svg>
+                    <div>
+                      <p className="card-value card-value-sm">
+                        {now.wind_speed}
+                        <span className="card-unit">km/h</span>
+                      </p>
+                      <p className="weather-now-condition">
+                        {now.wind_level?.label_th ?? "ลม"}
+                        {now.wind_direction_th ? ` · ${now.wind_direction_th}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* ช่วงอุณหภูมิของวัน แสดงเป็นแถบแทนบรรทัดตัวหนังสือ
@@ -317,9 +384,10 @@ export function SummaryCards({
                 {now.rain_chance_pct ?? "-"}
                 <span className="card-unit">%</span>
               </p>
-              <p className="card-note">
-                ชื้น {now.humidity ?? "-"}% · ลม {now.wind_speed ?? "-"} km/h
-              </p>
+              {/* เอาลมออกจากบรรทัดนี้แล้ว เพราะย้ายไปอยู่คู่กับอุณหภูมิในการ์ดใหญ่
+                  ถ้าปล่อยไว้ทั้งสองที่จะเป็นตัวเลขเดียวกันโผล่สองรอบในกลุ่มเดียวกัน
+                  เหลือความชื้นซึ่งเกี่ยวกับโอกาสฝนโดยตรง จึงอยู่ถูกที่แล้ว */}
+              <p className="card-note">ความชื้น {now.humidity ?? "-"}%</p>
             </article>
 
             <article className="card">

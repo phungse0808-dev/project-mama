@@ -14,7 +14,6 @@ type Props = {
   provinces: string[];
   /** จังหวัดที่ใช้เมื่อผู้ใช้ยังไม่ได้เลือกเจาะจง */
   fallbackProvince: string;
-  userId: number | null;
 };
 
 /** ชั่วโมงที่ให้เลือกได้ ครอบคลุมช่วงที่คนตื่นอยู่จริง
@@ -27,15 +26,17 @@ const HOURS = [6, 7, 8, 9, 10, 11, 12, 15, 18];
 /**
  * สวิตช์เปิดปิดสรุปประจำวัน
  *
- * วางไว้ในแผงคำแนะนำสำหรับคุณ เพราะเป็นการตั้งค่าส่วนตัวเหมือนกัน
- * และเนื้อหาที่แจ้งก็อ้างอิงกลุ่มเสี่ยงที่ตั้งไว้ในแผงเดียวกันนี้
+ * อยู่ท้ายแผงระฆังแจ้งเตือน เพราะเป็นที่ที่คนไปหาเรื่องแจ้งเตือนอยู่แล้ว
+ * เรื่องแจ้งเตือนทั้งหมดจึงอยู่ที่เดียว ไม่ต้องเลื่อนหาในหน้าอีก
+ *
+ * ตอนปิดเห็นแค่สวิตช์กับคำอธิบายบรรทัดเดียว ช่องตั้งเวลากับพื้นที่โผล่มาเมื่อเปิดแล้ว
+ * แผงระฆังกว้างแค่สามร้อยกว่าพิกเซล ถ้ากางทุกช่องไว้ตลอดจะยาวจนบังรายการแจ้งเตือน
  */
 export function DigestSettings({
   settings,
   onChange,
   provinces,
   fallbackProvince,
-  userId,
 }: Props) {
   const [permission, setPermission] = useState(permissionState());
   const [sending, setSending] = useState(false);
@@ -71,7 +72,6 @@ export function DigestSettings({
       // บังคับให้ผ่านเงื่อนไขเวลา เพราะปุ่มนี้มีไว้ดูหน้าตาเดี๋ยวนี้
       { ...settings, enabled: true, hour: 0 },
       fallbackProvince,
-      userId,
     );
     if (!sent) clearLastSent();
     setTested(sent ? "ส่งแล้ว ดูที่มุมจอ" : "ยังไม่มีข้อมูลพอจะสรุป ลองใหม่อีกครั้ง");
@@ -104,6 +104,10 @@ export function DigestSettings({
         </button>
         <span className="digest-title">สรุปฝุ่นและอากาศประจำวัน</span>
       </div>
+
+      {!settings.enabled && permission !== "denied" && (
+        <p className="digest-note">ปิดอยู่ เปิดแล้วจะสรุปฝุ่นและอากาศให้วันละครั้ง</p>
+      )}
 
       {permission === "denied" && (
         <p className="digest-note warn">

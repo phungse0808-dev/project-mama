@@ -54,6 +54,8 @@ export type Summary = {
   pm25_max: number | null;
   pm25_min: number | null;
   level: AqiLevel | null;
+  /** วิธีป้องกันตัวของระดับที่ค่าเฉลี่ยนี้ตกอยู่ ว่างแปลว่าไม่รู้ระดับ */
+  protection: { icon: string; text_th: string }[];
   level_counts: Record<string, number>;
   /** ceiling เป็นค่าสูงสุดของระดับนั้น ระดับสุดท้ายไม่มีขอบบนจึงเป็นค่าว่าง */
   levels: { key: string; label_th: string; color: string; ceiling: number | null }[];
@@ -360,6 +362,11 @@ export type WeatherNow = {
   humidity?: number | null;
   precipitation?: number | null;
   wind_speed?: number | null;
+  /** องศาที่ลมพัดมาจาก ศูนย์คือทิศเหนือ */
+  wind_direction?: number | null;
+  wind_direction_th?: string | null;
+  wind_gusts?: number | null;
+  wind_level?: WindLevel | null;
   weather_code?: number | null;
   condition?: string;
   rain_chance_pct?: number | null;

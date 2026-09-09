@@ -23,9 +23,20 @@ type Props = {
   onSearch: () => void;
   onHome: () => void;
   onSignOut: () => void;
+  provinces: string[];
+  /** จังหวัดในโปรไฟล์ ส่งต่อให้สรุปประจำวันในแผงระฆัง */
+  fallbackProvince: string;
 };
 
-export function NavBar({ active, onGoTo, onSearch, onHome, onSignOut }: Props) {
+export function NavBar({
+  active,
+  onGoTo,
+  onSearch,
+  onHome,
+  onSignOut,
+  provinces,
+  fallbackProvince,
+}: Props) {
   return (
     <header className="navbar">
       <div className="navbar-inner">
@@ -59,7 +70,7 @@ export function NavBar({ active, onGoTo, onSearch, onHome, onSignOut }: Props) {
         <div className="navbar-right">
           {/* ระฆังอยู่ก่อนปุ่มอื่น เพราะเป็นสิ่งที่ต้องเหลือบดูว่ามีอะไรใหม่ไหม
               ไม่ใช่ปุ่มที่ตั้งใจจะกด การวางไว้ซ้ายสุดของกลุ่มทำให้เจอง่ายกว่า */}
-          <NotificationBell />
+          <NotificationBell provinces={provinces} fallbackProvince={fallbackProvince} />
           <button className="navbar-action" onClick={onSearch}>
             ค้นหา
           </button>
