@@ -126,80 +126,71 @@ export function HomePage({
           คำแนะนำที่ตรงกับตัวคุณ และผลกระทบต่อสุขภาพ
         </p>
 
-        {/* แบ่งเป็นสองกลุ่มเพราะขอบเขตของตัวเลขต่างกัน
-            ค่าฝุ่นเป็นภาพรวมทั้งประเทศ ส่วนอากาศเป็นของจังหวัดเดียว
-            ถ้าวางเรียงกันหกช่องรวดจะเข้าใจผิดว่าอุณหภูมิเป็นค่าเฉลี่ยทั้งประเทศด้วย */}
-        {/* อ่านขอบเขตจากคำตอบของเซิร์ฟเวอร์ ไม่ใช่จากค่าที่เลือกไว้
-            เพราะระหว่างที่คำขอใหม่ยังไม่กลับมา ตัวเลขบนจอยังเป็นของขอบเขตเดิม */}
-        <p className="home-group">
-          <span className="home-group-bar dust" />
-          เรื่องของฝุ่น · {summary?.province ?? "ทั้งประเทศ"}
-        </p>
+        {/* สามกลุ่มเรียงเป็นสามคอลัมน์ ไม่ใช่ซ้อนกันลงมา
+            เดิมแต่ละกลุ่มกินเต็มความกว้าง ได้ช่องกว้างหกร้อยพิกเซล
+            สำหรับตัวเลขสี่ตัว พื้นที่ว่างจึงมากกว่าตัวเนื้อหา และการ์ดสูงเกือบห้าร้อย
 
-        <div className="home-stats">
-          <div>
-            <p className="home-stat-value">{summary?.pm25_avg ?? "—"}</p>
-            <p className="home-stat-label">
-              µg/m³ {summary?.province ? "เฉลี่ยในจังหวัด" : "เฉลี่ยทั้งประเทศ"}
+            ยังต้องแบ่งกลุ่มอยู่ เพราะขอบเขตของตัวเลขต่างกัน
+            ค่าฝุ่นเป็นภาพรวมทั้งประเทศ ส่วนอากาศกับลมเป็นของจังหวัดเดียว
+            ถ้าเรียงหกช่องรวดจะเข้าใจผิดว่าอุณหภูมิเป็นค่าเฉลี่ยทั้งประเทศด้วย */}
+        <div className="home-cols">
+          {/* อ่านขอบเขตจากคำตอบของเซิร์ฟเวอร์ ไม่ใช่จากค่าที่เลือกไว้
+              เพราะระหว่างที่คำขอใหม่ยังไม่กลับมา ตัวเลขบนจอยังเป็นของขอบเขตเดิม */}
+          <div className="home-col dust">
+            <p className="home-col-head">
+              เรื่องของฝุ่น<span>{summary?.province ?? "ทั้งประเทศ"}</span>
+            </p>
+
+            <p className="home-col-value">
+              {summary?.pm25_avg ?? "—"}
+              <span className="home-col-unit">µg/m³</span>
+            </p>
+            <p className="home-col-note">
+              {summary?.province ? "เฉลี่ยในจังหวัด" : "เฉลี่ยทั้งประเทศ"}
               {summary?.level ? ` · ระดับ${summary.level.label_th}` : ""}
             </p>
-          </div>
-          <div>
-            <p className="home-stat-value">{summary?.pm25_max ?? "—"}</p>
-            <p className="home-stat-label">
+
+            <p className="home-col-sub">
+              <strong>{summary?.pm25_max ?? "—"}</strong>
               สูงสุด{summary?.worst_station ? ` · ${summary.worst_station.province}` : ""}
             </p>
           </div>
-        </div>
 
-        {/* ซ่อนทั้งกลุ่มเมื่อดึงอากาศไม่ได้ ไม่ใช่แสดงขีดกลางสามช่อง
-            เพราะช่องว่างเรียงกันดูเหมือนระบบพัง ส่วนการหายไปเงียบ ๆ
-            ยังเหลือส่วนของฝุ่นที่ใช้งานได้ตามปกติ */}
-        {now && (
-          <>
-            <p className="home-group">
-              <span className="home-group-bar weather" />
-              สภาพอากาศ · {now.province ?? target}
-            </p>
+          {/* ซ่อนทั้งคอลัมน์เมื่อดึงอากาศไม่ได้ ไม่ใช่แสดงขีดกลาง
+              เพราะช่องว่างเรียงกันดูเหมือนระบบพัง ส่วนการหายไปเงียบ ๆ
+              ยังเหลือคอลัมน์ฝุ่นที่ใช้งานได้ตามปกติ */}
+          {now && (
+            <div className="home-col weather">
+              <p className="home-col-head">
+                สภาพอากาศ<span>{now.province ?? target}</span>
+              </p>
 
-            <div className="home-stats">
-              <div className="home-weather-now">
-                <WeatherIcon code={now.weather_code} size={34} />
+              <div className="home-col-main">
+                <WeatherIcon code={now.weather_code} size={30} />
                 <div>
-                  <p className="home-stat-value">
+                  <p className="home-col-value">
                     {now.temperature ?? "—"}
-                    <span className="home-stat-unit"> °C</span>
+                    <span className="home-col-unit">°C</span>
                   </p>
-                  <p className="home-stat-label">{now.condition}</p>
+                  <p className="home-col-note">{now.condition}</p>
                 </div>
               </div>
 
-              <div>
-                <p className="home-stat-value">
-                  {now.rain_chance_pct ?? "—"}
-                  <span className="home-stat-unit"> %</span>
-                </p>
-                <p className="home-stat-label">โอกาสฝนตกวันนี้</p>
-              </div>
+              <p className="home-col-sub">
+                <strong>{now.rain_chance_pct ?? "—"}%</strong>
+                โอกาสฝนตกวันนี้
+              </p>
             </div>
-          </>
-        )}
+          )}
 
-        {/* ลมเป็นกลุ่มของตัวเอง ไม่ใช่ช่องหนึ่งในกลุ่มสภาพอากาศ
-            เพราะตอบคนละคำถาม อุณหภูมิกับฝนบอกว่าวันนี้อากาศเป็นอย่างไร
-            ส่วนลมบอกว่าฝุ่นจะระบายออกไหม ซึ่งเป็นเรื่องเดียวกับกลุ่มฝุ่นข้างบน
+          {air && (
+            <div className="home-col wind">
+              <p className="home-col-head">
+                ลม<span>{air.province ?? target}</span>
+              </p>
 
-            ซ่อนทั้งกลุ่มเมื่อดึงไม่ได้ ด้วยเหตุผลเดียวกับกลุ่มสภาพอากาศ */}
-        {air && (
-          <>
-            <p className="home-group">
-              <span className="home-group-bar wind" />
-              ลม · {air.province ?? target}
-            </p>
-
-            <div className="home-stats">
-              <div className="home-weather-now">
-                {/* เข็มทิศชี้ทางที่ลมพัดไป ส่วนองศาที่ต้นทางส่งมาคือทิศที่ลมพัดมาจาก
+              <div className="home-col-main">
+                {/* เข็มทิศชี้ทิศที่ลมพัดไป ส่วนองศาที่ต้นทางส่งมาคือทิศที่ลมพัดมาจาก
                     สองอย่างนี้ตรงข้ามกันเสมอ จึงหมุนเพิ่มอีกร้อยแปดสิบองศา */}
                 <svg className="home-wind-dial" viewBox="0 0 40 40" aria-hidden="true">
                   <circle cx="20" cy="20" r="17" />
@@ -211,33 +202,33 @@ export function HomePage({
                   )}
                 </svg>
                 <div>
-                  <p className="home-stat-value">
+                  <p className="home-col-value">
                     {air.wind_speed ?? "—"}
-                    <span className="home-stat-unit"> km/h</span>
+                    <span className="home-col-unit">km/h</span>
                   </p>
-                  <p className="home-stat-label">
+                  <p className="home-col-note">
                     {air.level?.label_th ?? "ไม่ทราบระดับ"}
                     {air.wind_direction_th ? ` · จากทิศ${air.wind_direction_th}` : ""}
                   </p>
                 </div>
               </div>
 
-              {/* ชั่วโมงที่ลมสงบเป็นตัวเลขที่เชื่อมลมกับฝุ่นโดยตรง
-                  ลมอ่อนแปลว่าอากาศแทบไม่ถ่ายเท ฝุ่นที่ปล่อยออกมาจึงค้างอยู่ที่เดิม */}
-              <div>
-                <p className="home-stat-value">
-                  {air.calm_hours ?? 0}
-                  <span className="home-stat-unit"> ชม.</span>
-                </p>
-                <p className="home-stat-label">
-                  {air.calm_hours
-                    ? "ลมสงบใน 24 ชม. · ช่วงที่ฝุ่นสะสม"
-                    : "ไม่มีช่วงลมสงบใน 24 ชม."}
-                </p>
-              </div>
+              {/* ไม่มีชั่วโมงลมสงบเป็นข่าวดี ไม่ใช่ตัวเลขที่ต้องเน้น
+                  เดิมแสดงเลขศูนย์ตัวใหญ่เท่าค่าอื่น ซึ่งอ่านเหมือนมีอะไรผิดปกติ
+                  จึงเปลี่ยนเป็นประโยคบอกเล่าเมื่อไม่มี และเน้นตัวเลขเฉพาะตอนที่มีจริง */}
+              <p className="home-col-sub">
+                {air.calm_hours ? (
+                  <>
+                    <strong>{air.calm_hours} ชม.</strong>
+                    ลมสงบใน 24 ชม. · ช่วงที่ฝุ่นสะสม
+                  </>
+                ) : (
+                  "อีก 24 ชม. ไม่มีช่วงลมสงบ อากาศถ่ายเทตลอด"
+                )}
+              </p>
             </div>
-          </>
-        )}
+          )}
+        </div>
 
         <span className="home-card-go">เข้าดูข้อมูล →</span>
       </button>

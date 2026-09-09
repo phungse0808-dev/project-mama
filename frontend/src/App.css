@@ -591,7 +591,7 @@ button {
 .health-value,
 .ranking-value,
 .alert-count,
-.home-stat-value,
+.home-col-value,
 .level-segment,
 .forecast-range,
 .field-pct {
@@ -1923,40 +1923,10 @@ button {
   color: var(--text-soft);
 }
 
-/* หัวกลุ่มบนการ์ดหน้าหลัก แยกเรื่องฝุ่นออกจากเรื่องอากาศ
-   เพราะสองชุดนี้คนละขอบเขต ฝุ่นเป็นทั้งประเทศ อากาศเป็นจังหวัดเดียว */
-.home-group {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0 0 8px;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  color: var(--text-soft);
-}
 
-.home-group-bar {
-  width: 3px;
-  height: 12px;
-  border-radius: 9px;
-  flex: none;
-}
 
-.home-group-bar.dust {
-  background: linear-gradient(180deg, var(--accent), var(--accent-deep));
-}
 
-/* กลุ่มอากาศใช้สีส้ม ให้แยกออกจากกลุ่มฝุ่นตั้งแต่กวาดสายตา
-   ใช้ชุดสีเดียวกับหัวกลุ่มในหน้าฝุ่น จะได้อ่านเป็นภาษาเดียวกันทั้งเว็บ */
-.home-group-bar.weather {
-  background: linear-gradient(180deg, #a8620a, #d99a2b);
-}
 
-/* กลุ่มลมใช้สีเขียว แยกจากฟ้าของฝุ่นและส้มของอากาศ
-   สามกลุ่มจึงบอกได้จากแถบสีโดยไม่ต้องอ่านหัวข้อ */
-.home-group-bar.wind {
-  background: linear-gradient(180deg, #0d7e5a, #12a05f);
-}
 
 /* เข็มทิศย่อบนหน้าหลัก ขนาดเท่าไอคอนสภาพอากาศที่อยู่ช่องข้างกัน
    จะได้เรียงเป็นแถวเดียวกันพอดี ไม่ใช่ใบหนึ่งสูงกว่าอีกใบ */
@@ -1981,47 +1951,11 @@ button {
   fill: var(--accent);
 }
 
-/* ไอคอนกับตัวเลขอยู่บรรทัดเดียวกัน ต่างจากช่องอื่นที่มีแต่ตัวเลข */
-.home-weather-now {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
 
-.home-stat-unit {
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--text-dim);
-}
 
-/* ให้จำนวนคอลัมน์ยุบตามความกว้างเอง ไม่บังคับสามคอลัมน์เสมอ
-   บนจอ 390 พิกเซล สามคอลัมน์เหลือช่องละ 90 ซึ่งแคบจนตัวเลขอุณหภูมิ
-   ตัดบรรทัดกลางคำ เช่น 28.3 อยู่บรรทัดหนึ่งแล้ว องศาเซลเซียสตกไปอีกบรรทัด */
-.home-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
-}
 
-.home-stats > div {
-  background: var(--bg-soft, var(--surface-2));
-  border-radius: 10px;
-  padding: 12px 14px;
-}
 
-.home-stat-value {
-  margin: 0;
-  font-size: 25px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
 
-.home-stat-label {
-  margin: 3px 0 0;
-  font-size: 13.5px;
-  color: var(--text-soft);
-}
 
 /* ดันไปชิดล่างเสมอ เพื่อให้กล่องสองใบมีเส้นล่างตรงกันแม้เนื้อหายาวไม่เท่ากัน */
 .home-card-go {
@@ -2626,3 +2560,94 @@ button {
 
 
 
+
+/* ---------- สามคอลัมน์บนการ์ดหน้าหลัก ---------- */
+
+/* เดิมสามกลุ่มซ้อนกันลงมา แต่ละกลุ่มกินเต็มความกว้าง
+   ได้ช่องกว้างหกร้อยพิกเซลสำหรับตัวเลขสี่ตัว การ์ดจึงสูงเกือบห้าร้อย
+   เรียงเป็นสามคอลัมน์แทน ใช้ความกว้างที่มีอยู่จริงและเตี้ยลงราวครึ่งหนึ่ง */
+.home-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+/* หัวคอลัมน์ใช้เส้นสีด้านล่างแทนแถบเล็กข้างหน้า
+   เส้นยาวเต็มคอลัมน์จึงทำหน้าที่คั่นกลุ่มไปด้วยในตัว ไม่ต้องมีเส้นแยกอีกเส้น */
+.home-col-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 11px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+  font-size: 13.5px;
+  color: var(--text-soft);
+}
+
+.home-col-head span {
+  margin-left: auto;
+  color: var(--text-dim);
+}
+
+.home-col.dust .home-col-head { border-bottom-color: var(--accent); }
+.home-col.weather .home-col-head { border-bottom-color: #d99a2b; }
+.home-col.wind .home-col-head { border-bottom-color: #0d7e5a; }
+
+/* ไอคอนอยู่ข้างตัวเลข เฉพาะคอลัมน์ที่มีไอคอน
+   คอลัมน์ฝุ่นไม่มีไอคอน ตัวเลขจึงเริ่มที่ขอบซ้ายเหมือนกัน */
+.home-col-main {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.home-col-value {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.home-col-unit {
+  margin-left: 6px;
+  font-family: "Sarabun", "Noto Sans Thai", sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--text-soft);
+}
+
+.home-col-note {
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+/* ค่ารองอยู่ใต้เส้นคั่นบาง ๆ ในคอลัมน์เดียวกัน ไม่ต้องมีกล่องของตัวเอง
+   เพราะเป็นข้อมูลประกอบของกลุ่มเดียวกัน ไม่ใช่คนละเรื่อง */
+.home-col-sub {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.home-col-sub strong {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
