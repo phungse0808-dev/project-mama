@@ -23,7 +23,15 @@ type Props = {
  * เพราะสีชุดนั้นแปลว่าอันตรายมากน้อย ถ้าเอามาใช้กับชื่อโรค
  * คนจะอ่านว่าโรคสีแดงร้ายแรงกว่าโรคสีเขียว ซึ่งไม่ใช่สิ่งที่แผงนี้บอก
  */
-const GROUP_COLORS = ["#0b6bcb", "#c62b45", "#9c5c07", "#0d7e5a"];
+const GROUP_COLORS = [
+  "#0b6bcb",
+  "#c62b45",
+  "#9c5c07",
+  "#0d7e5a",
+  "#5f4488",
+  "#a13d7a",
+  "#15607a",
+];
 
 /** เกณฑ์ที่ใช้เทียบ ตรงกับค่าใน backend/app/health_advice.py
  *
@@ -108,7 +116,10 @@ export function DiseaseRisk({ summary }: Props) {
   const rows = Object.entries(riskTable)
     .map(([group, risk], index) => ({
       group,
-      short: group.replace("กลุ่มโรค", ""),
+      // ตัดคำนำหน้าออกให้เหลือแต่ชื่อโรค กล่องจะได้แคบลงและชื่อเรียงกันสม่ำเสมอ
+      // ต้องตัดทั้ง "กลุ่มโรค" และ "โรค" เพราะรายการในตารางใช้คำนำหน้าไม่เหมือนกัน
+      // บางตัวเป็นกลุ่มโรคตามที่กรมควบคุมโรคเรียก บางตัวเป็นโรคเดี่ยวจากงานวิจัย
+      short: group.replace(/^(กลุ่มโรค|โรค)/, ""),
       risk,
       color: GROUP_COLORS[index % GROUP_COLORS.length],
       pct: excessPct(current, risk.relative_risk_per_10),
