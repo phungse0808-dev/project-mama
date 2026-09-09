@@ -15,6 +15,15 @@ import type { DiseaseSummary, Pm25HourlyPoint, Summary } from "../api";
 type Props = {
   /** สรุปค่าฝุ่นของพื้นที่ที่เลือกอยู่ ใช้เป็นตัวตั้งในการคำนวณ */
   summary: Summary | null;
+  /** แสดงเป็นวงกลมแทนกล่องกับกราฟเส้น ใช้ในหน้าโรคจากฝุ่น
+   *
+   * หน้าหลักกับหน้าโรคต้องการคนละแบบ
+   *     หน้าหลักเป็นทางผ่าน คนกวาดตาแล้วไปต่อ กล่องกับกราฟเส้นตอบได้ว่า
+   *     ค่าเท่าไรและวันนี้ช่วงไหนแย่ที่สุด
+   *     หน้าโรคเป็นที่อ่านจริง วงกลมตอบได้ว่าฝุ่นดันโรคไหนแรงกว่ากัน
+   *     ซึ่งเป็นคำถามที่คนเปิดหน้านี้มาถาม
+   */
+  ring?: boolean;
 };
 
 /** สีประจำกลุ่มโรค เรียงตามลำดับที่เซิร์ฟเวอร์ส่งมา
@@ -32,6 +41,17 @@ const GROUP_COLORS = [
   "#a13d7a",
   "#15607a",
 ];
+
+/** รัศมีและเส้นรอบวงของวงกลม ใช้แปลงสัดส่วนเป็นความยาวเส้นประ */
+const RADIUS = 70;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+/** ระยะห่างระหว่างชิ้น หน่วยเดียวกับเส้นรอบวง
+ *
+ * ต้องมีช่องว่าง ไม่ให้ชิ้นชนกันสนิท เพราะสองชิ้นที่ติดกันโดยไม่มีเส้นคั่น
+ * อ่านเป็นชิ้นเดียวเมื่อสีใกล้กัน ต่างจากกล่องที่อยู่ห่างกันอยู่แล้ว
+ */
+const SLICE_GAP = 2;
 
 /** เกณฑ์ที่ใช้เทียบ ตรงกับค่าใน backend/app/health_advice.py
  *
@@ -69,7 +89,7 @@ function excessPct(pm25: number, rrPer10: number): number {
  *     ให้เป็นชนิดเดียวกับกราฟย้อนหลังที่เว็บมีอยู่แล้ว คนใช้จึงอ่านเป็นทันที
  *     และตอบได้ว่าวันนี้ช่วงไหนแย่ที่สุด ซึ่งกราฟที่ลากตามค่าฝุ่นตอบไม่ได้
  */
-export function DiseaseRisk({ summary }: Props) {
+export function DiseaseRisk({ summary, ring = false }: Props) {
   const [data, setData] = useState<DiseaseSummary | null>(null);
   const [hourly, setHourly] = useState<Pm25HourlyPoint[]>([]);
   const province = summary?.province ?? null;
@@ -90,7 +110,11 @@ export function DiseaseRisk({ summary }: Props) {
   }, []);
 
   // ดึงใหม่ทุกครั้งที่เปลี่ยนพื้นที่ กราฟจึงเป็นของจังหวัดที่เลือกเสมอ
+  //
+  // ข้ามไปเลยเมื่อแสดงเป็นวงกลม เพราะวงกลมใช้ค่าเฉลี่ยค่าเดียว ไม่ได้ใช้รายชั่วโมง
+  // ถ้าไม่ข้าม หน้าโรคจะยิงคำขอที่ไม่มีใครใช้ผลลัพธ์ทุกครั้งที่เปลี่ยนจังหวัด
   useEffect(() => {
+    if (ring) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -103,7 +127,7 @@ export function DiseaseRisk({ summary }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [province]);
+  }, [province, ring]);
 
   const riskTable = data?.risk_by_group;
   const current = summary?.pm25_avg ?? null;
@@ -125,6 +149,26 @@ export function DiseaseRisk({ summary }: Props) {
       pct: excessPct(current, risk.relative_risk_per_10),
     }))
     .sort((a, b) => b.pct - a.pct);
+
+  // แปลงเปอร์เซ็นต์ของแต่ละโรคเป็นความยาวเส้นประของชิ้นในวงกลม
+  //
+  // สัดส่วนคิดจากผลรวมของทุกชิ้น ซึ่งบอกได้ว่าฝุ่นดันโรคไหนแรงกว่ากัน
+  // แต่ผลรวมนั้นเองไม่มีความหมาย เพราะแต่ละเปอร์เซ็นต์วัดจากฐานคนละฐาน
+  // จึงใช้เป็นตัวหารอย่างเดียว ไม่เอาไปแสดงที่ไหน
+  const totalPct = rows.reduce((sum, row) => sum + row.pct, 0) || 1;
+  let cursor = 0;
+  const slices = rows.map((row) => {
+    const share = row.pct / totalPct;
+    const length = share * CIRCUMFERENCE;
+    const slice = {
+      ...row,
+      share,
+      dash: `${Math.max(0, length - SLICE_GAP)} ${CIRCUMFERENCE - length + SLICE_GAP}`,
+      offset: -cursor,
+    };
+    cursor += length;
+    return slice;
+  });
 
   // แปลงค่าฝุ่นรายชั่วโมงเป็นเปอร์เซ็นต์ของทุกกลุ่มโรคในจุดเดียวกัน
   // ใช้ชื่อย่อเป็นกุญแจ เพราะเป็นชื่อเดียวกับที่แสดงในคำอธิบายสีของกราฟ
@@ -170,6 +214,75 @@ export function DiseaseRisk({ summary }: Props) {
         </span>
       </div>
 
+      {ring ? (
+        <>
+          <p className="drisk-section">
+            ฝุ่นวันนี้ดันโรคไหนแรงที่สุด
+            <span>ชิ้นใหญ่แปลว่าฝุ่นดันโรคนั้นแรงกว่า ไม่ใช่ว่ามีคนป่วยเยอะกว่า</span>
+          </p>
+
+          <div className="drisk-ring-row">
+            <svg
+              className="drisk-ring"
+              viewBox="0 0 180 180"
+              role="img"
+              aria-label="สัดส่วนผลของฝุ่นต่อแต่ละโรค"
+            >
+              <g transform="rotate(-90 90 90)" fill="none" strokeWidth="24">
+                {slices.map((slice) => (
+                  <circle
+                    key={slice.group}
+                    cx="90"
+                    cy="90"
+                    r={RADIUS}
+                    stroke={slice.color}
+                    strokeDasharray={slice.dash}
+                    strokeDashoffset={slice.offset}
+                  />
+                ))}
+              </g>
+              {/* ตรงกลางเป็นค่าฝุ่น ไม่ใช่ผลรวมของทุกชิ้น
+                  เพราะเปอร์เซ็นต์ของแต่ละโรควัดจากฐานคนละฐาน บวกกันแล้วไม่มีความหมาย
+                  ถ้าใส่ผลรวมไว้ตรงกลางจะเป็นตัวเลขที่ผิด */}
+              <text className="drisk-ring-value" x="90" y="84" textAnchor="middle">
+                {current}
+              </text>
+              <text className="drisk-ring-unit" x="90" y="104" textAnchor="middle">
+                µg/m³ ที่วัดได้
+              </text>
+            </svg>
+
+            {/* ตารางข้างวงเก็บค่าจริงของทุกโรคไว้ครบ
+                วงกลมบอกได้แค่ว่าชิ้นไหนใหญ่กว่า แต่บอกไม่ได้ว่าเท่าไร
+                ถ้ามีแต่วงอย่างเดียว ตัวเลขที่เป็นสาระจะหายไป */}
+            <ul className="drisk-legend">
+              <li className="drisk-legend-head">
+                <span />
+                <span>โรค</span>
+                <span>เพิ่มขึ้น</span>
+                <span>สัดส่วน</span>
+              </li>
+              {slices.map((slice) => (
+                <li key={slice.group}>
+                  <span className="drisk-legend-dot" style={{ background: slice.color }} />
+                  <span className="drisk-legend-name">
+                    {slice.short}
+                    {slice.risk.uncertain && <em>*</em>}
+                  </span>
+                  <span className="drisk-legend-pct">+{slice.pct.toFixed(2)}%</span>
+                  <span className="drisk-legend-share">{(slice.share * 100).toFixed(1)}%</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="drisk-ring-note">
+            เครื่องหมายดอกจันคือกลุ่มที่ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ ·
+            คอลัมน์เพิ่มขึ้นคือค่าจริงของโรคนั้น ส่วนคอลัมน์สัดส่วนคือส่วนแบ่งในวงกลม
+          </p>
+        </>
+      ) : (
+        <>
       <p className="drisk-section">คนเข้ารักษาเพิ่มขึ้น เทียบกับวันอากาศสะอาด</p>
 
       <div className="drisk-tiles">
@@ -244,6 +357,8 @@ export function DiseaseRisk({ summary }: Props) {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+      )}
+        </>
       )}
 
     </section>

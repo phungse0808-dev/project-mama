@@ -2760,3 +2760,114 @@ button {
   line-height: 1.8;
   color: var(--text-soft);
 }
+
+/* ---------- วงกลมสัดส่วนผลของฝุ่น เฉพาะหน้าโรค ---------- */
+
+.drisk-ring-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.drisk-ring {
+  width: 190px;
+  height: 190px;
+  flex: none;
+}
+
+.drisk-ring-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 29px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  fill: var(--text);
+}
+
+.drisk-ring-unit {
+  font-size: 13px;
+  fill: var(--text-soft);
+}
+
+/* ตารางข้างวง เก็บค่าจริงของทุกโรคไว้ครบ
+   วงกลมบอกได้แค่ว่าชิ้นไหนใหญ่กว่า ตัวเลขที่เป็นสาระอยู่ที่นี่ */
+.drisk-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 280px;
+}
+
+.drisk-legend li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) 68px 56px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 14.5px;
+}
+
+.drisk-legend li + li {
+  border-top: 1px solid var(--border);
+}
+
+.drisk-legend-head {
+  padding-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.drisk-legend-head span:nth-child(3),
+.drisk-legend-head span:nth-child(4) {
+  text-align: right;
+}
+
+.drisk-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px var(--level-edge);
+}
+
+.drisk-legend-name em {
+  font-style: normal;
+  color: var(--text-dim);
+}
+
+.drisk-legend-pct {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.drisk-legend-share {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+
+.drisk-ring-note {
+  margin: 18px 0 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-soft);
+}
+
+@media (max-width: 620px) {
+  /* จอแคบตัดคอลัมน์สัดส่วนออก ค่าจริงสำคัญกว่า
+     ส่วนสัดส่วนยังอ่านได้จากขนาดชิ้นในวงกลมอยู่แล้ว */
+  .drisk-legend li {
+    grid-template-columns: 14px minmax(0, 1fr) 68px;
+  }
+
+  .drisk-legend-share,
+  .drisk-legend-head span:nth-child(4) {
+    display: none;
+  }
+}

@@ -391,7 +391,7 @@ export default function App() {
               <span>คำนวณจากค่าที่วัดได้ ณ ขณะนี้ ด้วยค่าจากงานวิจัยที่ตีพิมพ์แล้ว</span>
             </h2>
 
-            <DiseaseRisk summary={summary} />
+            <DiseaseRisk summary={summary} ring />
 
             <h2 className="section-heading">
               ผู้ป่วยที่เกิดขึ้นจริง
