@@ -6,13 +6,20 @@
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import requests
 from sqlmodel import Session, col, select
 
-from app.config import AIR4THAI_URL, CA_BUNDLE, MISSING_VALUE, RAW_DIR, REQUEST_TIMEOUT
+from app.config import (
+    AIR4THAI_URL,
+    CA_BUNDLE,
+    MISSING_VALUE,
+    RAW_DIR,
+    RAW_KEEP_DAYS,
+    REQUEST_TIMEOUT,
+)
 from app.models import CollectionLog, Reading, Station
 
 POLLUTANTS = ("PM25", "PM10", "O3", "CO", "NO2", "SO2")
@@ -47,13 +54,48 @@ def save_raw(payload: dict) -> Path:
 
     เป็นแนวปฏิบัติที่จำเป็นสำหรับงานวิจัย เพราะถ้าพบภายหลังว่าโค้ดแปลงข้อมูลผิด
     จะยังกู้ข้อมูลกลับมาได้จากไฟล์ดิบ โดยไม่ต้องรอเก็บใหม่ซึ่งย้อนเวลาไม่ได้
+
+    เก็บไว้เท่าที่ RAW_KEEP_DAYS กำหนด ของเก่ากว่านั้นถูกลบโดย prune_raw
     """
     now = datetime.now()
     folder = RAW_DIR / now.strftime("%Y-%m-%d")
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"air4thai_{now.strftime('%H%M%S')}.json"
     path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    prune_raw()
     return path
+
+
+def prune_raw(keep_days: int = RAW_KEEP_DAYS) -> int:
+    """ลบโฟลเดอร์ข้อมูลดิบที่เก่ากว่าจำนวนวันที่กำหนด คืนจำนวนโฟลเดอร์ที่ลบ
+
+    ทำไมลบทั้งโฟลเดอร์ ไม่ดูเวลาแก้ไขของแต่ละไฟล์
+        ชื่อโฟลเดอร์คือวันที่เก็บจริง ซึ่งเชื่อได้กว่าเวลาแก้ไขไฟล์
+        เพราะการคัดลอกโปรเจคไปอีกเครื่องทำให้เวลาแก้ไขกลายเป็นวันที่คัดลอก
+        แล้วไฟล์เก่าทั้งกองจะดูเหมือนเพิ่งสร้าง เลยไม่ถูกลบสักที
+
+    ชื่อโฟลเดอร์ที่อ่านเป็นวันที่ไม่ได้จะถูกข้ามไป ไม่ลบทิ้ง
+    เพราะอาจเป็นของที่คนเอามาวางไว้เอง ไม่ใช่ของที่โปรแกรมนี้สร้าง
+    """
+    if keep_days <= 0:
+        return 0
+
+    limit = (datetime.now() - timedelta(days=keep_days)).date()
+    removed = 0
+    for folder in RAW_DIR.iterdir():
+        if not folder.is_dir():
+            continue
+        try:
+            day = datetime.strptime(folder.name, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if day >= limit:
+            continue
+        for item in folder.iterdir():
+            item.unlink()
+        folder.rmdir()
+        removed += 1
+    return removed
 
 
 def to_float(raw: object) -> float | None:
