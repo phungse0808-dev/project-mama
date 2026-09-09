@@ -15,7 +15,6 @@ import type {
 import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
-import { DiseaseCases } from "./components/DiseaseCases";
 import { DiseaseRisk } from "./components/DiseaseRisk";
 import { HomePage } from "./components/HomePage";
 import { NavBar } from "./components/NavBar";
@@ -66,6 +65,18 @@ export default function App() {
   // เพราะต้องล้างทิ้งเมื่อสลับหน้า ไม่งั้นกลับมาแล้วแผงยังค้างอยู่
   const [pickedProvince, setPickedProvince] = useState<string | null>(null);
 
+  // โรคที่เลือกดูในหน้าโรคจากฝุ่น ค่าว่างแปลว่าดูทุกโรค
+  //
+  // เก็บเป็นชื่อเต็มตามที่เซิร์ฟเวอร์ส่งมา ไม่ใช่ชื่อย่อที่ตัดคำนำหน้าออกแล้ว
+  // เพราะต้องเอาไปเทียบกับกุญแจในตารางค่าเสี่ยงและกลุ่มโรคของกรมควบคุมโรค
+  const [pickedDisease, setPickedDisease] = useState<string>("");
+
+  // รายชื่อโรคสำหรับช่องเลือก อ่านจากตารางค่าเสี่ยงที่เซิร์ฟเวอร์ส่งมา
+  //
+  // ไม่เขียนรายชื่อไว้ในหน้าเว็บ เพราะถ้าฝั่งหลังบ้านเพิ่มหรือตัดโรค
+  // ช่องเลือกจะไม่ตรงกับสิ่งที่แสดงจริง และไม่มีใครรู้ตัวจนกว่าจะมีคนสังเกต
+  const [diseaseNames, setDiseaseNames] = useState<string[]>([]);
+
   // จังหวัดที่ใช้ดึงสภาพอากาศ มาจากช่องเลือกเดียวกับค่าฝุ่น
   //
   // ทำไมต้องมีตัวสำรอง
@@ -87,6 +98,23 @@ export default function App() {
   // แยกออกจากการดึงค่าสรุปโดยตั้งใจ เพราะห้าเส้นทางนี้ให้คำตอบเดิมเสมอ
   // ไม่ว่าผู้ใช้จะเลือกจังหวัดไหน ถ้ารวมไว้ด้วยกัน การกดเปลี่ยนจังหวัดหนึ่งครั้ง
   // จะยิงคำขอที่รู้คำตอบอยู่แล้วเพิ่มอีกห้าครั้งโดยไม่ได้อะไรกลับมา
+  // ดึงครั้งเดียวตอนเข้าระบบ รายชื่อโรคไม่เปลี่ยนระหว่างใช้งาน
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await api.disease();
+        if (!cancelled) setDiseaseNames(Object.keys(result.risk_by_group ?? {}));
+      } catch {
+        if (!cancelled) setDiseaseNames([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   const loadAll = useCallback(async () => {
     try {
       setError(null);
@@ -386,19 +414,44 @@ export default function App() {
             สองส่วนนี้มาคนละแหล่งและคนละช่วงเวลา จึงต้องแยกให้เห็นชัดว่าอะไรเป็นอะไร */}
         {active === "disease" && (
           <>
-            <h2 className="section-heading">
-              ความเสี่ยงจากค่าฝุ่นตอนนี้
-              <span>คำนวณจากค่าที่วัดได้ ณ ขณะนี้ ด้วยค่าจากงานวิจัยที่ตีพิมพ์แล้ว</span>
-            </h2>
+            {/* ช่องเลือกอยู่บนสุดของหน้า มีผลกับทั้งสองส่วนพร้อมกัน
+                ไม่แยกช่องของใครของมัน เพราะคนอ่านคาดว่าเลือกครั้งเดียวแล้วทั้งหน้าเปลี่ยนตาม
 
-            <DiseaseRisk summary={summary} ring />
+                ใช้ช่องพื้นที่ตัวเดียวกับหน้าอื่น จึงจำค่าข้ามหน้าได้
+                เลือกเชียงใหม่ในหน้าวัดคุณภาพอากาศแล้วมาหน้านี้ ยังเป็นเชียงใหม่อยู่ */}
+            <div className="dfilter">
+              <label>
+                พื้นที่
+                <select
+                  value={dustProvince}
+                  onChange={(event) => setDustProvince(event.target.value)}
+                >
+                  <option value="">ทั้งประเทศ</option>
+                  {provinces.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <h2 className="section-heading">
-              ผู้ป่วยที่เกิดขึ้นจริง
-              <span>ข้อมูลย้อนหลังจากกรมควบคุมโรค ไม่ใช่ค่าที่ระบบคำนวณเอง</span>
-            </h2>
+              <label>
+                โรค
+                <select
+                  value={pickedDisease}
+                  onChange={(event) => setPickedDisease(event.target.value)}
+                >
+                  <option value="">ทุกโรค</option>
+                  {diseaseNames.map((item) => (
+                    <option key={item} value={item}>
+                      {item.replace(/^(กลุ่มโรค|โรค)/, "")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
-            <DiseaseCases />
+            <DiseaseRisk summary={summary} ring only={pickedDisease} />
           </>
         )}
 

@@ -24,6 +24,11 @@ type Props = {
    *     ซึ่งเป็นคำถามที่คนเปิดหน้านี้มาถาม
    */
   ring?: boolean;
+  /** แสดงเฉพาะโรคนี้โรคเดียว ค่าว่างแปลว่าแสดงทุกโรค
+   *
+   * ใช้ชื่อเต็มตามกุญแจในตารางค่าเสี่ยง ไม่ใช่ชื่อย่อที่ตัดคำนำหน้าออกแล้ว
+   */
+  only?: string;
 };
 
 /** สีประจำกลุ่มโรค เรียงตามลำดับที่เซิร์ฟเวอร์ส่งมา
@@ -89,7 +94,7 @@ function excessPct(pm25: number, rrPer10: number): number {
  *     ให้เป็นชนิดเดียวกับกราฟย้อนหลังที่เว็บมีอยู่แล้ว คนใช้จึงอ่านเป็นทันที
  *     และตอบได้ว่าวันนี้ช่วงไหนแย่ที่สุด ซึ่งกราฟที่ลากตามค่าฝุ่นตอบไม่ได้
  */
-export function DiseaseRisk({ summary, ring = false }: Props) {
+export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
   const [data, setData] = useState<DiseaseSummary | null>(null);
   const [hourly, setHourly] = useState<Pm25HourlyPoint[]>([]);
   const province = summary?.province ?? null;
@@ -137,6 +142,10 @@ export function DiseaseRisk({ summary, ring = false }: Props) {
   //
   // สาระของแผงคือค่าฝุ่นเท่านี้กระทบโรคไหนมากที่สุด
   // การเรียงตามผลลัพธ์จึงตอบคำถามได้ทันที ไม่ต้องไล่อ่านเทียบทีละแถว
+  // กรองก่อนแจกสี ไม่ใช่หลังแจกสี
+  //
+  // ถ้ากรองทีหลัง โรคที่เหลือจะได้สีตามลำดับใหม่ ทำให้สีเปลี่ยนไปมาเมื่อสลับตัวเลือก
+  // สีต้องผูกกับโรค ไม่ใช่ผูกกับอันดับที่มันอยู่ในรายการ
   const rows = Object.entries(riskTable)
     .map(([group, risk], index) => ({
       group,
@@ -148,6 +157,7 @@ export function DiseaseRisk({ summary, ring = false }: Props) {
       color: GROUP_COLORS[index % GROUP_COLORS.length],
       pct: excessPct(current, risk.relative_risk_per_10),
     }))
+    .filter((row) => !only || row.group === only)
     .sort((a, b) => b.pct - a.pct);
 
   // แปลงเปอร์เซ็นต์ของแต่ละโรคเป็นความยาวเส้นประของชิ้นในวงกลม
@@ -214,7 +224,29 @@ export function DiseaseRisk({ summary, ring = false }: Props) {
         </span>
       </div>
 
-      {ring ? (
+      {ring && rows.length === 1 ? (
+        /* เลือกโรคเดียวไม่ต้องมีวงกลม
+           วงที่มีชิ้นเดียวคือวงเต็มใบและสัดส่วนเป็นร้อยเปอร์เซ็นต์เสมอ
+           ซึ่งไม่ได้บอกอะไรเลย กินที่และหลอกให้คิดว่ามีอะไรให้เทียบ
+           แสดงเป็นค่าเดียวพร้อมที่มาแทน ซึ่งเป็นสิ่งที่คนเลือกโรคเดียวอยากรู้ */
+        <div className="drisk-single" style={{ borderTopColor: rows[0].color }}>
+          <p className="drisk-single-value" style={{ color: rows[0].color }}>
+            +{rows[0].pct.toFixed(2)}
+            <span>%</span>
+          </p>
+          <p className="drisk-single-name">
+            {rows[0].short}
+            {rows[0].risk.uncertain && <em>*</em>}
+          </p>
+          <p className="drisk-single-outcome">{rows[0].risk.outcome_th}</p>
+          <p className="drisk-single-source">
+            ความเสี่ยงสัมพัทธ์ {rows[0].risk.relative_risk_per_10} ต่อฝุ่น 10 หน่วย ·
+            ช่วงความเชื่อมั่น {rows[0].risk.ci_low}–{rows[0].risk.ci_high} ·{" "}
+            {rows[0].risk.source_th} · {rows[0].risk.evidence_th}
+            {rows[0].risk.uncertain && " · ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ"}
+          </p>
+        </div>
+      ) : ring ? (
         <>
           <p className="drisk-section">
             ฝุ่นวันนี้ดันโรคไหนแรงที่สุด
