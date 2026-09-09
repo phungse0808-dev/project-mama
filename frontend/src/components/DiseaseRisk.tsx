@@ -246,35 +246,6 @@ export function DiseaseRisk({ summary }: Props) {
         </div>
       )}
 
-      <div className="drisk-source">
-        <p className="drisk-source-lead">
-          ค่าที่ใช้คูณมาจากงานวิจัยที่ตีพิมพ์แล้ว ไม่ได้คำนวณจากข้อมูลของระบบนี้
-          เพราะช่วงเวลาของข้อมูลผู้ป่วยกับค่าฝุ่นที่เก็บได้ไม่ทับกัน
-          ตัวเลขที่ได้{data?.risk_note_th} เส้นประคือกลุ่มที่ผลยังไม่ชัดเจนทางสถิติ
-        </p>
-
-        {/* ตารางที่มาซ่อนไว้ ไม่ได้ลบทิ้ง
-            เจ็ดแถวเปิดค้างไว้ตลอดทำให้ท้ายแผงยาวกว่าตัวแผงเอง
-            แต่ลบทิ้งเลยก็ไม่ได้ เพราะเป็นสิ่งเดียวที่ตอบได้ว่าตัวเลขแต่ละตัวมาจากไหน
-            ซึ่งเป็นคำถามแรกที่คนอ่านงานจะถาม
-
-            แยกเป็นรายแถวไม่ยุบเป็นประโยคเดียว เพราะน้ำหนักหลักฐานไม่เท่ากัน
-            บางโรคมาจากงานทบทวนรวมหลายสิบงาน บางโรคมาจากงานวิจัยเมืองเดียว */}
-        <details className="drisk-cite">
-          <summary>ที่มาของตัวเลขแต่ละโรค</summary>
-          <ul className="drisk-source-list">
-            {rows.map((row) => (
-              <li key={row.group}>
-                <span className="drisk-source-name">{row.short}</span>
-                <span className="drisk-source-rr">{row.risk.relative_risk_per_10}</span>
-                <span className="drisk-source-from">
-                  {row.risk.source_th} · {row.risk.evidence_th}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      </div>
     </section>
   );
 }

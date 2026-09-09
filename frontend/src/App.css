@@ -2452,44 +2452,11 @@ button {
   color: var(--text-soft);
 }
 
-.drisk-source {
-  margin-top: 14px;
-  padding-top: 13px;
-  border-top: 1px solid var(--border);
-}
 
-.drisk-source-lead {
-  margin: 0 0 10px;
-  font-size: 13px;
-  line-height: 1.8;
-  color: var(--text-dim);
-}
 
-/* ที่มาแยกรายแถว เพราะแต่ละกลุ่มโรคมาจากคนละงานวิจัย
-   น้ำหนักหลักฐานไม่เท่ากัน จะยุบเป็นประโยคเดียวไม่ได้ */
-.drisk-source-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
 
-.drisk-source-list li {
-  display: grid;
-  grid-template-columns: minmax(0, 130px) 58px 1fr;
-  gap: 10px;
-  padding: 4px 0;
-  font-size: 13px;
-  color: var(--text-dim);
-}
 
-.drisk-source-name {
-  color: var(--text-soft);
-}
 
-.drisk-source-rr {
-  font-family: var(--font-mono);
-  color: var(--text-soft);
-}
 
 @media (max-width: 620px) {
   /* จอแคบ ข้อความเทียบเกณฑ์ยาวเกินกว่าจะอยู่ท้ายบรรทัดเดียวกับตัวเลข
@@ -2505,14 +2472,6 @@ button {
 
   .drisk-tile-value {
     font-size: 23px;
-  }
-
-  .drisk-source-list li {
-    grid-template-columns: 1fr auto;
-  }
-
-  .drisk-source-from {
-    grid-column: 1 / -1;
   }
 }
 
@@ -2662,35 +2621,8 @@ button {
   }
 }
 
-/* ที่มาของตัวเลขโรค ปิดไว้เป็นค่าตั้งต้น กดแล้วกาง */
-.drisk-cite {
-  margin-top: 10px;
-}
 
-.drisk-cite summary {
-  display: inline-block;
-  font-size: 14px;
-  color: var(--accent);
-  cursor: pointer;
-  list-style: none;
-}
 
-.drisk-cite summary::-webkit-details-marker {
-  display: none;
-}
 
-/* ลูกศรหมุนลงเมื่อกางแล้ว บอกสถานะโดยไม่ต้องเปลี่ยนข้อความ */
-.drisk-cite summary::before {
-  content: "›";
-  display: inline-block;
-  margin-right: 6px;
-  transition: transform 0.15s ease;
-}
 
-.drisk-cite[open] summary::before {
-  transform: rotate(90deg);
-}
 
-.drisk-cite .drisk-source-list {
-  margin-top: 10px;
-}
