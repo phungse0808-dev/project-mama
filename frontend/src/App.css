@@ -2661,3 +2661,36 @@ button {
     display: none;
   }
 }
+
+/* ที่มาของตัวเลขโรค ปิดไว้เป็นค่าตั้งต้น กดแล้วกาง */
+.drisk-cite {
+  margin-top: 10px;
+}
+
+.drisk-cite summary {
+  display: inline-block;
+  font-size: 14px;
+  color: var(--accent);
+  cursor: pointer;
+  list-style: none;
+}
+
+.drisk-cite summary::-webkit-details-marker {
+  display: none;
+}
+
+/* ลูกศรหมุนลงเมื่อกางแล้ว บอกสถานะโดยไม่ต้องเปลี่ยนข้อความ */
+.drisk-cite summary::before {
+  content: "›";
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 0.15s ease;
+}
+
+.drisk-cite[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.drisk-cite .drisk-source-list {
+  margin-top: 10px;
+}

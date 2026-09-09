@@ -253,20 +253,27 @@ export function DiseaseRisk({ summary }: Props) {
           ตัวเลขที่ได้{data?.risk_note_th} เส้นประคือกลุ่มที่ผลยังไม่ชัดเจนทางสถิติ
         </p>
 
-        {/* แยกที่มาเป็นรายแถว ไม่ยุบเป็นประโยคเดียว
-            เพราะสองกลุ่มมาจากการรวบรวมงานวิจัยหลายประเทศ
-            อีกสองกลุ่มมาจากงานวิจัยเมืองเดียว น้ำหนักหลักฐานไม่เท่ากัน */}
-        <ul className="drisk-source-list">
-          {rows.map((row) => (
-            <li key={row.group}>
-              <span className="drisk-source-name">{row.short}</span>
-              <span className="drisk-source-rr">{row.risk.relative_risk_per_10}</span>
-              <span className="drisk-source-from">
-                {row.risk.source_th} · {row.risk.evidence_th}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {/* ตารางที่มาซ่อนไว้ ไม่ได้ลบทิ้ง
+            เจ็ดแถวเปิดค้างไว้ตลอดทำให้ท้ายแผงยาวกว่าตัวแผงเอง
+            แต่ลบทิ้งเลยก็ไม่ได้ เพราะเป็นสิ่งเดียวที่ตอบได้ว่าตัวเลขแต่ละตัวมาจากไหน
+            ซึ่งเป็นคำถามแรกที่คนอ่านงานจะถาม
+
+            แยกเป็นรายแถวไม่ยุบเป็นประโยคเดียว เพราะน้ำหนักหลักฐานไม่เท่ากัน
+            บางโรคมาจากงานทบทวนรวมหลายสิบงาน บางโรคมาจากงานวิจัยเมืองเดียว */}
+        <details className="drisk-cite">
+          <summary>ที่มาของตัวเลขแต่ละโรค</summary>
+          <ul className="drisk-source-list">
+            {rows.map((row) => (
+              <li key={row.group}>
+                <span className="drisk-source-name">{row.short}</span>
+                <span className="drisk-source-rr">{row.risk.relative_risk_per_10}</span>
+                <span className="drisk-source-from">
+                  {row.risk.source_th} · {row.risk.evidence_th}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </details>
       </div>
     </section>
   );
