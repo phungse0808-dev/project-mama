@@ -75,7 +75,7 @@ def record_wind(session: Session) -> int:
     กลืนข้อผิดพลาดของส่วนนี้ทั้งหมด เพราะเป็นข้อมูลเสริม
     ถ้าดึงลมไม่ได้ก็ไม่ควรทำให้รอบเก็บค่าฝุ่นซึ่งเป็นงานหลักล้มไปด้วย
     """
-    from app.forecast import fetch_wind_many
+    from app.forecast import fetch_wind_hourly_many
     from app.models import WindHourly
     from app.services import province_coordinates
 
@@ -83,7 +83,14 @@ def record_wind(session: Session) -> int:
         (province, lat, lon)
         for province, (lat, lon) in sorted(province_coordinates(session).items())
     ]
-    rows = fetch_wind_many(points)
+
+    # ขอเป็นรายชั่วโมงย้อนหลัง ไม่ใช่ค่า ณ ขณะนี้
+    #
+    # ค่า ณ ขณะนี้เก็บได้เฉพาะชั่วโมงที่เครื่องเปิดอยู่ ถ้าปิดไปสิบชั่วโมงก็หายไปเลย
+    # แต่ค่าฝุ่นจาก Air4Thai ย้อนหลังได้ วัดจริงแล้วรอบเดียวได้มาถึงสิบชั่วโมง
+    # ถ้าลมเก็บได้แต่ปัจจุบัน สองชุดจะเลื่อนออกจากกันเรื่อย ๆ
+    # จนคำนวณความสัมพันธ์ไม่ได้ ซึ่งเป็นเหตุผลเดียวที่สร้างตารางนี้ขึ้นมา
+    rows = fetch_wind_hourly_many(points, past_days=1)
     if not rows:
         return 0
 
@@ -94,6 +101,11 @@ def record_wind(session: Session) -> int:
         ).all()
     }
 
+    # ตัดชั่วโมงอนาคตทิ้ง ต้นทางส่งค่าพยากรณ์ของวันนี้มาด้วยเสมอ
+    # ตารางนี้เก็บของที่เกิดขึ้นแล้วเท่านั้น ถ้าปนคำพยากรณ์เข้าไป
+    # การเอาไปเทียบกับค่าฝุ่นที่วัดได้จริงจะกลายเป็นเทียบของจริงกับของทำนาย
+    now = datetime.now().replace(minute=0, second=0, microsecond=0)
+
     added = 0
     for row in rows:
         try:
@@ -101,6 +113,8 @@ def record_wind(session: Session) -> int:
                 minute=0, second=0, microsecond=0
             )
         except (TypeError, ValueError):
+            continue
+        if moment > now:
             continue
         if (row["province"], moment) in existing:
             continue

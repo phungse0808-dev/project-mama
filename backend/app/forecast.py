@@ -444,3 +444,72 @@ def fetch_wind_many(points: list[tuple[str, float, float]]) -> list[dict]:
             }
         )
     return result
+
+
+def fetch_wind_hourly_many(
+    points: list[tuple[str, float, float]], past_days: int = 1
+) -> list[dict]:
+    """ลมรายชั่วโมงย้อนหลังของหลายจังหวัดพร้อมกัน สำหรับเติมชั่วโมงที่ขาด
+
+    ทำไมต้องมีตัวนี้ ทั้งที่มี fetch_wind_many อยู่แล้ว
+        fetch_wind_many ขอค่า current ซึ่งได้เฉพาะ "ตอนนี้" เท่านั้น
+        ถ้าเครื่องปิดไปสิบชั่วโมง สิบชั่วโมงนั้นก็หายไปเลย เติมทีหลังไม่ได้
+
+        แต่ค่าฝุ่นจาก Air4Thai ย้อนหลังได้ วัดจริงแล้วรอบเดียวได้มาถึงสิบชั่วโมง
+        สองชุดจึงเลื่อนออกจากกันเรื่อย ๆ แม้จะเก็บพร้อมกันทุกรอบก็ตาม
+        ซึ่งขัดกับเหตุผลทั้งหมดของตาราง WindHourly คือให้อยู่บนแกนเวลาเดียวกัน
+
+        Open-Meteo มีค่ารายชั่วโมงย้อนหลังให้ผ่าน past_days ตัวนี้จึงขอแบบนั้น
+        ทำให้เติมชั่วโมงที่ขาดย้อนหลังได้เหมือนที่ค่าฝุ่นทำได้
+
+    คืนรายการว่างเมื่อเรียกไม่สำเร็จ เพราะเป็นงานเบื้องหลัง
+    เก็บพลาดหนึ่งรอบไม่ควรทำให้รอบเก็บค่าฝุ่นทั้งรอบล้มไปด้วย
+    """
+    if not points:
+        return []
+
+    try:
+        response = requests.get(
+            OPEN_METEO_URL,
+            params={
+                "latitude": ",".join(str(lat) for _, lat, _ in points),
+                "longitude": ",".join(str(lon) for _, _, lon in points),
+                "hourly": "wind_speed_10m,wind_direction_10m",
+                "past_days": past_days,
+                # ขอวันข้างหน้าน้อยที่สุด เพราะตารางนี้เก็บของที่เกิดขึ้นแล้ว
+                # ไม่ได้เก็บคำพยากรณ์ ผู้เรียกจะตัดชั่วโมงอนาคตทิ้งอีกชั้นหนึ่ง
+                "forecast_days": 1,
+                "timezone": "Asia/Bangkok",
+            },
+            timeout=REQUEST_TIMEOUT,
+            verify=CA_BUNDLE,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except (requests.RequestException, ValueError):
+        return []
+
+    # ต้นทางตอบเป็นรายการเมื่อขอหลายพิกัด แต่ตอบเป็นวัตถุเดียวเมื่อขอจุดเดียว
+    entries = payload if isinstance(payload, list) else [payload]
+    if len(entries) != len(points):
+        return []
+
+    result: list[dict] = []
+    for (province, _, _), entry in zip(points, entries):
+        hourly = (entry or {}).get("hourly") or {}
+        times = hourly.get("time") or []
+        speeds = hourly.get("wind_speed_10m") or []
+        directions = hourly.get("wind_direction_10m") or []
+        for moment, speed, direction in zip(times, speeds, directions):
+            if speed is None:
+                continue
+            result.append(
+                {
+                    "province": province,
+                    "observed_at": moment,
+                    "wind_speed": speed,
+                    "wind_direction": direction,
+                    "wind_gusts": None,
+                }
+            )
+    return result
