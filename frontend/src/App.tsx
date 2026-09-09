@@ -15,6 +15,8 @@ import type {
 import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
+import { DiseaseCases } from "./components/DiseaseCases";
+import { DiseaseRisk } from "./components/DiseaseRisk";
 import { HomePage } from "./components/HomePage";
 import { NavBar } from "./components/NavBar";
 import type { SectionKey } from "./components/NavBar";
@@ -375,6 +377,28 @@ export default function App() {
             </h2>
 
             {health && <DataHealth health={health} />}
+          </>
+        )}
+
+        {/* หน้าโรคจากฝุ่น แยกออกมาเพราะตอบคนละคำถามกับหน้าวัดคุณภาพอากาศ
+            ส่วนบนคือความเสี่ยงที่คำนวณจากค่าฝุ่นตอนนี้
+            ส่วนล่างคือจำนวนผู้ป่วยจริงที่กรมควบคุมโรคเผยแพร่
+            สองส่วนนี้มาคนละแหล่งและคนละช่วงเวลา จึงต้องแยกให้เห็นชัดว่าอะไรเป็นอะไร */}
+        {active === "disease" && (
+          <>
+            <h2 className="section-heading">
+              ความเสี่ยงจากค่าฝุ่นตอนนี้
+              <span>คำนวณจากค่าที่วัดได้ ณ ขณะนี้ ด้วยค่าจากงานวิจัยที่ตีพิมพ์แล้ว</span>
+            </h2>
+
+            <DiseaseRisk summary={summary} />
+
+            <h2 className="section-heading">
+              ผู้ป่วยที่เกิดขึ้นจริง
+              <span>ข้อมูลย้อนหลังจากกรมควบคุมโรค ไม่ใช่ค่าที่ระบบคำนวณเอง</span>
+            </h2>
+
+            <DiseaseCases />
           </>
         )}
 

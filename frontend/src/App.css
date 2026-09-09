@@ -2651,3 +2651,112 @@ button {
   letter-spacing: -0.5px;
   color: var(--text);
 }
+
+/* ---------- ผู้ป่วยจริงจากกรมควบคุมโรค ---------- */
+
+.dcase-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.dcase-figures > div {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 13px 15px;
+}
+
+.dcase-value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.dcase-caption {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.dcase-section {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.dcase-section span {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-soft);
+}
+
+.dcase-chart {
+  margin-bottom: 22px;
+}
+
+/* สองรายการเรียงข้างกันบนจอกว้าง เพราะทั้งคู่สั้นและอ่านเทียบกันได้
+   จอแคบให้ตกลงมาต่อกัน */
+.dcase-splits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 22px;
+}
+
+.dcase-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dcase-list li {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) minmax(0, 1fr) 62px;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 0;
+  font-size: 14.5px;
+}
+
+.dcase-list li + li {
+  border-top: 1px solid var(--border);
+}
+
+.dcase-track {
+  background: var(--surface-2);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.dcase-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.dcase-number {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+.dcase-note {
+  margin: 22px 0 0;
+  padding: 13px 15px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-soft);
+}
