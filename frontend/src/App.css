@@ -2826,213 +2826,76 @@ button {
   box-shadow: 0 0 0 3px rgba(11, 107, 203, 0.16);
 }
 
-/* ---------- วงกลมสัดส่วนผลของฝุ่น เฉพาะหน้าโรค ---------- */
-
-.drisk-ring-row {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  flex-wrap: wrap;
-}
-
-.drisk-ring {
-  width: 190px;
-  height: 190px;
-  flex: none;
-}
-
-.drisk-ring-value {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 29px;
-  font-weight: 700;
-  letter-spacing: -1.5px;
-  fill: var(--text);
-}
-
-.drisk-ring-unit {
-  font-size: 13px;
-  fill: var(--text-soft);
-}
-
-/* ตารางข้างวง เก็บค่าจริงของทุกโรคไว้ครบ
-   วงกลมบอกได้แค่ว่าชิ้นไหนใหญ่กว่า ตัวเลขที่เป็นสาระอยู่ที่นี่ */
-.drisk-legend {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  flex: 1;
-  min-width: 280px;
-}
-
-.drisk-legend li {
-  display: grid;
-  grid-template-columns: 14px minmax(0, 1fr) 68px 56px;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  font-size: 14.5px;
-}
-
-.drisk-legend li + li {
-  border-top: 1px solid var(--border);
-}
-
-.drisk-legend-head {
-  padding-bottom: 8px;
-  font-size: 13px;
-  color: var(--text-soft);
-}
-
-.drisk-legend-head span:nth-child(3),
-.drisk-legend-head span:nth-child(4) {
-  text-align: right;
-}
-
-.drisk-legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  box-shadow: inset 0 0 0 1px var(--level-edge);
-}
-
-.drisk-legend-name em {
-  font-style: normal;
-  color: var(--text-dim);
-}
-
-.drisk-legend-pct {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.drisk-legend-share {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 13.5px;
-  color: var(--text-dim);
-}
-
-.drisk-ring-note {
-  margin: 18px 0 0;
-  font-size: 14px;
-  line-height: 1.8;
-  color: var(--text-soft);
-}
-
-@media (max-width: 620px) {
-  /* จอแคบตัดคอลัมน์สัดส่วนออก ค่าจริงสำคัญกว่า
-     ส่วนสัดส่วนยังอ่านได้จากขนาดชิ้นในวงกลมอยู่แล้ว */
-  .drisk-legend li {
-    grid-template-columns: 14px minmax(0, 1fr) 68px;
-  }
-
-  .drisk-legend-share,
-  .drisk-legend-head span:nth-child(4) {
-    display: none;
-  }
-}
-
-/* ---------- ช่องเลือกของหน้าโรค ---------- */
-
-/* อยู่บนสุดของหน้า มีผลกับทั้งแผงความเสี่ยงและแผงผู้ป่วยจริง
-   ไม่แยกช่องของใครของมัน เพราะคนอ่านคาดว่าเลือกครั้งเดียวแล้วทั้งหน้าเปลี่ยนตาม */
-.dfilter {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-}
-
-.dfilter label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 13.5px;
-  color: var(--text-soft);
-}
-
-.dfilter select {
-  font-family: inherit;
-  font-size: 14.5px;
-  height: 38px;
-  min-width: 190px;
-  padding: 0 11px;
-  border: 1px solid var(--border-strong);
-  border-radius: 9px;
-  background: var(--surface);
-  color: var(--text);
-  cursor: pointer;
-}
-
-.dfilter select:hover {
-  border-color: var(--accent);
-}
-
-.dfilter select:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(11, 107, 203, 0.16);
-}
-
 /* กล่องบอกว่าทำไมไม่มีข้อมูล ไม่ใช่แค่บอกว่าไม่มี
    ใช้สีส้มเหมือนกล่องเตือนอื่น เพราะเป็นข้อจำกัดที่ต้องอ่าน ไม่ใช่ข้อผิดพลาด */
 
 
 
 
-/* เลือกโรคเดียวแล้วแสดงเป็นค่าเดียวพร้อมที่มา แทนวงกลมชิ้นเดียว */
-.drisk-single {
-  border-top: 3px solid;
-  border-radius: 0 0 11px 11px;
-  background: var(--surface-2);
-  padding: 18px 20px;
-  max-width: 560px;
+/* ---------- เลือกโรคเดียว วงกลมชิ้นเดียวพร้อมที่มาข้าง ๆ ---------- */
+
+.drisk-solo {
+  flex: 1;
+  min-width: 240px;
+  max-width: 460px;
 }
 
-.drisk-single-value {
+.drisk-solo-name {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   margin: 0;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 42px;
+  font-size: 18px;
   font-weight: 700;
-  line-height: 1;
-  letter-spacing: -2px;
 }
 
-.drisk-single-value span {
-  font-size: 20px;
-  margin-left: 3px;
-}
-
-.drisk-single-name {
-  margin: 10px 0 0;
-  font-size: 17px;
-  font-weight: 600;
-}
-
-.drisk-single-name em {
+.drisk-solo-name em {
   font-style: normal;
   color: var(--text-dim);
 }
 
-.drisk-single-outcome {
-  margin: 4px 0 0;
+.drisk-solo-outcome {
+  margin: 5px 0 0;
   font-size: 14.5px;
   color: var(--text-soft);
 }
 
-/* ที่มาเต็มโชว์ตรงนี้ได้ เพราะมีโรคเดียวจึงไม่ยาวจนรก
-   ต่างจากตอนแสดงเจ็ดโรคที่ต้องยุบที่มาไปไว้ที่อื่น */
-.drisk-single-source {
-  margin: 12px 0 0;
-  padding-top: 11px;
+/* ที่มาของตัวเลขกางออกได้ตรงนี้ เพราะมีโรคเดียวจึงไม่ยาวจนรก
+   ต่างจากตอนแสดงเจ็ดโรคที่ต้องยุบไปไว้หลังปุ่ม
+
+   วางชื่อกับค่าไว้คนละฝั่งของบรรทัด ค่าจึงเรียงตรงกันเป็นคอลัมน์เดียว
+   กวาดตาลงมาอ่านได้ ไม่ต้องไล่หาว่าตัวเลขอยู่ตรงไหนของแต่ละบรรทัด */
+.drisk-solo-facts {
+  margin: 14px 0 0;
   border-top: 1px solid var(--border);
+}
+
+.drisk-solo-facts div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.drisk-solo-facts dt {
   font-size: 13.5px;
-  line-height: 1.8;
+  color: var(--text-soft);
+}
+
+.drisk-solo-facts dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.drisk-solo-source {
+  margin: 11px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
   color: var(--text-dim);
 }

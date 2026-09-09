@@ -146,7 +146,7 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
   //
   // ถ้ากรองทีหลัง โรคที่เหลือจะได้สีตามลำดับใหม่ ทำให้สีเปลี่ยนไปมาเมื่อสลับตัวเลือก
   // สีต้องผูกกับโรค ไม่ใช่ผูกกับอันดับที่มันอยู่ในรายการ
-  const rows = Object.entries(riskTable)
+  const allRows = Object.entries(riskTable)
     .map(([group, risk], index) => ({
       group,
       // ตัดคำนำหน้าออกให้เหลือแต่ชื่อโรค กล่องจะได้แคบลงและชื่อเรียงกันสม่ำเสมอ
@@ -157,15 +157,19 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
       color: GROUP_COLORS[index % GROUP_COLORS.length],
       pct: excessPct(current, risk.relative_risk_per_10),
     }))
-    .filter((row) => !only || row.group === only)
     .sort((a, b) => b.pct - a.pct);
 
-  // แปลงเปอร์เซ็นต์ของแต่ละโรคเป็นความยาวเส้นประของชิ้นในวงกลม
+  const rows = allRows.filter((row) => !only || row.group === only);
+
+  // ผลรวมคิดจากทุกโรคเสมอ ไม่ใช่จากโรคที่เหลือหลังกรอง
   //
-  // สัดส่วนคิดจากผลรวมของทุกชิ้น ซึ่งบอกได้ว่าฝุ่นดันโรคไหนแรงกว่ากัน
-  // แต่ผลรวมนั้นเองไม่มีความหมาย เพราะแต่ละเปอร์เซ็นต์วัดจากฐานคนละฐาน
-  // จึงใช้เป็นตัวหารอย่างเดียว ไม่เอาไปแสดงที่ไหน
-  const totalPct = rows.reduce((sum, row) => sum + row.pct, 0) || 1;
+  // เพราะสัดส่วนที่แสดงต้องแปลว่า "ส่วนแบ่งของโรคนี้ในผลทั้งหมดที่ฝุ่นก่อ"
+  // ถ้าหารด้วยผลรวมของโรคที่เลือกไว้ โรคเดียวจะได้ 100% เสมอ ซึ่งไม่จริง
+  // และพอสลับโรค ตัวเลขสัดส่วนจะเป็น 100% เท่ากันหมดจนเทียบอะไรไม่ได้เลย
+  //
+  // ตัวผลรวมเองไม่เอาไปแสดงที่ไหน เพราะแต่ละเปอร์เซ็นต์วัดจากฐานคนละฐาน
+  // บวกกันแล้วไม่มีความหมาย ใช้เป็นตัวหารอย่างเดียว
+  const totalPct = allRows.reduce((sum, row) => sum + row.pct, 0) || 1;
   let cursor = 0;
   const slices = rows.map((row) => {
     const share = row.pct / totalPct;
@@ -225,26 +229,73 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
       </div>
 
       {ring && rows.length === 1 ? (
-        /* เลือกโรคเดียวไม่ต้องมีวงกลม
-           วงที่มีชิ้นเดียวคือวงเต็มใบและสัดส่วนเป็นร้อยเปอร์เซ็นต์เสมอ
-           ซึ่งไม่ได้บอกอะไรเลย กินที่และหลอกให้คิดว่ามีอะไรให้เทียบ
-           แสดงเป็นค่าเดียวพร้อมที่มาแทน ซึ่งเป็นสิ่งที่คนเลือกโรคเดียวอยากรู้ */
-        <div className="drisk-single" style={{ borderTopColor: rows[0].color }}>
-          <p className="drisk-single-value" style={{ color: rows[0].color }}>
-            +{rows[0].pct.toFixed(2)}
-            <span>%</span>
-          </p>
-          <p className="drisk-single-name">
-            {rows[0].short}
-            {rows[0].risk.uncertain && <em>*</em>}
-          </p>
-          <p className="drisk-single-outcome">{rows[0].risk.outcome_th}</p>
-          <p className="drisk-single-source">
-            ความเสี่ยงสัมพัทธ์ {rows[0].risk.relative_risk_per_10} ต่อฝุ่น 10 หน่วย ·
-            ช่วงความเชื่อมั่น {rows[0].risk.ci_low}–{rows[0].risk.ci_high} ·{" "}
-            {rows[0].risk.source_th} · {rows[0].risk.evidence_th}
-            {rows[0].risk.uncertain && " · ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ"}
-          </p>
+        /* เลือกโรคเดียวก็ยังเป็นวงกลม แต่เป็นวงชิ้นเดียวบนรางสีเทา
+           ไม่ใช่วงเต็มใบ เพราะความยาวของชิ้นคือส่วนแบ่งของโรคนี้ในผลทั้งหมด
+           ซึ่งหารด้วยผลรวมของทั้งเจ็ดโรคเสมอ ไม่ใช่ของโรคที่เลือกไว้
+           รางสีเทาที่เหลือจึงเป็นส่วนของอีกหกโรคที่ไม่ได้เลือก มีความหมายจริง
+
+           ข้างวงใส่ที่มาของตัวเลขได้ครบ เพราะมีโรคเดียวจึงไม่ยาวจนรก
+           ต่างจากตอนแสดงเจ็ดโรคที่ต้องยุบที่มาไปไว้ที่อื่น */
+        <div className="drisk-ring-row">
+          <svg
+            className="drisk-ring"
+            viewBox="0 0 180 180"
+            role="img"
+            aria-label={`ส่วนแบ่งผลของฝุ่นต่อ${rows[0].short}`}
+          >
+            <g transform="rotate(-90 90 90)" fill="none" strokeWidth="24">
+              <circle cx="90" cy="90" r={RADIUS} stroke="var(--surface-2)" />
+              <circle
+                cx="90"
+                cy="90"
+                r={RADIUS}
+                stroke={rows[0].color}
+                strokeLinecap="round"
+                strokeDasharray={`${(rows[0].pct / totalPct) * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
+              />
+            </g>
+            <text className="drisk-ring-value" x="90" y="82" textAnchor="middle">
+              +{rows[0].pct.toFixed(2)}%
+            </text>
+            <text className="drisk-ring-unit" x="90" y="102" textAnchor="middle">
+              {rows[0].short}
+            </text>
+            <text className="drisk-ring-unit" x="90" y="119" textAnchor="middle">
+              {((rows[0].pct / totalPct) * 100).toFixed(1)}% ของผลรวม
+            </text>
+          </svg>
+
+          <div className="drisk-solo">
+            <p className="drisk-solo-name" style={{ color: rows[0].color }}>
+              <span className="drisk-legend-dot" style={{ background: rows[0].color }} />
+              {rows[0].short}
+              {rows[0].risk.uncertain && <em>*</em>}
+            </p>
+            <p className="drisk-solo-outcome">{rows[0].risk.outcome_th}</p>
+
+            <dl className="drisk-solo-facts">
+              <div>
+                <dt>ความเสี่ยงสัมพัทธ์ต่อฝุ่น 10 หน่วย</dt>
+                <dd>{rows[0].risk.relative_risk_per_10}</dd>
+              </div>
+              <div>
+                <dt>ช่วงความเชื่อมั่น</dt>
+                <dd>
+                  {rows[0].risk.ci_low}–{rows[0].risk.ci_high}
+                </dd>
+              </div>
+              <div>
+                <dt>ฝุ่นที่ใช้คำนวณ</dt>
+                <dd>{current} µg/m³</dd>
+              </div>
+            </dl>
+
+            <p className="drisk-solo-source">
+              {rows[0].risk.source_th} · {rows[0].risk.evidence_th}
+              {rows[0].risk.uncertain &&
+                " · ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ"}
+            </p>
+          </div>
         </div>
       ) : ring ? (
         <>
