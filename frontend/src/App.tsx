@@ -9,6 +9,7 @@ import type {
   ProvinceRank,
   StationHistory,
   StationReading,
+  StationSummary,
   Summary,
   WeatherNow,
 } from "./api";
@@ -60,6 +61,14 @@ export default function App() {
   // ค่าฝุ่นดูภาพรวมทั้งประเทศได้และเป็นค่าตั้งต้นที่มีความหมาย
   // ส่วนสภาพอากาศต้องเจาะจงจังหวัดเสมอ เพราะอุณหภูมิเฉลี่ยทั้งประเทศไม่มีความหมาย
   const [dustProvince, setDustProvince] = useState<string>("");
+
+  // สถานีที่เจาะดูในกลุ่มการ์ดฝุ่น ค่าว่างแปลว่าดูรวมทั้งจังหวัด
+  //
+  // ขอบเขตนี้แคบกว่าจังหวัด แต่มีผลเฉพาะกลุ่มการ์ดฝุ่นเท่านั้น
+  // ส่วนแถบสัดส่วนระดับ แผนที่ และแผงโรคยังเป็นของทั้งจังหวัดเหมือนเดิม
+  // เพราะสัดส่วนของสถานีเดียวคือแท่งเดียวเต็มความกว้าง ซึ่งไม่บอกอะไร
+  const [dustStation, setDustStation] = useState<string>("");
+  const [stationSummary, setStationSummary] = useState<StationSummary | null>(null);
 
   // จังหวัดที่กดเลือกบนแผนที่ เก็บไว้ที่นี่ไม่ใช่ในแผนที่
   // เพราะต้องล้างทิ้งเมื่อสลับหน้า ไม่งั้นกลับมาแล้วแผงยังค้างอยู่
@@ -177,6 +186,46 @@ export default function App() {
       clearInterval(timer);
     };
   }, [user, dustProvince]);
+
+  // ล้างสถานีที่เลือกไว้ทุกครั้งที่เปลี่ยนจังหวัด
+  //
+  // ถ้าไม่ล้าง สถานีของจังหวัดเดิมจะค้างอยู่ แล้วการ์ดจะแสดงค่าของคนละจังหวัด
+  // กับชื่อที่เขียนอยู่ในช่องเลือกข้างบน ซึ่งอ่านแล้วเข้าใจผิดทันที
+  useEffect(() => {
+    setDustStation("");
+  }, [dustProvince]);
+
+  // ค่าของสถานีที่เจาะดู ดึงใหม่เมื่อเปลี่ยนสถานี
+  //
+  // ล้างค่าเดิมทิ้งทันทีที่เปลี่ยน ต่างจากค่าสรุปของจังหวัดที่จงใจปล่อยให้ค้างไว้
+  // เพราะการ์ดชุดนี้เขียนชื่อสถานีกำกับอยู่ในตัว ถ้าค้างของเดิมไว้ระหว่างรอ
+  // จะเห็นชื่อสถานีใหม่คู่กับตัวเลขของสถานีเก่าอยู่ครู่หนึ่ง ซึ่งผิดโดยตรง
+  useEffect(() => {
+    if (!user || !dustStation) {
+      setStationSummary(null);
+      return;
+    }
+    let cancelled = false;
+    setStationSummary(null);
+
+    const load = async () => {
+      try {
+        const result = await api.stationSummary(dustStation);
+        if (!cancelled) setStationSummary(result);
+      } catch {
+        // สถานีอาจถูกถอดออกไปแล้ว ถอยกลับไปแสดงค่าของทั้งจังหวัดแทน
+        // ดีกว่าขึ้นข้อความผิดพลาดคาดทั้งหน้าเพราะการ์ดกลุ่มเดียว
+        if (!cancelled) setDustStation("");
+      }
+    };
+
+    void load();
+    const timer = setInterval(() => void load(), 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [user, dustStation]);
 
   // ตรวจว่าถึงเวลาส่งสรุปประจำวันหรือยัง
   //
@@ -351,6 +400,10 @@ export default function App() {
                 weatherProvince={weatherTarget}
                 dustProvince={dustProvince}
                 onDustProvinceChange={setDustProvince}
+                stations={stations}
+                dustStation={dustStation}
+                onDustStationChange={setDustStation}
+                stationSummary={stationSummary}
               />
             )}
             {summary && <LevelBar summary={summary} />}

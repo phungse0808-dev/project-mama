@@ -214,6 +214,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 12px;
   /* ตั้งความสูงขั้นต่ำเท่าช่องเลือก เพื่อให้หัวของสองกลุ่มอยู่ระดับเดียวกัน
      แม้ฝั่งซ้ายจะมีแค่ข้อความและฝั่งขวามีช่องเลือก */
@@ -253,6 +254,26 @@ body {
   padding: 0 4px;
   font-size: 14.5px;
   color: var(--text-soft);
+}
+
+/* กลุ่มฝุ่นมีช่องเลือกได้สองช่อง คือจังหวัดกับสถานี
+   ห่อไว้ด้วยกันเพราะหัวกลุ่มใช้ space-between ถ้าปล่อยเป็นสองลูกอิสระ
+   ชื่อกลุ่มกับช่องแรกจะถูกดันแยกไปคนละมุมจนอ่านเป็นคนละเรื่อง
+
+   ยอมให้ตกบรรทัดได้ เพราะชื่อสถานีบางแห่งยาวมาก
+   เช่น สำนักงานเขตราษฎร์บูรณะ กรุงเทพฯ ซึ่งบนจอแคบวางเรียงกันไม่พอ */
+.card-group-pickers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ช่องเลือกสถานีจำกัดความกว้างไว้ ไม่ให้ชื่อยาวดันหัวกลุ่มจนเสียทรง
+   ตัวเลือกที่กางออกมายังเห็นชื่อเต็มอยู่ เพราะเบราว์เซอร์วาดรายการนอกกรอบนี้ */
+.card-group-pickers .card-group-picker:last-child select {
+  max-width: 210px;
 }
 
 .card-group-picker select {

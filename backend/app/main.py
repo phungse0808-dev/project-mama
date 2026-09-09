@@ -37,6 +37,7 @@ from app.services import (
     station_daily,
     pm25_hourly_series,
     station_history,
+    station_summary,
     update_profile,
     weather_history,
     weather_now,
@@ -173,6 +174,23 @@ def get_station_history(
 ) -> dict:
     """ประวัติค่าตรวจวัดย้อนหลังของหนึ่งสถานี"""
     result = station_history(session, station_code, hours)
+    if not result:
+        raise HTTPException(status_code=404, detail=f"ไม่พบสถานีรหัส {station_code}")
+    return result
+
+
+@app.get("/api/stations/{station_code}/summary", tags=["แดชบอร์ด"])
+def get_station_summary(
+    station_code: str,
+    hours: int = Query(24, ge=2, le=168, description="ช่วงเวลาที่ใช้หาค่าต่ำสุดและสูงสุด"),
+    session: Session = Depends(get_session),
+) -> dict:
+    """ค่าฝุ่นล่าสุดของสถานีเดียว พร้อมช่วงต่ำสุดถึงสูงสุดย้อนหลัง
+
+    ใช้ตอนผู้ใช้เลือกเจาะดูทีละสถานีในกลุ่มการ์ดฝุ่น
+    ขอบเขตนี้มีผลเฉพาะกลุ่มการ์ดนั้น ส่วนอื่นของหน้ายังเป็นของทั้งจังหวัด
+    """
+    result = station_summary(session, station_code, hours)
     if not result:
         raise HTTPException(status_code=404, detail=f"ไม่พบสถานีรหัส {station_code}")
     return result

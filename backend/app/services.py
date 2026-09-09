@@ -765,6 +765,66 @@ def station_history(session: Session, station_code: str, hours: int) -> dict:
     }
 
 
+def station_summary(session: Session, station_code: str, hours: int = 24) -> dict:
+    """สรุปค่าฝุ่นของสถานีเดียว สำหรับตอนที่ผู้ใช้เจาะดูทีละสถานี
+
+    ทำไมแยกออกมา ไม่เติมเป็นตัวกรองอีกชั้นใน national_summary
+        ค่าสรุปของจังหวัดถูกใช้หลายที่ในหน้าเดียวกัน ทั้งแถบสัดส่วนระดับ
+        และแผงโรคที่มากับฝุ่น ถ้าย่อขอบเขตทั้งก้อนลงเหลือสถานีเดียว
+        แถบสัดส่วนจะเหลือแท่งเดียวเต็มความกว้างซึ่งไม่บอกอะไร
+        และตัวเลขโรคจะเปลี่ยนตามไปด้วยทั้งที่ผู้ใช้แค่อยากเจาะดูค่าฝุ่นจุดเดียว
+        การเลือกสถานีจึงมีผลเฉพาะกลุ่มการ์ดฝุ่น ส่วนอื่นยังเป็นของจังหวัดเหมือนเดิม
+
+    ต่ำสุดกับสูงสุดคิดจากชั่วโมงที่มีค่าจริงเท่านั้น และส่งจำนวนชั่วโมงที่ใช้กลับไปด้วย
+    เพราะหลายสถานีส่งไม่ครบทุกชั่วโมง บางแห่งใน 24 ชั่วโมงมีข้อมูลแค่สิบชั่วโมง
+    ถ้าเขียนกำกับว่า 24 ชั่วโมงทั้งที่ใช้จริงสิบ จะเป็นการบอกช่วงเวลาที่ไม่ตรงกับตัวเลข
+    """
+    station = session.exec(
+        select(Station).where(Station.station_code == station_code)
+    ).first()
+    if station is None:
+        return {}
+
+    latest = session.exec(
+        select(Reading)
+        .where(Reading.station_id == station.id)
+        .order_by(desc(col(Reading.measured_at)))
+    ).first()
+    if latest is None:
+        return {}
+
+    since = datetime.now() - timedelta(hours=hours)
+    recent = session.exec(
+        select(Reading.pm25).where(
+            Reading.station_id == station.id,
+            col(Reading.measured_at) >= since,
+            col(Reading.pm25).is_not(None),
+        )
+    ).all()
+
+    level = describe(latest.aqi, latest.pm25)
+    return {
+        "station_code": station.station_code,
+        "name_th": station.name_th,
+        "area_th": station.area_th,
+        "province": station.province,
+        "measured_at": latest.measured_at.isoformat(),
+        "minutes_behind": minutes_behind(latest.measured_at),
+        "is_stale": is_stale(latest),
+        "pm25": latest.pm25,
+        "pm10": latest.pm10,
+        "aqi": latest.aqi,
+        "level": level,
+        # คำแนะนำการป้องกันของระดับที่สถานีนี้ตกอยู่
+        # ส่งมาพร้อมค่าเหมือน national_summary เพราะสองอย่างนี้ต้องตรงกันเสมอ
+        "protection": protection_for(level["key"]) if level else [],
+        "pm25_min": round(min(recent), 1) if recent else None,
+        "pm25_max": round(max(recent), 1) if recent else None,
+        "hours_window": hours,
+        "hours_with_data": len(recent),
+    }
+
+
 def weather_history(session: Session, province: str, days: int) -> dict:
     """ข้อมูลอากาศรายวันย้อนหลังของหนึ่งจังหวัด"""
     since = date.today() - timedelta(days=days)

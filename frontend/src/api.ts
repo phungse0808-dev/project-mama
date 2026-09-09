@@ -73,6 +73,33 @@ export type Summary = {
 };
 
 
+/** สรุปของสถานีเดียว ใช้ตอนผู้ใช้เจาะดูทีละสถานีในกลุ่มการ์ดฝุ่น
+ *
+ * ต่างจาก Summary ตรงที่ไม่มีค่าเฉลี่ยและไม่มีจำนวนสถานี เพราะมีสถานีเดียว
+ * ต่ำสุดกับสูงสุดจึงมาจากชั่วโมงย้อนหลังของสถานีนั้น ไม่ใช่จากสถานีอื่นในจังหวัด
+ */
+export type StationSummary = {
+  station_code: string;
+  name_th: string;
+  area_th: string;
+  province: string;
+  measured_at: string;
+  minutes_behind: number | null;
+  is_stale: boolean;
+  pm25: number | null;
+  pm10: number | null;
+  aqi: number | null;
+  level: AqiLevel;
+  protection: { icon: string; text_th: string }[];
+  pm25_min: number | null;
+  pm25_max: number | null;
+  /** ช่วงที่ขอไป เช่น 24 ชั่วโมง */
+  hours_window: number;
+  /** ชั่วโมงที่มีค่าจริงในช่วงนั้น มักน้อยกว่าที่ขอเพราะหลายสถานีส่งไม่ครบ */
+  hours_with_data: number;
+};
+
+
 export type ProvinceRank = {
   province: string;
   pm25_avg: number;
@@ -436,6 +463,8 @@ export const api = {
     get<StationDaily>(`/api/stations/${code}/daily?days=${days}`),
   stationHistory: (code: string, hours = 48) =>
     get<StationHistory>(`/api/stations/${code}/history?hours=${hours}`),
+  stationSummary: (code: string, hours = 24) =>
+    get<StationSummary>(`/api/stations/${code}/summary?hours=${hours}`),
   weather: (province: string, days = 30) =>
     get<{ province: string; points: WeatherPoint[] }>(
       `/api/weather/${encodeURIComponent(province)}?days=${days}`,

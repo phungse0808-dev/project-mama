@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Summary, WeatherNow } from "../api";
+import type { StationReading, StationSummary, Summary, WeatherNow } from "../api";
 import { formatThaiDateTime } from "../api";
 import { levelInk } from "../levelInk";
 import { ProtectIcon } from "./ProtectIcon";
@@ -14,6 +14,13 @@ type CardProps = Props & {
   /** ค่าว่างแปลว่าทั้งประเทศ */
   dustProvince: string;
   onDustProvinceChange: (province: string) => void;
+  /** สถานีทั้งหมดที่ยังส่งข้อมูล ใช้ทำรายการในช่องเลือกสถานี */
+  stations: StationReading[];
+  /** รหัสสถานีที่เจาะดูอยู่ ค่าว่างแปลว่าดูรวมทั้งจังหวัด */
+  dustStation: string;
+  onDustStationChange: (code: string) => void;
+  /** ค่าของสถานีที่เจาะดู เป็นค่าว่างระหว่างที่ยังโหลดไม่เสร็จ */
+  stationSummary: StationSummary | null;
 };
 
 /** ตัดเอาเฉพาะเวลาจากค่าที่ต้นทางส่งมาเป็น 2026-08-19T08:30 ซึ่งเป็นเวลาไทยอยู่แล้ว */
@@ -128,9 +135,31 @@ export function SummaryCards({
   weatherProvince,
   dustProvince,
   onDustProvinceChange,
+  stations,
+  dustStation,
+  onDustStationChange,
+  stationSummary,
 }: CardProps) {
   const worst = summary.worst_station;
   const now = weatherNow?.available ? weatherNow : null;
+
+  // สถานีของจังหวัดที่เลือกอยู่ เรียงตามชื่อไทยเพื่อให้ไล่หาในรายการยาวได้
+  //
+  // ช่องนี้โผล่เฉพาะตอนที่จังหวัดนั้นมีมากกว่าหนึ่งสถานี
+  // เพราะ 61 จาก 74 จังหวัดมีสถานีเดียว ถ้าขึ้นตลอดจะได้ช่องที่กดแล้วไม่เปลี่ยนอะไร
+  // ตอนดูทั้งประเทศก็ไม่ขึ้น เพราะ 174 ตัวเลือกในช่องเดียวหาไม่เจอ
+  const stationChoices = dustProvince
+    ? stations
+        .filter((item) => item.province === dustProvince)
+        .sort((a, b) => a.name_th.localeCompare(b.name_th, "th"))
+    : [];
+  const canPickStation = stationChoices.length > 1;
+
+  // ใช้ค่าของสถานีต่อเมื่อโหลดมาแล้วจริง ระหว่างรอยังแสดงค่าของทั้งจังหวัดไปก่อน
+  // ดีกว่าปล่อยการ์ดว่างไว้ เพราะค่าของจังหวัดก็เป็นค่าจริงที่ถูกต้องอยู่แล้ว
+  const picked = canPickStation && dustStation ? stationSummary : null;
+  const level = picked ? picked.level : summary.level;
+  const protection = picked ? picked.protection : summary.protection;
 
   return (
     <section className="card-groups">
@@ -143,20 +172,43 @@ export function SummaryCards({
               ตัวเลือกแรกเป็นทั้งประเทศ ไม่ใช่จังหวัดใดจังหวัดหนึ่ง
               เพราะภาพรวมทั้งประเทศเป็นคำตอบที่มีความหมายในตัวเอง
               ต่างจากสภาพอากาศที่ค่าเฉลี่ยทั้งประเทศไม่ได้บอกอะไร */}
-          <label className="card-group-picker">
-            <span className="sr-only">เลือกพื้นที่ที่ต้องการดูค่าฝุ่น</span>
-            <select
-              value={dustProvince}
-              onChange={(event) => onDustProvinceChange(event.target.value)}
-            >
-              <option value="">ทั้งประเทศ</option>
-              {provinces.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="card-group-pickers">
+            <label className="card-group-picker">
+              <span className="sr-only">เลือกพื้นที่ที่ต้องการดูค่าฝุ่น</span>
+              <select
+                value={dustProvince}
+                onChange={(event) => onDustProvinceChange(event.target.value)}
+              >
+                <option value="">ทั้งประเทศ</option>
+                {provinces.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {/* ช่องเลือกสถานี ขึ้นเฉพาะจังหวัดที่มีมากกว่าหนึ่งสถานี
+                ตัวเลือกแรกเป็นทั้งจังหวัด ซึ่งเป็นค่าตั้งต้นและเป็นทางกลับ
+                ผู้ใช้จึงถอยออกจากการเจาะดูสถานีได้ในช่องเดียวกัน
+                ไม่ต้องหาปุ่มยกเลิกที่อื่น */}
+            {canPickStation && (
+              <label className="card-group-picker">
+                <span className="sr-only">เลือกสถานีตรวจวัดที่ต้องการเจาะดู</span>
+                <select
+                  value={dustStation}
+                  onChange={(event) => onDustStationChange(event.target.value)}
+                >
+                  <option value="">ทุกสถานีในจังหวัด</option>
+                  {stationChoices.map((item) => (
+                    <option key={item.station_code} value={item.station_code}>
+                      {item.name_th}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
         </header>
 
         <div className="cards cards-dust">
@@ -166,7 +218,7 @@ export function SummaryCards({
           <article
             className="card card-hero"
             style={
-              summary.level
+              level
                 ? {
                     // พื้นโปร่งไล่สีจากสีระดับ แทนพื้นทึบ
                     //
@@ -175,9 +227,9 @@ export function SummaryCards({
                     //
                     // ยังเปลี่ยนสีตามระดับได้เหมือนเดิม เพราะผสมจากสีที่ส่งเข้ามา
                     // ไม่ได้กำหนดสีตายตัว พอค่าฝุ่นสูงขึ้นจะเป็นเหลืองส้มแดงเอง
-                    background: `linear-gradient(160deg, ${summary.level.color}26, ${summary.level.color}08)`,
-                    borderColor: `${summary.level.color}59`,
-                    boxShadow: `0 0 30px ${summary.level.color}1f, inset 0 0 30px ${summary.level.color}0d`,
+                    background: `linear-gradient(160deg, ${level.color}26, ${level.color}08)`,
+                    borderColor: `${level.color}59`,
+                    boxShadow: `0 0 30px ${level.color}1f, inset 0 0 30px ${level.color}0d`,
                   }
                 : undefined
             }
@@ -185,55 +237,96 @@ export function SummaryCards({
             {/* อ่านขอบเขตจากคำตอบของเซิร์ฟเวอร์ ไม่ใช่จากค่าที่หน้าเว็บส่งไป
                 เพราะระหว่างที่คำขอใหม่ยังไม่กลับมา ตัวเลขบนจอยังเป็นของขอบเขตเดิม
                 ถ้าเปลี่ยนป้ายทันทีที่กดจะกลายเป็นป้ายไม่ตรงกับตัวเลข */}
+            {/* เจาะดูสถานีเดียวไม่ใช่ค่าเฉลี่ยแล้ว จึงต้องเปลี่ยนคำกำกับด้วย
+                ไม่ใช่แค่เปลี่ยนตัวเลข เพราะคำว่าเฉลี่ยกับค่าที่วัดได้จุดเดียว
+                เป็นคนละอย่างกัน และบรรทัดล่างเปลี่ยนจากช่วงระหว่างสถานี
+                เป็นช่วงตามเวลาของสถานีนั้น */}
             <p className="card-label">
-              PM2.5 เฉลี่ย{summary.province ? summary.province : "ทั้งประเทศ"}
+              {picked
+                ? `PM2.5 ${picked.name_th}`
+                : `PM2.5 เฉลี่ย${summary.province ? summary.province : "ทั้งประเทศ"}`}
             </p>
             <p className="card-value">
-              {summary.pm25_avg ?? "-"}
+              {picked ? picked.pm25 ?? "-" : summary.pm25_avg ?? "-"}
               <span className="card-unit">µg/m³</span>
             </p>
             <p className="card-note">
-              {summary.level ? `คุณภาพอากาศ${summary.level.label_th} · ` : ""}
-              ต่ำสุด {summary.pm25_min ?? "-"} · สูงสุด {summary.pm25_max ?? "-"}
+              {level ? `คุณภาพอากาศ${level.label_th} · ` : ""}
+              {picked
+                ? picked.area_th
+                : `ต่ำสุด ${summary.pm25_min ?? "-"} · สูงสุด ${summary.pm25_max ?? "-"}`}
             </p>
           </article>
 
-          <article className="card">
-            <p className="card-label">สถานีที่รายงาน</p>
-            <p className="card-value card-value-md">
-              {summary.stations_reporting}
-              <span className="card-unit">/ {summary.stations_total}</span>
-            </p>
-            <p className="card-note">
-              {summary.stations_stale > 0
-                ? `ข้อมูลค้าง ${summary.stations_stale} สถานี`
-                : "ทุกสถานีเป็นปัจจุบัน"}
-            </p>
-          </article>
+          {/* สองใบนี้เปลี่ยนเรื่องไปเลยเมื่อเจาะดูสถานีเดียว ไม่ใช่แค่กรองข้อมูล
+              เพราะของเดิมหมดความหมายทั้งคู่ จำนวนสถานีที่รายงานจะเป็น 1/1 ตลอด
+              และค่าสูงสุดขณะนี้จะเป็นเลขตัวเดียวกับการ์ดใหญ่เป๊ะ ๆ
+              ทั้งสองใบจึงกลายเป็นค่าของสถานีนั้นเองแทน คือช่วงตามเวลากับดัชนี AQI */}
+          {picked ? (
+            <article className="card">
+              <p className="card-label">ต่ำสุด–สูงสุด {picked.hours_window} ชม.</p>
+              <p className="card-value card-value-md">
+                {picked.pm25_min ?? "-"}
+                <span className="card-unit">– {picked.pm25_max ?? "-"}</span>
+              </p>
+              {/* บอกจำนวนชั่วโมงที่มีค่าจริง ไม่ใช่ช่วงที่ขอไป
+                  เพราะหลายสถานีส่งไม่ครบทุกชั่วโมง บางแห่งใน 24 ชั่วโมงมีแค่สิบ
+                  ถ้าเขียนว่า 24 ชั่วโมงจะเป็นการบอกช่วงที่ไม่ตรงกับตัวเลข */}
+              <p className="card-note">
+                {picked.hours_with_data > 0
+                  ? `จาก ${picked.hours_with_data} ชั่วโมงที่มีข้อมูล`
+                  : "ยังไม่มีข้อมูลย้อนหลัง"}
+              </p>
+            </article>
+          ) : (
+            <article className="card">
+              <p className="card-label">สถานีที่รายงาน</p>
+              <p className="card-value card-value-md">
+                {summary.stations_reporting}
+                <span className="card-unit">/ {summary.stations_total}</span>
+              </p>
+              <p className="card-note">
+                {summary.stations_stale > 0
+                  ? `ข้อมูลค้าง ${summary.stations_stale} สถานี`
+                  : "ทุกสถานีเป็นปัจจุบัน"}
+              </p>
+            </article>
+          )}
 
-          <article className="card">
-            <p className="card-label">สูงสุดขณะนี้</p>
-            <p className="card-value card-value-md">{worst ? worst.pm25 : "-"}</p>
-            {/* ดูทั้งประเทศอยากรู้ว่าจังหวัดไหน ดูจังหวัดเดียวอยากรู้ว่าสถานีไหน
-                เพราะรู้อยู่แล้วว่าเป็นจังหวัดที่เลือกไว้ การบอกซ้ำจึงไม่ได้ข้อมูลใหม่ */}
-            <p className="card-note">
-              {worst
-                ? summary.province
-                  ? worst.name_th
-                  : `จ.${worst.province}`
-                : "ไม่มีข้อมูล"}
-            </p>
-          </article>
+          {picked ? (
+            <article className="card">
+              <p className="card-label">ดัชนีคุณภาพอากาศ</p>
+              <p className="card-value card-value-md">{picked.aqi ?? "-"}</p>
+              <p className="card-note">AQI ตามเกณฑ์กรมควบคุมมลพิษ</p>
+            </article>
+          ) : (
+            <article className="card">
+              <p className="card-label">สูงสุดขณะนี้</p>
+              <p className="card-value card-value-md">{worst ? worst.pm25 : "-"}</p>
+              {/* ดูทั้งประเทศอยากรู้ว่าจังหวัดไหน ดูจังหวัดเดียวอยากรู้ว่าสถานีไหน
+                  เพราะรู้อยู่แล้วว่าเป็นจังหวัดที่เลือกไว้ การบอกซ้ำจึงไม่ได้ข้อมูลใหม่ */}
+              <p className="card-note">
+                {worst
+                  ? summary.province
+                    ? worst.name_th
+                    : `จ.${worst.province}`
+                  : "ไม่มีข้อมูล"}
+              </p>
+            </article>
+          )}
 
           <article className="card">
             <p className="card-label">ข้อมูล ณ เวลา</p>
+            {/* เวลาของสถานีที่เจาะดู ไม่ใช่เวลาล่าสุดของทั้งจังหวัด
+                เพราะแต่ละสถานีส่งข้อมูลไม่พร้อมกัน ถ้าใช้เวลาของจังหวัด
+                จะบอกว่าข้อมูลใหม่กว่าที่สถานีนั้นส่งมาจริง */}
             <p className="card-value card-value-sm">
-              {formatThaiDateTime(summary.measured_at)}
+              {formatThaiDateTime(picked ? picked.measured_at : summary.measured_at)}
             </p>
             <p className="card-note">
           {/* จุดกะพริบบอกว่าระบบยังดึงข้อมูลอยู่ ไม่ใช่หน้าที่ค้างไว้เฉย ๆ */}
           <span className="live-dot" aria-hidden="true" />
-          {describeAge(summary.minutes_behind)}
+          {describeAge(picked ? picked.minutes_behind : summary.minutes_behind)}
         </p>
           </article>
         </div>
@@ -249,20 +342,15 @@ export function SummaryCards({
             สีไอคอนใช้เฉดเข้มจาก levelInk ไม่ใช่สีพื้นของระดับ
             เพราะเหลือง #ffd400 บนพื้นขาววัดได้ 1.43:1 คืออ่านไม่ออก
             ส่วนขอบซ้ายยังเป็นสีมาตรฐานเดิม เพราะเป็นพื้นสีไม่ใช่ตัวหนังสือ */}
-        {summary.level && summary.protection.length > 0 && (
-          <div
-            className="protect"
-            style={{ boxShadow: `inset 4px 0 0 ${summary.level.color}` }}
-          >
-            <p className="protect-head">
-              ป้องกันตัวอย่างไรที่ระดับ{summary.level.label_th}
-            </p>
+        {level && protection.length > 0 && (
+          <div className="protect" style={{ boxShadow: `inset 4px 0 0 ${level.color}` }}>
+            <p className="protect-head">ป้องกันตัวอย่างไรที่ระดับ{level.label_th}</p>
             <div className="protect-list">
-              {summary.protection.map((item) => (
+              {protection.map((item) => (
                 <div className="protect-item" key={item.text_th}>
                   <ProtectIcon
                     name={item.icon}
-                    color={levelInk(summary.level?.color) ?? "currentColor"}
+                    color={levelInk(level.color) ?? "currentColor"}
                   />
                   <span>{item.text_th}</span>
                 </div>
