@@ -220,9 +220,20 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
               <p className="forecast-caption">สูงสุดเวลา {day.peak_at} น.</p>
             </div>
 
+            {/* ทาสีจาง 8% เป็นชั้นภาพ ไม่ใช่สีพื้น
+                เพื่อให้ CSS วางสีขาวทึบไว้ใต้ได้ สีจางจึงผสมกับขาวเสมอ
+                ไม่ว่าแถวที่มันวางอยู่จะพื้นสีอะไร
+
+                เดิมใช้สีพื้นโปร่ง แถววันนี้ที่พื้นเป็นเทาจึงทำให้พื้นป้ายเข้มลง
+                ตัวหนังสือกับพื้นต่างกันแค่ 4.33:1 ต่ำกว่าเกณฑ์ 4.5:1
+                เป็นเหมือนกันทั้งห้าระดับ เพราะสีตัวหนังสือใน levelInk
+                ถูกปรับมาให้พอดีเกณฑ์บนพื้นขาว ไม่ได้เผื่อพื้นที่เข้มกว่านั้น */}
             <span
               className="forecast-level"
-              style={{ backgroundColor: `${day.level.color}14`, color: levelInk(day.level.color) }}
+              style={{
+                backgroundImage: `linear-gradient(${day.level.color}14, ${day.level.color}14)`,
+                color: levelInk(day.level.color),
+              }}
             >
               {day.level.label_th}
             </span>

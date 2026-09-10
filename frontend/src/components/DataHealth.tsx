@@ -66,32 +66,37 @@ export function DataHealth({ health }: Props) {
 
         <div>
           <h3 className="health-subtitle">ประวัติการเก็บข้อมูลล่าสุด</h3>
-          <table className="runs-table">
-            <thead>
-              <tr>
-                <th>เวลา</th>
-                <th>แหล่ง</th>
-                <th>ใหม่</th>
-                <th>ซ้ำ</th>
-                <th>ผล</th>
-              </tr>
-            </thead>
-            <tbody>
-              {health.recent_runs.map((run, index) => (
-                <tr key={`${run.started_at}-${index}`}>
-                  <td>{formatThaiDateTime(run.started_at)}</td>
-                  <td>{run.source === "air4thai" ? "Air4Thai" : "NASA POWER"}</td>
-                  <td>{run.records_new.toLocaleString("th-TH")}</td>
-                  <td>{run.records_duplicate.toLocaleString("th-TH")}</td>
-                  <td>
-                    <span className={run.success ? "badge-ok" : "badge-fail"}>
-                      {run.success ? "สำเร็จ" : "ล้มเหลว"}
-                    </span>
-                  </td>
+          {/* ตารางห้าคอลัมน์บีบให้แคบกว่านี้ไม่ได้แล้ว
+              บนมือถือจึงให้เลื่อนแนวนอนในกล่องของตัวเอง
+              ดีกว่าปล่อยให้ดันทั้งหน้าจนเลื่อนซ้ายขวาได้ทั้งหน้า */}
+          <div className="runs-scroll">
+            <table className="runs-table">
+              <thead>
+                <tr>
+                  <th>เวลา</th>
+                  <th>แหล่ง</th>
+                  <th>ใหม่</th>
+                  <th>ซ้ำ</th>
+                  <th>ผล</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {health.recent_runs.map((run, index) => (
+                  <tr key={`${run.started_at}-${index}`}>
+                    <td>{formatThaiDateTime(run.started_at)}</td>
+                    <td>{run.source === "air4thai" ? "Air4Thai" : "NASA POWER"}</td>
+                    <td>{run.records_new.toLocaleString("th-TH")}</td>
+                    <td>{run.records_duplicate.toLocaleString("th-TH")}</td>
+                    <td>
+                      <span className={run.success ? "badge-ok" : "badge-fail"}>
+                        {run.success ? "สำเร็จ" : "ล้มเหลว"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
