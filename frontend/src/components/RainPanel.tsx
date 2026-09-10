@@ -206,7 +206,7 @@ export function RainPanel({ provinces, defaultProvince }: Props) {
               formatter={(value) => [value + "%", "โอกาสฝนตก"]}
             />
             <Bar dataKey="chance_pct" radius={[4, 4, 0, 0]} isAnimationActive={false}>
-              <LabelList dataKey="chance_pct" position="top" fontSize={13} />
+              <LabelList dataKey="chance_pct" position="top" fontSize={14.5} />
               {(data.monthly ?? []).map((item) => (
                 <Cell
                   key={item.month}

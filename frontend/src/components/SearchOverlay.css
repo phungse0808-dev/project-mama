@@ -21,7 +21,7 @@
 .search-input {
   width: 100%;
   padding: 18px 22px;
-  font-size: 18px;
+  font-size: 21.5px;
   font-family: inherit;
   color: var(--text);
   border: none;
@@ -50,19 +50,19 @@
   padding: 14px 20px;
   background: #f4f8fd;
   border-bottom: 1px solid #eef1f6;
-  font-size: 14.5px;
+  font-size: 17.5px;
   color: var(--text-soft);
 }
 
 .search-summary strong {
   color: var(--text);
-  font-size: 18px;
+  font-size: 21.5px;
 }
 
 .search-empty {
   margin: 0;
   padding: 26px 18px;
-  font-size: 15px;
+  font-size: 18px;
   color: var(--text-soft);
   text-align: center;
 }
@@ -107,13 +107,13 @@
 .search-name {
   display: flex;
   flex-direction: column;
-  font-size: 14.5px;
+  font-size: 17.5px;
   line-height: 1.35;
   min-width: 0;
 }
 
 .search-name small {
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--text-soft);
 }
 
@@ -121,13 +121,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  font-size: 21px;
+  font-size: 25px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .search-value small {
-  font-size: 13px;
+  font-size: 15.5px;
   font-weight: 500;
   color: var(--text-soft);
 }
@@ -135,6 +135,6 @@
 .search-hint {
   margin: 14px 0 0;
   text-align: center;
-  font-size: 13.5px;
+  font-size: 16px;
   color: var(--text-dim);
 }

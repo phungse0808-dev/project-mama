@@ -220,7 +220,7 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                   label={{
                     value: `มาตรฐานไทย ${daily.thai_standard}`,
                     position: "insideTopRight",
-                    fontSize: 13,
+                    fontSize: 14.5,
                     fill: "#f08080",
                   }}
                 />

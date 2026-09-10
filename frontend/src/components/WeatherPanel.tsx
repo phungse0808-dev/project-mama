@@ -129,12 +129,12 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: -12 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf1" />
-              <XAxis dataKey="label" tick={{ fontSize: 13 }} interval="preserveStartEnd" />
-              <YAxis yAxisId="left" tick={{ fontSize: 13 }} width={65} unit=" มม." />
+              <XAxis dataKey="label" tick={{ fontSize: 14.5 }} interval="preserveStartEnd" />
+              <YAxis yAxisId="left" tick={{ fontSize: 14.5 }} width={65} unit=" มม." />
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tick={{ fontSize: 13 }}
+                tick={{ fontSize: 14.5 }}
                 width={58}
                 unit=" °C"
               />
