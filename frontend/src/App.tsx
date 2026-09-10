@@ -35,6 +35,25 @@ import { WeatherPanel } from "./components/WeatherPanel";
 // เก็บผู้ใช้ไว้ในเบราว์เซอร์ เพื่อไม่ต้องกรอกชื่อใหม่ทุกครั้งที่เปิดโปรแกรม
 const USER_KEY = "pm25_user";
 
+/** โหมดสีที่ผู้ใช้เลือกไว้ */
+const THEME_KEY = "pm25_theme";
+
+/** อ่านโหมดที่เลือกไว้ ถ้ายังไม่เคยเลือกให้ตามค่าที่ตั้งไว้ในเครื่อง
+ *
+ * ตามเครื่องเป็นค่าตั้งต้นที่ดีกว่าบังคับสว่างเสมอ
+ * คนที่ตั้งเครื่องเป็นโหมดมืดไว้แล้วมักตั้งใจให้ทุกอย่างเป็นมืด
+ * แต่พอกดปุ่มเองครั้งแรก จะยึดตามที่กดตลอดไป ไม่กลับไปตามเครื่องอีก
+ */
+function loadTheme(): "light" | "dark" {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {
+    // เบราว์เซอร์บางตัวปิดที่เก็บข้อมูลไว้ ถือว่ายังไม่เคยเลือก
+  }
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 function loadSavedUser(): AppUser | null {
   try {
     const raw = localStorage.getItem(USER_KEY);
@@ -46,6 +65,7 @@ function loadSavedUser(): AppUser | null {
 
 export default function App() {
   const [user, setUser] = useState<AppUser | null>(loadSavedUser);
+  const [theme, setTheme] = useState<"light" | "dark">(loadTheme);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [stations, setStations] = useState<StationReading[]>([]);
   const [ranking, setRanking] = useState<ProvinceRank[]>([]);
@@ -123,6 +143,44 @@ export default function App() {
       cancelled = true;
     };
   }, [user]);
+
+  // ใส่โหมดที่เลือกไว้ที่ธาตุรากของหน้า แล้วจำไว้ในเครื่อง
+  //
+  // ใส่ที่ธาตุรากไม่ใช่ที่ body เพราะตัวแปรสีประกาศไว้ที่ :root
+  // ใส่โหมดลงหน้าเว็บก่อนสั่งให้ React วาดใหม่ ไม่ใช่ทำใน useEffect
+  //
+  // เพราะ levelInk กับ levelColor อ่านโหมดจาก data-theme ตอนที่ถูกเรียก
+  // ซึ่งเกิดขึ้นระหว่างวาด ถ้าไปตั้งค่าใน useEffect ที่ทำงานหลังวาดเสร็จ
+  // รอบนั้นจะได้สีของโหมดเก่า แล้วไม่มีรอบวาดถัดไปมาแก้ให้ ค่าจึงค้างผิดตลอด
+  //
+  // ปิดทรานซิชันชั่วขณะด้วย เพราะปุ่มหลายตัวตั้ง transition ไว้ที่ color
+  // พอค่าตัวแปรสีเปลี่ยนทั้งหน้าพร้อมกัน เบราว์เซอร์จะค้างค่าที่คำนวณไว้เดิม
+  // ต้องบังคับให้คำนวณสไตล์ใหม่คั่นกลาง ไม่งั้นสองบรรทัดถูกรวบเป็นครั้งเดียว
+  // แล้วกฎปิดทรานซิชันจะไม่ทันมีผลตอนที่สีเปลี่ยน ซึ่งเป็นตอนที่ต้องการมันพอดี
+  const applyTheme = useCallback((next: "light" | "dark") => {
+    const root = document.documentElement;
+    root.dataset.themeSwitching = "1";
+    void root.offsetHeight;
+    root.dataset.theme = next;
+    void root.offsetHeight;
+    window.setTimeout(() => {
+      delete root.dataset.themeSwitching;
+    }, 60);
+
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch {
+      // จำไม่ได้ก็ไม่เป็นไร โหมดยังใช้ได้จนกว่าจะปิดหน้า
+    }
+    setTheme(next);
+  }, []);
+
+  // ตั้งค่าครั้งแรกตอนเปิดหน้า
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    // ตั้งใจไม่ใส่ theme ใน dependency เพราะการสลับทีหลังทำผ่าน applyTheme แล้ว
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadAll = useCallback(async () => {
     try {
@@ -369,6 +427,8 @@ export default function App() {
         onSignOut={handleSignOut}
         provinces={provinces}
         fallbackProvince={user.province ?? ""}
+        theme={theme}
+        onToggleTheme={() => applyTheme(theme === "dark" ? "light" : "dark")}
       />
 
       {searching && (

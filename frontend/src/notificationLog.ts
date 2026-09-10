@@ -42,12 +42,28 @@ export type Notice = {
 
    เกณฑ์คือ 4.5:1 บนพื้นเทาของปุ่มระฆัง ไม่ใช่บนพื้นขาว
    เหลืองเดิม #887100 วัดบนเทาได้ 4.44 ซึ่งตกเกณฑ์ ทั้งที่บนขาวได้ 4.76 */
-export const LEVEL_COLORS: Record<NoticeLevel, string> = {
+const LEVEL_COLORS_LIGHT: Record<NoticeLevel, string> = {
   info: "#0b6bcb",
   good: "#0d7e5a",
   moderate: "#806a00",
   unhealthy: "#b15700",
 };
+
+/* บนพื้นมืดต้องใช้สีมาตรฐานที่สว่าง ไม่ใช่เฉดเข้มของชุดบน
+   เฉดเข้มที่ปรับมาให้อ่านได้บนพื้นขาว วัดบนพื้นมืดได้ราว 3.2:1 ซึ่งตกเกณฑ์
+   ส่วนสีมาตรฐานอ่านได้ดีบนพื้นมืดอยู่แล้ว เป็นเหตุผลเดียวกับที่ levelInk คืนสีเดิม */
+const LEVEL_COLORS_DARK: Record<NoticeLevel, string> = {
+  info: "#5ec8ff",
+  good: "#3ddc97",
+  moderate: "#ffd400",
+  unhealthy: "#ff9d45",
+};
+
+/** สีของระดับการแจ้งเตือน ตามโหมดสีที่ใช้อยู่ */
+export function levelColor(level: NoticeLevel): string {
+  const dark = document.documentElement.dataset.theme === "dark";
+  return (dark ? LEVEL_COLORS_DARK : LEVEL_COLORS_LIGHT)[level];
+}
 
 /** ลำดับความแรง ใช้เลือกสีของระฆังจากรายการที่แรงที่สุด */
 const SEVERITY: NoticeLevel[] = ["good", "info", "moderate", "unhealthy"];

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { formatThaiDateTime } from "../api";
-import { LEVEL_COLORS, list, markAllRead, worstOf } from "../notificationLog";
+import { levelColor, list, markAllRead, worstOf } from "../notificationLog";
 import type { Notice } from "../notificationLog";
 import { DigestSettings } from "./DigestSettings";
 import { loadSettings } from "../dailyDigest";
@@ -91,7 +91,7 @@ export function NotificationBell({ provinces, fallbackProvince }: Props) {
   // แต่พอ React ถอด style ออก เบราว์เซอร์ยังค้างสีเดิมไว้
   // ปุ่มจึงติดสีของระดับล่าสุดและไม่ยอมกลับเป็นสีปกติ
   // การส่งค่าที่ชัดเจนทุกครั้งทำให้ไม่ต้องพึ่งพฤติกรรมตอนถอดค่าออก
-  const bellColor = worst ? LEVEL_COLORS[worst] : "var(--text)";
+  const bellColor = worst ? levelColor(worst) : "var(--text)";
 
   const toggle = () => {
     const next = !open;
@@ -122,7 +122,7 @@ export function NotificationBell({ provinces, fallbackProvince }: Props) {
             คำอ่านออกได้เลยโดยไม่ต้องเดา และทำให้ปุ่มกว้างขึ้นจนสะดุดตากว่าเดิมด้วย */}
         <span className="bell-label">แจ้งเตือน</span>
         {unread > 0 && (
-          <span className="bell-badge" style={{ background: LEVEL_COLORS[worst ?? "info"] }}>
+          <span className="bell-badge" style={{ background: levelColor(worst ?? "info") }}>
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -145,7 +145,7 @@ export function NotificationBell({ provinces, fallbackProvince }: Props) {
             <ul className="bell-list">
               {items.map((item) => (
                 <li key={item.id} className={item.read ? "bell-item" : "bell-item unread"}>
-                  <span className="bell-dot" style={{ background: LEVEL_COLORS[item.level] }} />
+                  <span className="bell-dot" style={{ background: levelColor(item.level) }} />
                   <div className="bell-body">
                     <p className="bell-item-title">{item.title}</p>
                     <p className="bell-item-detail">{item.detail}</p>

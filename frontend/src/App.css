@@ -39,6 +39,96 @@
      ไม่ใช่เป็นความสูง หน้าที่แยกกล่องจึงยกให้เส้นขอบเป็นหลัก เงาเป็นตัวช่วย */
   --shadow: 0 1px 2px rgba(20, 40, 70, 0.05), 0 4px 14px rgba(20, 40, 70, 0.05);
   --shadow-lift: 0 2px 6px rgba(20, 40, 70, 0.07), 0 14px 34px rgba(20, 40, 70, 0.08);
+
+  /* สีบอกสถานะที่ใช้เป็นตัวหนังสือ ต้องแยกค่าตามโหมด
+     ค่าชุดนี้วัดบนพื้นขาว ส่วนโหมดมืดกำหนดค่าของตัวเองไว้ข้างล่าง
+     ถ้าเขียนสีตายตัวไว้ในกฎ พอสลับโหมดจะเหลือความต่างแค่ราวหนึ่งจุดศูนย์
+     คือแทบมองไม่เห็นตัวอักษรเลย */
+  --ink-ok: #1a7f4b;
+  --ink-bad: #c0392b;
+  --ink-warn: #a8620a;
+  --ink-accent-on-tint: #0a5aa8;
+
+  /* ตัวเลขบนป้ายแจ้งเตือน พื้นป้ายมาจากสีของระดับที่แรงที่สุด
+     โหมดสว่างพื้นป้ายเป็นเฉดเข้มทุกตัว ตัวเลขจึงต้องเป็นขาว */
+  --badge-ink: #ffffff;
+
+  /* พื้นจาง ๆ ของป้ายบอกสถานะ และสีตัวหนังสือบนพื้นสีเน้น
+     โหมดสว่างพื้นสีเน้นเป็นฟ้าเข้ม ตัวหนังสือจึงเป็นขาว */
+  --tint-ok: #e8f6ed;
+  --tint-bad: #fdeaea;
+  --tint-warn: #fff4e3;
+  --on-accent: #ffffff;
+}
+
+/* ระหว่างสลับโหมด ห้ามทุกอย่างค่อย ๆ เปลี่ยน
+   ไม่งั้นค่าสีที่คำนวณไว้เดิมจะค้างอยู่จนกว่าจะมีอะไรมากระตุ้นให้วาดใหม่ */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
+}
+
+/* ---------- โหมดมืด ---------- */
+
+/* กู้ชุดสีเดิมของโปรเจคก่อนเปลี่ยนมาเป็นพื้นขาวกลับมาใช้
+   ไม่ได้ออกแบบใหม่ เพราะชุดนั้นผ่านการใช้งานจริงมาแล้วและมีเหตุผลกำกับไว้ครบ
+
+   พื้นหลังเป็นกรมท่าเข้ม ไม่ใช่ดำสนิท
+   เพราะดำสนิทกับตัวอักษรขาวทำให้ตาล้าเร็วและขอบตัวอักษรเรืองแสง
+   สีที่มีเนื้อสีเล็กน้อยอ่านสบายกว่าในระยะยาว
+
+   ค่าที่แก้จากของเดิมมีสองตัว
+       --accent-deep เดิมเขียนเป็น #9addfff ซึ่งเป็นเลขฐานสิบหกเจ็ดหลัก
+       เบราว์เซอร์ตีความไม่ได้จึงข้ามทิ้ง เคยทำให้แถบสีในหน้าหลักหายไปทั้งแถบ
+       --text-dim เดิม #6b7d92 วัดบนพื้นมืดได้ 4.37:1 ซึ่งตกเกณฑ์มาตลอด
+       เปลี่ยนเป็น #8095ad ได้ 6.51:1
+
+   ทำไมพื้นการ์ดต่างจากพื้นหน้า ต่างจากธีมสว่างที่ขาวเท่ากันหมด
+       บนพื้นมืดเงาแทบไม่เห็น การแยกกล่องจึงต้องใช้พื้นผิวคนละระดับ
+       ส่วนธีมสว่างใช้เส้นขอบเป็นหลักเพราะเงาเข้มบนขาวอ่านเป็นคราบสกปรก */
+:root[data-theme="dark"] {
+  --bg: #070a10;
+  --surface: #0d1420;
+  --surface-2: #131c2a;
+  --border: #1e2a3a;
+  --border-strong: #2b3d52;
+
+  --text: #eaf6ff;
+  --text-soft: #a8bcd2;
+  --text-dim: #8095ad;
+
+  /* สีเน้นต้องสว่างขึ้นเมื่ออยู่บนพื้นมืด
+     ฟ้าเข้ม #0b6bcb ที่ใช้บนพื้นขาวจะจมหายไปกับพื้นหลังเข้ม */
+  --accent: #5ec8ff;
+  --accent-deep: #9addff;
+  --accent-soft: #0e2233;
+
+  /* ขอบทับพื้นที่ระบายด้วยสีระดับ บนพื้นมืดต้องเป็นขาวจาง ไม่ใช่ดำจาง
+     เพราะดำบนพื้นมืดมองไม่เห็น ขอบจึงไม่ได้ทำหน้าที่อะไรเลย */
+  --level-edge: rgba(255, 255, 255, 0.28);
+
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.45), 0 14px 34px rgba(0, 0, 0, 0.4);
+
+  /* สีบอกสถานะบนพื้นมืดต้องสว่างขึ้นมาก
+     เขียว #1a7f4b ที่ใช้บนพื้นขาว วัดบนพื้น #0d1420 ได้ 1.79:1 คืออ่านไม่ออก */
+  --ink-ok: #4ade80;
+  --ink-bad: #ff8577;
+  --ink-warn: #ffb454;
+  --ink-accent-on-tint: #7fd4ff;
+
+  /* โหมดมืดพื้นป้ายเป็นสีสว่าง ตัวเลขขาวบนเหลืองวัดได้ 1.43:1 คืออ่านไม่ออก
+     จึงกลับเป็นตัวเข้มบนพื้นสว่าง ซึ่งเป็นเหตุผลเดียวกับตัวเลขในแถบสัดส่วนระดับ */
+  --badge-ink: #070a10;
+
+  /* พื้นจางบนโหมดมืดต้องเป็นเฉดเข้มของสีนั้น ไม่ใช่เฉดอ่อน
+     ครีม #fff4e3 บนโหมดมืดทำให้ตัวหนังสือสีอ่อนวัดได้ 1.79:1 คือหายไปเลย
+     และตัวหนังสือบนพื้นสีเน้นต้องเป็นตัวเข้ม เพราะสีเน้นโหมดมืดเป็นฟ้าสว่าง */
+  --tint-ok: #10281d;
+  --tint-bad: #2e1417;
+  --tint-warn: #2b2010;
+  --on-accent: #070a10;
 }
 
 * {
@@ -494,7 +584,7 @@ button {
 }
 
 .weather-range-value.high {
-  color: #a8620a;
+  color: var(--ink-warn);
 }
 
 /* ต้องกำหนด min-width เป็นศูนย์ เพราะกล่องยืดหยุ่นไม่ยอมหดต่ำกว่าความกว้างของเนื้อหา
@@ -1380,13 +1470,13 @@ button {
 }
 
 .badge-ok {
-  background: #e8f6ed;
-  color: #1a7f4b;
+  background: var(--tint-ok);
+  color: var(--ink-ok);
 }
 
 .badge-fail {
-  background: #fdeaea;
-  color: #c0392b;
+  background: var(--tint-bad);
+  color: var(--ink-bad);
 }
 
 /* ---------- หน้าเข้าใช้งาน ---------- */
@@ -1470,7 +1560,7 @@ button {
 .signin-error {
   margin: 10px 0 0;
   font-size: 15.5px;
-  color: #c0392b;
+  color: var(--ink-bad);
   text-align: left;
 }
 
@@ -1481,7 +1571,7 @@ button {
   font-size: 18px;
   font-weight: 700;
   font-family: inherit;
-  color: #fff;
+  color: var(--on-accent);
   background: var(--accent);
   border: none;
   border-radius: 10px;
@@ -1549,7 +1639,7 @@ button {
 
 .error-box h2 {
   margin: 0 0 8px;
-  color: #c0392b;
+  color: var(--ink-bad);
 }
 
 .error-hint {
@@ -1568,7 +1658,7 @@ button {
 .error-box button {
   margin-top: 12px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: none;
   border-radius: 8px;
   padding: 9px 19px;
@@ -1593,10 +1683,10 @@ button {
 .alert-clear {
   margin: 0 0 18px;
   padding: 12px 14px;
-  background: #e8f6ed;
+  background: var(--tint-ok);
   border: 1px solid #b7e2c6;
   border-radius: 10px;
-  color: #1a7f4b;
+  color: var(--ink-ok);
   font-size: 16.5px;
 }
 
@@ -1615,8 +1705,8 @@ button {
   border-left-width: 4px;
 }
 
-.alert-box.danger { border-left-color: #ff0000; background: #fdeaea; }
-.alert-box.warn   { border-left-color: #ff7e00; background: #fff4e3; }
+.alert-box.danger { border-left-color: #ff0000; background: var(--tint-bad); }
+.alert-box.warn   { border-left-color: #ff7e00; background: var(--tint-warn); }
 .alert-box.quiet  { border-left-color: #cfd6e0; }
 
 .alert-heading {
@@ -1778,7 +1868,7 @@ button {
   border-color: var(--accent);
   /* สีเน้นของธีมพื้นขาวเป็นน้ำเงินเข้ม ตัวอักษรจึงต้องเป็นขาว
      ขาวบนน้ำเงินนี้วัดได้ 5.28:1 ส่วนตัวเข้มแบบเดิมเหลือ 3.52:1 ซึ่งตกเกณฑ์ */
-  color: #ffffff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -1849,7 +1939,7 @@ button {
   padding: 0;
   border: none;
   border-radius: 99px;
-  background: #eef1f6;
+  background: var(--surface-2);
   cursor: pointer;
   transition: background 0.18s;
 }
@@ -1912,7 +2002,7 @@ button {
 }
 
 .digest-note.warn {
-  color: #a8620a;
+  color: var(--ink-warn);
 }
 
 /* แถวช่องเลือกเหนือการ์ดหน้าหลัก จัดชิดขวาให้เข้าชุดกับหัวกลุ่มในหน้าฝุ่น */
@@ -2043,7 +2133,7 @@ button {
    --accent บนพื้นนั้นวัดได้ 4.48:1 ซึ่งขาดไปนิดเดียวจากเกณฑ์ 4.5
    ส่วนเฉดนี้ได้ 5.86:1 ยังเป็นสีเดียวกันแค่เข้มขึ้น */
 .card-hero .card-label {
-  color: #0a5aa8;
+  color: var(--ink-accent-on-tint);
 }
 
 .card-hero .card-note,
@@ -2156,8 +2246,8 @@ button {
 }
 
 .forecast-tag.real {
-  background: #e8f6ed;
-  color: #1a7f4b;
+  background: var(--tint-ok);
+  color: var(--ink-ok);
 }
 
 .forecast-value {
@@ -2219,7 +2309,7 @@ button {
   flex: 0 0 auto;
   min-width: 118px;
   border-radius: 12px;
-  color: #fff;
+  color: var(--on-accent);
   display: flex;
   align-items: baseline;
   justify-content: center;
