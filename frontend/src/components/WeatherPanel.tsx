@@ -129,17 +129,17 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: -12 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf1" />
-              <XAxis dataKey="label" tick={{ fontSize: 22 }} interval="preserveStartEnd" />
-              <YAxis yAxisId="left" tick={{ fontSize: 22 }} width={98} unit=" มม." />
+              <XAxis dataKey="label" tick={{ fontSize: 18 }} interval="preserveStartEnd" />
+              <YAxis yAxisId="left" tick={{ fontSize: 18 }} width={79} unit=" มม." />
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tick={{ fontSize: 22 }}
-                width={87}
+                tick={{ fontSize: 18 }}
+                width={70}
                 unit=" °C"
               />
               <Tooltip
-                contentStyle={{ borderRadius: 8, borderColor: "#ccd6e0", background: "#ffffff", color: "#131a24", fontSize: 23 }}
+                contentStyle={{ borderRadius: 8, borderColor: "#ccd6e0", background: "#ffffff", color: "#131a24", fontSize: 18.5 }}
                 labelFormatter={(label) => `วันที่ ${label}`}
               />
               <Legend />

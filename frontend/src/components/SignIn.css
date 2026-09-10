@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 60px 84px;
+  padding: 49px 68px;
   position: relative;
   overflow: hidden;
   background:
@@ -31,7 +31,7 @@
   border: none;
   border-radius: 20px;
   box-shadow: var(--shadow-lift);
-  padding: 66px 60px 51px;
+  padding: 53px 49px 41px;
   text-align: center;
 }
 
@@ -53,15 +53,15 @@
 .signin-label {
   display: block;
   text-align: left;
-  font-size: 26px;
+  font-size: 21px;
   font-weight: 600;
   margin-bottom: 8px;
 }
 
 .signin-input {
   width: 100%;
-  padding: 21px 24px;
-  font-size: 31px;
+  padding: 17px 20px;
+  font-size: 25px;
   font-family: inherit;
   border: 1px solid var(--border-strong);
   border-radius: 12px;
@@ -77,7 +77,7 @@
 
 .signin-error {
   margin: 10px 0 0;
-  font-size: 26px;
+  font-size: 21px;
   color: #b02020;
   text-align: left;
 }
@@ -85,8 +85,8 @@
 .signin-button {
   width: 100%;
   margin-top: 18px;
-  padding: 21px;
-  font-size: 31px;
+  padding: 17px;
+  font-size: 25px;
   font-weight: 700;
   font-family: inherit;
   color: #fff;
@@ -111,7 +111,7 @@
 
 .signin-note {
   margin: 24px 0 0;
-  font-size: 24px;
+  font-size: 19.5px;
   line-height: 1.75;
   color: var(--text-soft);
   border-top: 1px solid var(--border);
@@ -119,9 +119,9 @@
 }
 
 /* จอแคบไม่มีพื้นที่ว่างให้ถ่วงน้ำหนัก ดึงกล่องกลับมากลางจอและลดระยะขอบ */
-@media (max-width: 1620px) {
+@media (max-width: 1312px) {
   .signin-page {
     justify-content: center;
-    padding: 48px 30px;
+    padding: 39px 24px;
   }
 }

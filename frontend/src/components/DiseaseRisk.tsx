@@ -639,15 +639,15 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
                 ))}
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf1" />
-              <XAxis dataKey="label" tick={{ fontSize: 22 }} />
-              <YAxis tick={{ fontSize: 22 }} unit="%" width={116} />
+              <XAxis dataKey="label" tick={{ fontSize: 18 }} />
+              <YAxis tick={{ fontSize: 18 }} unit="%" width={94} />
               <Tooltip
                 contentStyle={{
                   borderRadius: 8,
                   borderColor: "#ccd6e0",
                   background: "#ffffff",
                   color: "#131a24",
-                  fontSize: 23,
+                  fontSize: 18.5,
                 }}
                 labelFormatter={(label) => `เวลา ${label}`}
                 formatter={(value, name) => [`+${value}%`, name]}
