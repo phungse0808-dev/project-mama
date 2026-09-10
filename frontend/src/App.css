@@ -2971,3 +2971,103 @@ button {
   color: var(--text) !important;
   fill: var(--text) !important;
 }
+
+/* ---------- คำเตือนกับแถบวิธีป้องกันในหน้าโรค ---------- */
+
+/* กล่องคำเตือน วางก่อนตัวเลข ไม่ใช่ท้ายแผง
+   ใช้ขอบซ้ายสีเดียวไม่ตีกรอบรอบ เพราะเป็นข้อความที่ต้องอ่าน ไม่ใช่กล่องแยกเรื่อง
+   ขอบด้านเดียวจึงไม่มนมุม ตามที่ใช้กับแถบอื่นในเว็บ */
+.drisk-warn {
+  margin: 14px 0 0;
+  padding: 11px 14px;
+  border-radius: 0;
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.drisk-warn p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+}
+
+.drisk-warn p + p {
+  margin-top: 5px;
+  color: var(--text-soft);
+}
+
+.drisk-advice {
+  margin: 18px 0 0;
+  padding: 13px 16px;
+  border-radius: 0;
+  background: var(--surface-2);
+}
+
+.drisk-advice-head {
+  margin: 0 0 3px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.drisk-advice-sub {
+  margin: 0 0 12px;
+  font-size: 14.5px;
+  color: var(--text-dim);
+}
+
+.drisk-advice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.drisk-advice-list li {
+  display: grid;
+  grid-template-columns: 23px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding-bottom: 10px;
+}
+
+.drisk-advice-list li + li {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.drisk-advice-list li:last-child {
+  padding-bottom: 0;
+}
+
+.drisk-advice-group {
+  margin: 0 0 3px;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ป้ายชื่อโรคที่บรรทัดนี้ครอบคลุม
+   พื้นขาวทึบบนพื้นเทาของแถบ ป้ายจึงลอยขึ้นมาแยกจากข้อความรอบข้าง */
+.drisk-advice-chips {
+  margin: 0 0 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 5px;
+}
+
+.drisk-advice-chips span {
+  font-size: 13px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+}
+
+.drisk-advice-text {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--text);
+}

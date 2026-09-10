@@ -100,6 +100,27 @@ export type StationSummary = {
 };
 
 
+/** คำแนะนำสุขภาพของทุกกลุ่มเสี่ยง ตามค่าฝุ่นของพื้นที่ที่เลือก
+ *
+ * มีอยู่ในฝั่งหลังบ้านตั้งแต่ต้นแต่ไม่เคยมีหน้าไหนเรียกใช้
+ * ข้อความเขียนไว้ครบ 5 ระดับ x 8 กลุ่มเสี่ยง รวม 40 ข้อความ
+ */
+export type HealthAdvice = {
+  province: string | null;
+  scope: string;
+  station_count: number;
+  pm25: number | null;
+  level: AqiLevel;
+  groups: {
+    key: string;
+    label_th: string;
+    detail_th: string;
+    sensitive: boolean;
+    advice_th: string;
+  }[];
+};
+
+
 export type ProvinceRank = {
   province: string;
   pm25_avg: number;
@@ -458,6 +479,12 @@ export const api = {
         (province ? `&province=${encodeURIComponent(province)}` : "")
     ),
   stations: () => get<StationReading[]>("/api/stations"),
+  healthAdvice: (province?: string | null) =>
+    get<HealthAdvice>(
+      province
+        ? `/api/health-advice?province=${encodeURIComponent(province)}`
+        : "/api/health-advice",
+    ),
   provinceRanking: () => get<ProvinceRank[]>("/api/provinces/ranking"),
   stationDaily: (code: string, days = 30) =>
     get<StationDaily>(`/api/stations/${code}/daily?days=${days}`),

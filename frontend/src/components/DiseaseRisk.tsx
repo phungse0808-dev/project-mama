@@ -10,7 +10,9 @@ import {
   YAxis,
 } from "recharts";
 import { api } from "../api";
-import type { DiseaseSummary, Pm25HourlyPoint, Summary } from "../api";
+import type { DiseaseSummary, HealthAdvice, Pm25HourlyPoint, Summary } from "../api";
+import { levelInk } from "../levelInk";
+import { ProtectIcon } from "./ProtectIcon";
 
 type Props = {
   /** สรุปค่าฝุ่นของพื้นที่ที่เลือกอยู่ ใช้เป็นตัวตั้งในการคำนวณ */
@@ -56,6 +58,34 @@ type Props = {
  * ซึ่งแผงนี้มีอยู่แล้วคือตารางข้างวงที่เขียนชื่อโรคกับตัวเลขไว้ครบทุกแถว
  * ถ้าวันไหนเอาตารางออก ต้องกลับมาหาสีที่ผ่านเกณฑ์โดยไม่ต้องพึ่งตาราง
  */
+/** โรคในวงกลมตรงกับกลุ่มเสี่ยงไหนในตารางคำแนะนำสุขภาพ
+ *
+ * ทำไมต้องจับคู่ ไม่ใช้คำแนะนำเดียวกันหมด
+ *     คำแนะนำของคนเป็นหอบหืดกับคนเป็นโรคหัวใจไม่เหมือนกัน
+ *     ระดับเดียวกันคนหนึ่งได้ว่าเตรียมยาพ่น อีกคนได้ว่าสังเกตอาการเหนื่อยง่าย
+ *     ถ้าแสดงข้อความกลางเหมือนกันหมด คนที่เลือกโรคตัวเองไว้จะไม่ได้อะไรเพิ่ม
+ *
+ * ผิวหนังอักเสบกับตาอักเสบไม่มีกลุ่มเสี่ยงของตัวเองในตาราง
+ * จึงตกไปใช้ของประชาชนทั่วไป ซึ่งตรงกว่าการยัดเข้ากลุ่มทางเดินหายใจ
+ * เพราะสองโรคนี้ไม่ได้เข้าทางปอด และคำแนะนำเรื่องยาพ่นไม่เกี่ยวกับคนเป็นผื่น
+ */
+const DISEASE_GROUP: Record<string, string> = {
+  "โรคภูมิแพ้": "respiratory",
+  "โรคหอบหืด": "respiratory",
+  "โรคปอดอุดกั้นเรื้อรัง": "respiratory",
+  "โรคปอดอักเสบ": "respiratory",
+  "กลุ่มโรคหัวใจและหลอดเลือด": "cardiac",
+  "กลุ่มโรคผิวหนังอักเสบ": "general",
+  "กลุ่มโรคตาอักเสบ": "general",
+};
+
+/** ไอคอนของแต่ละกลุ่มเสี่ยง ใช้ชุดเดียวกับแถบวิธีป้องกันในหน้าวัดคุณภาพอากาศ */
+const GROUP_ICON: Record<string, string> = {
+  respiratory: "wind",
+  cardiac: "heart",
+  general: "run",
+};
+
 const GROUP_COLORS = [
   "#378add",
   "#d85a30",
@@ -119,6 +149,7 @@ function excessPct(pm25: number, rrPer10: number): number {
 export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
   const [data, setData] = useState<DiseaseSummary | null>(null);
   const [hourly, setHourly] = useState<Pm25HourlyPoint[]>([]);
+  const [advice, setAdvice] = useState<HealthAdvice | null>(null);
   const province = summary?.province ?? null;
 
   useEffect(() => {
@@ -149,6 +180,27 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
         if (!cancelled) setHourly(result);
       } catch {
         if (!cancelled) setHourly([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [province, ring]);
+
+  // คำแนะนำสุขภาพของพื้นที่ที่เลือก ดึงใหม่เมื่อเปลี่ยนพื้นที่
+  //
+  // เรียกเฉพาะตอนแสดงเป็นวงกลม เพราะแถบนี้มีเฉพาะหน้าโรค
+  // หน้าหลักที่ใช้กล่องกับกราฟเส้นมีแถบวิธีป้องกันของตัวเองอยู่แล้วในการ์ดฝุ่น
+  useEffect(() => {
+    if (!ring) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await api.healthAdvice(province);
+        if (!cancelled) setAdvice(result);
+      } catch {
+        // ไม่มีคำแนะนำก็แค่ไม่ขึ้นแถบ ส่วนอื่นของแผงยังใช้ได้ตามปกติ
+        if (!cancelled) setAdvice(null);
       }
     })();
     return () => {
@@ -200,6 +252,35 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
   // เดิมสองอย่างนั้นหายไปตอนเลือกโรค ทำให้กดทีเดียวแล้วทั้งแผงดูเหมือนคนละแผง
   // ทั้งที่ควรรู้สึกว่าแค่เจาะดูใกล้ขึ้น ไม่ใช่ย้ายไปอยู่หน้าอื่น
   const picked = ring && only && rows.length === 1 ? rows[0] : null;
+
+  // กลุ่มคำแนะนำที่ต้องแสดง คิดจากโรคที่กำลังดูอยู่
+  //
+  // ดูทุกโรคจะได้สามกลุ่ม เพราะเจ็ดโรคยุบลงมาเหลือคำแนะนำสามชุดที่ไม่ซ้ำกัน
+  // ถ้าเรียงทีละโรคจะได้ข้อความเดียวกันซ้ำสี่บรรทัด เพราะสี่โรคใช้กลุ่มเดียวกัน
+  // จับกลุ่มแล้วติดป้ายชื่อโรคกำกับ ได้ครบเจ็ดโรคเท่าเดิมแต่อ่านสั้นกว่า
+  //
+  // เลือกโรคเดียวจะเหลือกลุ่มเดียวที่ตรงกับโรคนั้น
+  const adviceGroups = (() => {
+    if (!advice) return [];
+    const wanted = picked ? [picked] : allRows;
+    const order: string[] = [];
+    const members: Record<string, string[]> = {};
+    for (const row of wanted) {
+      const key = DISEASE_GROUP[row.group] ?? "general";
+      if (!members[key]) {
+        members[key] = [];
+        order.push(key);
+      }
+      members[key].push(row.short);
+    }
+    return order
+      .map((key) => {
+        const group = advice.groups.find((item) => item.key === key);
+        return group ? { ...group, diseases: members[key] } : null;
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+  })();
+
   let cursor = 0;
   const slices = allRows.map((row) => {
     const share = row.pct / totalPct;
@@ -257,6 +338,25 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
           {standing}
         </span>
       </div>
+
+      {/* คำเตือนวางก่อนตัวเลข ไม่ใช่ท้ายแผง
+          เพราะคำเตือนที่อยู่ท้ายแผงถูกอ่านหลังจากเข้าใจผิดไปเรียบร้อยแล้ว
+
+          บรรทัดแรกมาจาก risk_note_th ที่ฝั่งหลังบ้านเตรียมไว้ตั้งแต่ต้น
+          ส่งมากับคำตอบทุกครั้งแต่ไม่เคยมีหน้าไหนหยิบมาแสดง */}
+      {ring && (
+        <div className="drisk-warn">
+          <p>
+            <strong>
+              ตัวเลขนี้คือจำนวนผู้เข้ารักษาทั้งพื้นที่ ไม่ใช่โอกาสป่วยของคุณ
+            </strong>
+          </p>
+          <p>
+            คำนวณจากค่าฝุ่นที่วัดได้ คูณกับความเสี่ยงสัมพัทธ์จากงานวิจัยต่างประเทศ
+            ไม่ได้มาจากผู้ป่วยจริงในไทย
+          </p>
+        </div>
+      )}
 
       {ring ? (
         <>
@@ -409,10 +509,65 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
             </div>
           )}
 
+          {/* เดิมเขียนว่าดอกจันคือช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ซึ่งไม่จริง
+              ตรวจทั้งเจ็ดโรคแล้วไม่มีโรคไหนคร่อมเลยสักโรค รวมทั้งภูมิแพ้ที่ติดดอกจันอยู่
+              ช่วงของมันคือ 1.008 ถึง 1.413 ซึ่งอยู่เหนือหนึ่งทั้งช่วง
+              เหตุผลจริงคืองานทบทวนรวมไม่พบนัยสำคัญ หลักฐานจึงขัดกันเอง
+
+              คำว่าส่วนแบ่งเปลี่ยนด้วย เพราะทำให้คนคิดว่ามีก้อนหนึ่งอยู่แล้วแบ่งกัน
+              ซึ่งไม่มี ตัวหารเกิดจากการบวกเปอร์เซ็นต์ที่วัดจากฐานคนละฐาน
+              ตัวมันเองจึงไม่มีความหมาย บอกได้แค่ความแรงเมื่อเทียบกันเอง */}
           <p className="drisk-ring-note">
-            เครื่องหมายดอกจันคือกลุ่มที่ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ ·
-            คอลัมน์เพิ่มขึ้นคือค่าจริงของโรคนั้น ส่วนคอลัมน์สัดส่วนคือส่วนแบ่งในวงกลม
+            เครื่องหมายดอกจันคือกลุ่มที่งานวิจัยยังให้ผลไม่ตรงกัน ตัวเลขจึงยังสรุปไม่ได้แน่ ·
+            คอลัมน์เพิ่มขึ้นคือค่าจริงของโรคนั้น ส่วนคอลัมน์สัดส่วนคือความแรงเมื่อเทียบกันเองในวงกลม
           </p>
+
+          {/* แถบวิธีป้องกัน เปลี่ยนทั้งข้อความและสีตามค่าฝุ่นที่วัดได้
+
+              ทำไมต้องมี
+                  ของเดิมแผงนี้บอกได้แค่ว่าฝุ่นดันโรคไหนแรงกว่ากัน ซึ่งรู้แล้วทำอะไรต่อไม่ได้
+                  แถบนี้ทำให้อ่านจบแล้วมีสิ่งที่ลงมือทำได้จริง และเชื่อมสองส่วนของหน้าเข้าด้วยกัน
+                  คือเลือกโรคที่ตัวเองเป็น แล้วได้คำแนะนำของโรคนั้นเลย
+
+              สีขอบซ้ายใช้สีมาตรฐานของระดับ ส่วนไอคอนใช้เฉดเข้มจาก levelInk
+              เพราะเหลือง #ffd400 บนพื้นขาววัดได้ 1.43:1 ซึ่งอ่านไม่ออก
+              ส่วนขอบซ้ายเป็นพื้นสี ไม่ได้อยู่ใต้เกณฑ์เดียวกับตัวอักษร */}
+          {adviceGroups.length > 0 && advice?.level && (
+            <div
+              className="drisk-advice"
+              style={{ boxShadow: `inset 4px 0 0 ${advice.level.color}` }}
+            >
+              <p className="drisk-advice-head">ฝุ่นระดับนี้ ใครต้องระวังอะไร</p>
+              <p className="drisk-advice-sub">
+                {picked
+                  ? `แสดงเฉพาะกลุ่มที่ ${picked.short} อยู่`
+                  : "ครอบคลุมทั้ง 7 โรคในวงกลม จับกลุ่มตามชนิดของผลกระทบ"}
+              </p>
+
+              <ul className="drisk-advice-list">
+                {adviceGroups.map((group) => (
+                  <li key={group.key}>
+                    <ProtectIcon
+                      name={GROUP_ICON[group.key] ?? "heart"}
+                      color={levelInk(advice.level.color) ?? "currentColor"}
+                      size={21}
+                    />
+                    <div>
+                      <p className="drisk-advice-group">{group.label_th}</p>
+                      {/* ป้ายชื่อโรคบอกว่าบรรทัดนี้ครอบคลุมโรคไหนบ้าง
+                          ถ้าไม่มี คนอ่านจะไม่รู้ว่ากลุ่มทางเดินหายใจหมายถึงสี่โรคไหนในวงกลม */}
+                      <p className="drisk-advice-chips">
+                        {group.diseases.map((name) => (
+                          <span key={name}>{name}</span>
+                        ))}
+                      </p>
+                      <p className="drisk-advice-text">{group.advice_th}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       ) : (
         <>
