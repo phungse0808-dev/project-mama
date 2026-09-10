@@ -937,6 +937,35 @@ def personal_summary(session: Session, user_id: int) -> dict | None:
     }
 
 
+def protection_by_level() -> list[dict]:
+    """วิธีป้องกันตัวของทุกระดับคุณภาพอากาศ พร้อมช่วงค่าของแต่ละระดับ
+
+    ไม่ต้องใช้ฐานข้อมูล เพราะเป็นตารางคงที่ตามเกณฑ์ของกรมควบคุมมลพิษ
+    แยกเป็นเส้นทางของตัวเอง ไม่ยัดเข้า national_summary
+    เพราะหน้าเว็บขอชุดนี้ครั้งเดียวตอนกางดู ไม่ได้ขอทุกรอบที่ค่าฝุ่นเปลี่ยน
+
+    ช่วงค่าอ่านจาก level_ceiling_pm25 ไม่ได้พิมพ์ตัวเลขซ้ำไว้ที่นี่
+    วันหลังเกณฑ์เปลี่ยน ตัวเลขบนหน้าเว็บจะเปลี่ยนตามเองโดยไม่ต้องตามแก้สองที่
+    """
+    result = []
+    floor = 0.0
+    for level in LEVELS:
+        ceiling = level_ceiling_pm25(level.key)
+        result.append(
+            {
+                "key": level.key,
+                "label_th": level.label_th,
+                "color": level.color,
+                "pm25_from": floor,
+                "pm25_to": ceiling,
+                "protection": protection_for(level.key),
+            }
+        )
+        if ceiling is not None:
+            floor = ceiling
+    return result
+
+
 def health_guidance(session: Session, province: str | None) -> dict:
     """คำแนะนำสุขภาพรายกลุ่มเสี่ยง ตามค่าฝุ่นของจังหวัดที่เลือก
 

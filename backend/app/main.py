@@ -31,6 +31,7 @@ from app.services import (
     national_summary,
     personal_summary,
     pm25_forecast,
+    protection_by_level,
     province_ranking,
     rain_chance,
     sign_in,
@@ -388,6 +389,16 @@ def get_health_advice(
 ) -> dict:
     """คำแนะนำสุขภาพของทุกกลุ่มเสี่ยง ตามค่าฝุ่นของพื้นที่ที่เลือก"""
     return health_guidance(session, province)
+
+
+@app.get("/api/protection-levels", tags=["สุขภาพ"])
+def get_protection_levels() -> list[dict]:
+    """วิธีป้องกันตัวของทุกระดับคุณภาพอากาศ พร้อมช่วงค่าของแต่ละระดับ
+
+    ใช้ให้ผู้อ่านดูล่วงหน้าว่าถ้าฝุ่นขึ้นไปถึงระดับไหน ต้องทำอะไรบ้าง
+    เป็นตารางคงที่ ไม่ขึ้นกับพื้นที่หรือเวลา จึงไม่รับพารามิเตอร์
+    """
+    return protection_by_level()
 
 
 @app.get("/api/alerts", tags=["สุขภาพ"])

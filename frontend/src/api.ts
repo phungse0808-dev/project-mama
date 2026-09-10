@@ -121,6 +121,20 @@ export type HealthAdvice = {
 };
 
 
+/** วิธีป้องกันตัวของทุกระดับคุณภาพอากาศ พร้อมช่วงค่าของแต่ละระดับ
+ *
+ * pm25_to เป็นค่าว่างที่ระดับสุดท้าย เพราะระดับนั้นไม่มีขอบบน
+ */
+export type ProtectionLevel = {
+  key: string;
+  label_th: string;
+  color: string;
+  pm25_from: number;
+  pm25_to: number | null;
+  protection: { icon: string; text_th: string }[];
+};
+
+
 export type ProvinceRank = {
   province: string;
   pm25_avg: number;
@@ -479,6 +493,7 @@ export const api = {
         (province ? `&province=${encodeURIComponent(province)}` : "")
     ),
   stations: () => get<StationReading[]>("/api/stations"),
+  protectionLevels: () => get<ProtectionLevel[]>("/api/protection-levels"),
   healthAdvice: (province?: string | null) =>
     get<HealthAdvice>(
       province
