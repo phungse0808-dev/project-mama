@@ -243,7 +243,7 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
             role="img"
             aria-label={`ส่วนแบ่งผลของฝุ่นต่อ${rows[0].short}`}
           >
-            <g transform="rotate(-90 90 90)" fill="none" strokeWidth="24">
+            <g transform="rotate(-90 90 90)" fill="none" strokeWidth="26">
               <circle cx="90" cy="90" r={RADIUS} stroke="var(--surface-2)" />
               <circle
                 cx="90"
@@ -311,7 +311,7 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
               role="img"
               aria-label="สัดส่วนผลของฝุ่นต่อแต่ละโรค"
             >
-              <g transform="rotate(-90 90 90)" fill="none" strokeWidth="24">
+              <g transform="rotate(-90 90 90)" fill="none" strokeWidth="26">
                 {slices.map((slice) => (
                   <circle
                     key={slice.group}
