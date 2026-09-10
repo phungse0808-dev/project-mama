@@ -2752,7 +2752,10 @@ button {
   grid-template-columns: 14px minmax(0, 1fr) 68px 56px;
   align-items: center;
   gap: 10px;
-  padding: 8px 0;
+  /* เว้นด้านข้างไว้ให้แถบไฮไลต์ของแถวที่เลือกใช้
+     เดิมแถบดึงขอบออกด้วย margin ติดลบ ซึ่งบนจอแคบที่ตารางกว้างเท่ากรอบพอดี
+     จะล้นออกไปแปดพิกเซล เว้นไว้ตั้งแต่ต้นแล้วทุกแถวยังเรียงตรงกันเหมือนเดิม */
+  padding: 8px;
   font-size: 17.5px;
 }
 
@@ -2867,70 +2870,84 @@ button {
 
 
 
-/* ---------- เลือกโรคเดียว วงกลมชิ้นเดียวพร้อมที่มาข้าง ๆ ---------- */
+/* ---------- เลือกโรคเดียว ---------- */
 
-.drisk-solo {
-  flex: 1;
-  min-width: 240px;
-  max-width: 460px;
+/* แถวที่เลือกไว้ในตาราง
+   ใช้ที่ว่างด้านข้างที่ทุกแถวมีอยู่แล้ว ไม่ได้ดึงขอบออกเพิ่ม
+   คอลัมน์จึงไม่ขยับ และแถบไม่ล้นออกนอกกรอบตอนจอแคบ */
+.drisk-legend li.on {
+  background: var(--accent-soft);
+  border-radius: 8px;
+  border-top-color: transparent;
 }
 
-.drisk-solo-name {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin: 0;
-  font-size: 21.5px;
-  font-weight: 700;
+.drisk-legend li.on + li {
+  border-top-color: transparent;
 }
 
-.drisk-solo-name em {
-  font-style: normal;
+/* แถวที่ไม่ได้เลือก จางลงแต่ยังอ่านออก
+   ไม่ซ่อนทิ้ง เพราะค่าของโรคที่เลือกไม่มีความหมายถ้าไม่รู้ว่าโรคอื่นเท่าไร
+   วัดแล้วสีนี้บนพื้นขาวได้ 4.6:1 ยังผ่านเกณฑ์ตัวอักษร */
+.drisk-legend li.off .drisk-legend-name,
+.drisk-legend li.off .drisk-legend-pct,
+.drisk-legend li.off .drisk-legend-share {
   color: var(--text-dim);
 }
 
-.drisk-solo-outcome {
-  margin: 5px 0 0;
-  font-size: 17.5px;
-  color: var(--text-soft);
+.drisk-legend li.off .drisk-legend-pct {
+  font-weight: 400;
 }
 
-/* ที่มาของตัวเลขกางออกได้ตรงนี้ เพราะมีโรคเดียวจึงไม่ยาวจนรก
-   ต่างจากตอนแสดงเจ็ดโรคที่ต้องยุบไปไว้หลังปุ่ม
-
-   วางชื่อกับค่าไว้คนละฝั่งของบรรทัด ค่าจึงเรียงตรงกันเป็นคอลัมน์เดียว
-   กวาดตาลงมาอ่านได้ ไม่ต้องไล่หาว่าตัวเลขอยู่ตรงไหนของแต่ละบรรทัด */
-.drisk-solo-facts {
-  margin: 14px 0 0;
+/* กล่องที่มาของตัวเลข ต่อท้ายตาราง ไม่ได้ไปแทนที่ตาราง */
+.drisk-pick {
+  margin-top: 18px;
+  padding-top: 14px;
   border-top: 1px solid var(--border);
 }
 
-.drisk-solo-facts div {
+.drisk-pick-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 700;
 }
 
-.drisk-solo-facts dt {
-  font-size: 16px;
+/* สามช่องเรียงกันแทนรายการแนวตั้ง
+   แผงจึงสูงขึ้นราวเก้าสิบพิกเซล ไม่ใช่เท่าตัว
+   และค่าทั้งสามอ่านเทียบกันได้ในสายตาเดียว */
+.drisk-pick-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.drisk-pick-facts div {
+  background: var(--surface-2);
+  border-radius: 9px;
+  padding: 9px 12px;
+}
+
+.drisk-pick-facts dt {
+  font-size: 14.5px;
   color: var(--text-soft);
+  margin-bottom: 3px;
 }
 
-.drisk-solo-facts dd {
+.drisk-pick-facts dd {
   margin: 0;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 17.5px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--text);
 }
 
-.drisk-solo-source {
+.drisk-pick-note {
   margin: 11px 0 0;
-  font-size: 15.5px;
+  font-size: 14.5px;
   line-height: 1.7;
   color: var(--text-dim);
 }

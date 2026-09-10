@@ -170,8 +170,16 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
   // ตัวผลรวมเองไม่เอาไปแสดงที่ไหน เพราะแต่ละเปอร์เซ็นต์วัดจากฐานคนละฐาน
   // บวกกันแล้วไม่มีความหมาย ใช้เป็นตัวหารอย่างเดียว
   const totalPct = allRows.reduce((sum, row) => sum + row.pct, 0) || 1;
+
+  // โรคที่เจาะดูอยู่ ค่าว่างแปลว่าดูทุกโรค
+  //
+  // ใช้ตัดสินแค่สองอย่างคือวงวาดแบบไหน กับจะโชว์ที่มาของตัวเลขไหม
+  // ส่วนหัวข้อกับตารางยังอยู่ที่เดิมทั้งคู่ไม่ว่าเลือกอะไร
+  // เดิมสองอย่างนั้นหายไปตอนเลือกโรค ทำให้กดทีเดียวแล้วทั้งแผงดูเหมือนคนละแผง
+  // ทั้งที่ควรรู้สึกว่าแค่เจาะดูใกล้ขึ้น ไม่ใช่ย้ายไปอยู่หน้าอื่น
+  const picked = ring && only && rows.length === 1 ? rows[0] : null;
   let cursor = 0;
-  const slices = rows.map((row) => {
+  const slices = allRows.map((row) => {
     const share = row.pct / totalPct;
     const length = share * CIRCUMFERENCE;
     const slice = {
@@ -228,77 +236,10 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
         </span>
       </div>
 
-      {ring && rows.length === 1 ? (
-        /* เลือกโรคเดียวก็ยังเป็นวงกลม แต่เป็นวงชิ้นเดียวบนรางสีเทา
-           ไม่ใช่วงเต็มใบ เพราะความยาวของชิ้นคือส่วนแบ่งของโรคนี้ในผลทั้งหมด
-           ซึ่งหารด้วยผลรวมของทั้งเจ็ดโรคเสมอ ไม่ใช่ของโรคที่เลือกไว้
-           รางสีเทาที่เหลือจึงเป็นส่วนของอีกหกโรคที่ไม่ได้เลือก มีความหมายจริง
-
-           ข้างวงใส่ที่มาของตัวเลขได้ครบ เพราะมีโรคเดียวจึงไม่ยาวจนรก
-           ต่างจากตอนแสดงเจ็ดโรคที่ต้องยุบที่มาไปไว้ที่อื่น */
-        <div className="drisk-ring-row">
-          <svg
-            className="drisk-ring"
-            viewBox="0 0 180 180"
-            role="img"
-            aria-label={`ส่วนแบ่งผลของฝุ่นต่อ${rows[0].short}`}
-          >
-            <g transform="rotate(-90 90 90)" fill="none" strokeWidth="26">
-              <circle cx="90" cy="90" r={RADIUS} stroke="var(--surface-2)" />
-              <circle
-                cx="90"
-                cy="90"
-                r={RADIUS}
-                stroke={rows[0].color}
-                strokeLinecap="round"
-                strokeDasharray={`${(rows[0].pct / totalPct) * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
-              />
-            </g>
-            <text className="drisk-ring-value" x="90" y="82" textAnchor="middle">
-              +{rows[0].pct.toFixed(2)}%
-            </text>
-            <text className="drisk-ring-unit" x="90" y="102" textAnchor="middle">
-              {rows[0].short}
-            </text>
-            <text className="drisk-ring-unit" x="90" y="119" textAnchor="middle">
-              {((rows[0].pct / totalPct) * 100).toFixed(1)}% ของผลรวม
-            </text>
-          </svg>
-
-          <div className="drisk-solo">
-            <p className="drisk-solo-name" style={{ color: rows[0].color }}>
-              <span className="drisk-legend-dot" style={{ background: rows[0].color }} />
-              {rows[0].short}
-              {rows[0].risk.uncertain && <em>*</em>}
-            </p>
-            <p className="drisk-solo-outcome">{rows[0].risk.outcome_th}</p>
-
-            <dl className="drisk-solo-facts">
-              <div>
-                <dt>ความเสี่ยงสัมพัทธ์ต่อฝุ่น 10 หน่วย</dt>
-                <dd>{rows[0].risk.relative_risk_per_10}</dd>
-              </div>
-              <div>
-                <dt>ช่วงความเชื่อมั่น</dt>
-                <dd>
-                  {rows[0].risk.ci_low}–{rows[0].risk.ci_high}
-                </dd>
-              </div>
-              <div>
-                <dt>ฝุ่นที่ใช้คำนวณ</dt>
-                <dd>{current} µg/m³</dd>
-              </div>
-            </dl>
-
-            <p className="drisk-solo-source">
-              {rows[0].risk.source_th} · {rows[0].risk.evidence_th}
-              {rows[0].risk.uncertain &&
-                " · ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ"}
-            </p>
-          </div>
-        </div>
-      ) : ring ? (
+      {ring ? (
         <>
+          {/* หัวข้อนี้อยู่ตลอด ไม่ว่าเลือกทุกโรคหรือเจาะดูโรคเดียว
+              เพราะเป็นคำอธิบายว่าวงกลมข้างล่างอ่านยังไง ซึ่งจริงทั้งสองกรณี */}
           <p className="drisk-section">
             ฝุ่นวันนี้ดันโรคไหนแรงที่สุด
             <span>ชิ้นใหญ่แปลว่าฝุ่นดันโรคนั้นแรงกว่า ไม่ใช่ว่ามีคนป่วยเยอะกว่า</span>
@@ -309,35 +250,78 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
               className="drisk-ring"
               viewBox="0 0 180 180"
               role="img"
-              aria-label="สัดส่วนผลของฝุ่นต่อแต่ละโรค"
+              aria-label={
+                picked
+                  ? `ส่วนแบ่งผลของฝุ่นต่อ${picked.short}`
+                  : "สัดส่วนผลของฝุ่นต่อแต่ละโรค"
+              }
             >
               <g transform="rotate(-90 90 90)" fill="none" strokeWidth="26">
-                {slices.map((slice) => (
-                  <circle
-                    key={slice.group}
-                    cx="90"
-                    cy="90"
-                    r={RADIUS}
-                    stroke={slice.color}
-                    strokeDasharray={slice.dash}
-                    strokeDashoffset={slice.offset}
-                  />
-                ))}
+                {picked ? (
+                  <>
+                    {/* รางสีเทาคืออีกหกโรคที่ไม่ได้เลือก ไม่ใช่ที่ว่างเปล่า ๆ
+                        ตารางข้าง ๆ บอกว่าหกโรคนั้นคือโรคอะไรบ้าง */}
+                    <circle cx="90" cy="90" r={RADIUS} stroke="var(--surface-2)" />
+                    <circle
+                      cx="90"
+                      cy="90"
+                      r={RADIUS}
+                      stroke={picked.color}
+                      strokeLinecap="round"
+                      strokeDasharray={`${(picked.pct / totalPct) * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
+                    />
+                  </>
+                ) : (
+                  slices.map((slice) => (
+                    <circle
+                      key={slice.group}
+                      cx="90"
+                      cy="90"
+                      r={RADIUS}
+                      stroke={slice.color}
+                      strokeDasharray={slice.dash}
+                      strokeDashoffset={slice.offset}
+                    />
+                  ))
+                )}
               </g>
-              {/* ตรงกลางเป็นค่าฝุ่น ไม่ใช่ผลรวมของทุกชิ้น
+
+              {/* ดูทุกโรคใส่ค่าฝุ่นไว้ตรงกลาง ไม่ใช่ผลรวมของทุกชิ้น
                   เพราะเปอร์เซ็นต์ของแต่ละโรควัดจากฐานคนละฐาน บวกกันแล้วไม่มีความหมาย
-                  ถ้าใส่ผลรวมไว้ตรงกลางจะเป็นตัวเลขที่ผิด */}
-              <text className="drisk-ring-value" x="90" y="84" textAnchor="middle">
-                {current}
-              </text>
-              <text className="drisk-ring-unit" x="90" y="104" textAnchor="middle">
-                µg/m³ ที่วัดได้
-              </text>
+                  ถ้าใส่ผลรวมไว้ตรงกลางจะเป็นตัวเลขที่ผิด
+
+                  เจาะดูโรคเดียวจึงใส่ค่าของโรคนั้นแทน ซึ่งเป็นตัวเลขที่มีความหมายจริง */}
+              {picked ? (
+                <>
+                  <text className="drisk-ring-value" x="90" y="80" textAnchor="middle">
+                    +{picked.pct.toFixed(2)}%
+                  </text>
+                  <text className="drisk-ring-unit" x="90" y="97" textAnchor="middle">
+                    {picked.short}
+                  </text>
+                  <text className="drisk-ring-unit" x="90" y="112" textAnchor="middle">
+                    {((picked.pct / totalPct) * 100).toFixed(1)}% ของผลรวม
+                  </text>
+                </>
+              ) : (
+                <>
+                  <text className="drisk-ring-value" x="90" y="84" textAnchor="middle">
+                    {current}
+                  </text>
+                  <text className="drisk-ring-unit" x="90" y="104" textAnchor="middle">
+                    µg/m³ ที่วัดได้
+                  </text>
+                </>
+              )}
             </svg>
 
             {/* ตารางข้างวงเก็บค่าจริงของทุกโรคไว้ครบ
                 วงกลมบอกได้แค่ว่าชิ้นไหนใหญ่กว่า แต่บอกไม่ได้ว่าเท่าไร
-                ถ้ามีแต่วงอย่างเดียว ตัวเลขที่เป็นสาระจะหายไป */}
+                ถ้ามีแต่วงอย่างเดียว ตัวเลขที่เป็นสาระจะหายไป
+
+                แสดงครบเจ็ดแถวเสมอ แม้ตอนเจาะดูโรคเดียว
+                เพราะค่าของโรคหนึ่งไม่มีความหมายถ้าไม่รู้ว่าโรคอื่นเท่าไร
+                และการที่แถวไม่หายไปไหนทำให้กดสลับแล้วสายตาไม่ต้องหาที่อยู่ใหม่ */}
             <ul className="drisk-legend">
               <li className="drisk-legend-head">
                 <span />
@@ -345,19 +329,63 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
                 <span>เพิ่มขึ้น</span>
                 <span>สัดส่วน</span>
               </li>
-              {slices.map((slice) => (
-                <li key={slice.group}>
-                  <span className="drisk-legend-dot" style={{ background: slice.color }} />
-                  <span className="drisk-legend-name">
-                    {slice.short}
-                    {slice.risk.uncertain && <em>*</em>}
-                  </span>
-                  <span className="drisk-legend-pct">+{slice.pct.toFixed(2)}%</span>
-                  <span className="drisk-legend-share">{(slice.share * 100).toFixed(1)}%</span>
-                </li>
-              ))}
+              {slices.map((slice) => {
+                const isPicked = picked?.group === slice.group;
+                return (
+                  <li
+                    key={slice.group}
+                    className={picked ? (isPicked ? "on" : "off") : undefined}
+                  >
+                    {/* แถวที่ไม่ได้เลือกใช้จุดสีเทา ไม่ใช่สีของโรคที่จางลง
+                        เพราะสีจางของเจ็ดโรคยังแยกออกจากกันได้อยู่ แล้วจะแย่งความสนใจ
+                        กับแถวที่เลือกไว้ กลายเป็นไฮไลต์ที่ไม่ได้ไฮไลต์อะไร */}
+                    <span
+                      className="drisk-legend-dot"
+                      style={{ background: picked && !isPicked ? "var(--border-strong)" : slice.color }}
+                    />
+                    <span className="drisk-legend-name">
+                      {slice.short}
+                      {slice.risk.uncertain && <em>*</em>}
+                    </span>
+                    <span className="drisk-legend-pct">+{slice.pct.toFixed(2)}%</span>
+                    <span className="drisk-legend-share">{(slice.share * 100).toFixed(1)}%</span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
+
+          {/* ที่มาของตัวเลขโผล่ขึ้นมาต่อท้าย ไม่ได้ไปแทนที่ตาราง
+              จึงกางได้ครบเพราะมีโรคเดียว ต่างจากตอนดูเจ็ดโรคที่ยาวเกินจะใส่ทุกแถว */}
+          {picked && (
+            <div className="drisk-pick">
+              <p className="drisk-pick-head">
+                <span className="drisk-legend-dot" style={{ background: picked.color }} />
+                ที่มาของตัวเลข{picked.short}
+              </p>
+              <dl className="drisk-pick-facts">
+                <div>
+                  <dt>ความเสี่ยงสัมพัทธ์ต่อฝุ่น 10 หน่วย</dt>
+                  <dd>{picked.risk.relative_risk_per_10}</dd>
+                </div>
+                <div>
+                  <dt>ช่วงความเชื่อมั่น</dt>
+                  <dd>
+                    {picked.risk.ci_low}–{picked.risk.ci_high}
+                  </dd>
+                </div>
+                <div>
+                  <dt>ฝุ่นที่ใช้คำนวณ</dt>
+                  <dd>{current} µg/m³</dd>
+                </div>
+              </dl>
+              <p className="drisk-pick-note">
+                {picked.risk.outcome_th} · {picked.risk.source_th} · {picked.risk.evidence_th}
+                {picked.risk.uncertain &&
+                  " · ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ"}
+              </p>
+            </div>
+          )}
 
           <p className="drisk-ring-note">
             เครื่องหมายดอกจันคือกลุ่มที่ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ ·
