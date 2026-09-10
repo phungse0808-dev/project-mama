@@ -109,7 +109,14 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
     <>
       <h2 className="panel-title">
         พยากรณ์ฝุ่นล่วงหน้า 3 วัน
-        <span className="panel-hint">จากแบบจำลอง ไม่ใช่ค่าที่ระบบคำนวณเอง</span>
+        {/* ชื่อแหล่งที่มาอยู่ตรงนี้ ไม่ได้อยู่ในคำอธิบายท้ายแผงเหมือนเดิม
+            เพราะย่อหน้าท้ายแผงถูกเอาออกไปแล้ว แต่ชื่อแหล่งยังต้องแสดงอยู่
+            ค่าชุดนี้มาจากแบบจำลองภายนอก ไม่ใช่ค่าที่ระบบนี้คำนวณเอง
+            ถ้าไม่บอกที่มาจะกลายเป็นการเสนอผลงานของคนอื่นเป็นของตัวเอง
+
+            อ่านชื่อจากคำตอบของเซิร์ฟเวอร์ ไม่เขียนย่อไว้ที่หน้าเว็บ
+            วันไหนเปลี่ยนแหล่งข้อมูล จะได้แก้ที่ FORECAST_SOURCE จุดเดียว */}
+        <span className="panel-hint">จาก{data?.source ?? "แบบจำลองภายนอก"} · ไม่ใช่ค่าที่ระบบคำนวณเอง</span>
       </h2>
       <div className="weather-controls">
         <label>
@@ -166,12 +173,6 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
   }
 
   const days = data.days ?? [];
-  const worst = days.reduce(
-    (highest, item) => (item.pm25_avg > (highest?.pm25_avg ?? -1) ? item : highest),
-    days[0],
-  );
-  const overStandard = worst && data.standard_th != null && worst.pm25_avg > data.standard_th;
-  const overWho = worst && data.guideline_who != null && worst.pm25_avg > data.guideline_who;
 
   return (
     <section className="panel">
@@ -229,33 +230,6 @@ export function ForecastPanel({ provinces, defaultProvince }: Props) {
         ))}
       </div>
 
-      <p className="weather-note">
-        {overStandard
-          ? `มีวันที่ค่าเฉลี่ยเกินมาตรฐานไทย ${data.standard_th} µg/m³`
-          : `ทุกวันต่ำกว่ามาตรฐานไทย ${data.standard_th} µg/m³`}
-        {overWho
-          ? ` แต่ยังเกินค่าแนะนำขององค์การอนามัยโลก ${data.guideline_who} µg/m³`
-          : ` และต่ำกว่าค่าแนะนำขององค์การอนามัยโลก ${data.guideline_who} µg/m³`}
-        <br />
-        วันที่สถานีวัดค่าได้แล้วจะใช้ค่าที่วัดได้จริง ไม่ใช้ค่าคาดการณ์
-        เพราะค่าที่วัดได้จริงแม่นกว่าเสมอ เหลือเฉพาะชั่วโมงที่ยังไม่ถึง
-        และวันข้างหน้าที่ยังต้องใช้การคาดการณ์
-        <br />
-        ค่าคาดการณ์ตั้งต้นมาจาก{data.source} ซึ่ง<strong>ระบบไม่ได้คำนวณเอง</strong>
-        {data.adjusted && data.accuracy?.available
-          ? ` แล้วชดเชยด้วยค่าคลาดเคลื่อนที่วัดได้จริง ${data.accuracy.bias! < 0 ? "+" : "−"}${Math.abs(data.accuracy.bias!)} µg/m³ ` +
-            `จากการเทียบ ${data.accuracy.hours} ชั่วโมงย้อนหลังกับ` +
-            (data.station_code ? "สถานีนี้" : `${data.accuracy.station_count} สถานีในจังหวัดนี้`)
-          : ""}
-        <br />
-        ต่างจากค่าฝุ่นในหน้าหลักซึ่งวัดได้จริงจากสถานีของกรมควบคุมมลพิษ
-        ค่าในตารางนี้ยังไม่เกิดขึ้นจริงและคลาดเคลื่อนได้
-        <br />
-        ระบบยังสร้างแบบจำลองพยากรณ์เองทั้งหมดไม่ได้ เพราะฝุ่นในไทยขึ้นกับฤดูกาลอย่างชัดเจน
-        ต้องมีข้อมูลย้อนหลังอย่างน้อยหนึ่งปีเต็ม แต่ระบบเพิ่งเริ่มเก็บได้ราวหนึ่งเดือน
-        การชดเชยด้วยค่าที่วัดได้จริงจึงเป็นวิธีที่ใช้ข้อมูลเท่าที่มีให้เกิดประโยชน์ที่สุด
-        ยิ่งเก็บข้อมูลนานขึ้น การชดเชยจะยิ่งน่าเชื่อถือ
-      </p>
     </section>
   );
 }
