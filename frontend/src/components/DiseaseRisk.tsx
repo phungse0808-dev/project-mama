@@ -14,7 +14,6 @@ import type {
   DiseaseSummary,
   HealthAdvice,
   Pm25HourlyPoint,
-  ProtectionLevel,
   Summary,
 } from "../api";
 import { levelInk } from "../levelInk";
@@ -156,10 +155,6 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
   const [data, setData] = useState<DiseaseSummary | null>(null);
   const [hourly, setHourly] = useState<Pm25HourlyPoint[]>([]);
   const [advice, setAdvice] = useState<HealthAdvice | null>(null);
-  const [levels, setLevels] = useState<ProtectionLevel[]>([]);
-  // ตารางทุกระดับปิดไว้ก่อน เพราะแผงนี้ยาวอยู่แล้ว
-  // คนที่อยากรู้แค่วันนี้จะได้ไม่ต้องเลื่อนผ่านอีกห้าแถว
-  const [showLevels, setShowLevels] = useState(false);
   const province = summary?.province ?? null;
 
   useEffect(() => {
@@ -217,26 +212,6 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
       cancelled = true;
     };
   }, [province, ring]);
-
-  // ดึงตารางทุกระดับตอนกางครั้งแรกเท่านั้น
-  //
-  // เป็นตารางคงที่ ไม่เปลี่ยนตามพื้นที่หรือเวลา ดึงครั้งเดียวพอ
-  // และไม่ดึงถ้าไม่มีใครกาง จะได้ไม่เสียคำขอไปกับของที่ไม่มีใครดู
-  useEffect(() => {
-    if (!showLevels || levels.length > 0) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const result = await api.protectionLevels();
-        if (!cancelled) setLevels(result);
-      } catch {
-        if (!cancelled) setLevels([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [showLevels, levels.length]);
 
   const riskTable = data?.risk_by_group;
   const current = summary?.pm25_avg ?? null;
@@ -574,6 +549,28 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
                   : "ครอบคลุมทั้ง 7 โรคในวงกลม จับกลุ่มตามชนิดของผลกระทบ"}
               </p>
 
+              {/* ข้อปฏิบัติทั่วไปของระดับนี้ วางไว้บนสุดเพราะใช้กับทุกคน
+                  ไม่ต้องอ่านว่าตัวเองอยู่กลุ่มไหนก่อนถึงจะรู้ว่าต้องทำอะไร
+                  ส่วนบรรทัดของแต่ละกลุ่มข้างล่างคือส่วนที่ต่างกันตามโรค
+
+                  ใช้ summary.protection ที่มากับค่าสรุปอยู่แล้ว ไม่ได้ขอเพิ่ม
+                  ค่านี้กับระดับที่ใช้ตัดสินสีจึงมาจากคำตอบเดียวกันเสมอ
+                  ไม่มีจังหวะที่ค่าเปลี่ยนแล้วคำแนะนำยังเป็นของระดับเดิมค้างอยู่ */}
+              {summary && summary.protection.length > 0 && (
+                <div className="drisk-advice-basic">
+                  {summary.protection.map((item) => (
+                    <span key={item.text_th}>
+                      <ProtectIcon
+                        name={item.icon}
+                        color={levelInk(advice.level.color) ?? "currentColor"}
+                        size={19}
+                      />
+                      {item.text_th}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <ul className="drisk-advice-list">
                 {adviceGroups.map((group) => (
                   <li key={group.key}>
@@ -599,78 +596,6 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
             </div>
           )}
 
-          {/* ตารางคำแนะนำของทุกระดับ กดเปิดปิดได้
-              บอกล่วงหน้าว่าถ้าฝุ่นขึ้นไปถึงระดับไหนต้องทำอะไร
-              ต่างจากแถบข้างบนที่บอกเฉพาะระดับตอนนี้
-
-              ปิดไว้เป็นค่าเริ่มต้น เพราะแผงนี้สูงพันพิกเซลอยู่แล้ว
-              กางแล้วเพิ่มอีกราวสามร้อย คนที่อยากรู้แค่วันนี้ไม่ต้องเลื่อนผ่าน */}
-          {advice?.level && (
-            <div className="drisk-levels">
-              <button
-                type="button"
-                className="drisk-levels-toggle"
-                onClick={() => setShowLevels((open) => !open)}
-                aria-expanded={showLevels}
-              >
-                <span aria-hidden="true">{showLevels ? "▾" : "▸"}</span>
-                คำแนะนำของทุกระดับ
-              </button>
-
-              {showLevels && (
-                <>
-                  <p className="drisk-levels-hint">
-                    ดูล่วงหน้าว่าถ้าฝุ่นขึ้นไปถึงระดับไหน ต้องทำอะไรบ้าง
-                  </p>
-                  <ul className="drisk-levels-list">
-                    {levels.map((level) => (
-                      <li
-                        key={level.key}
-                        className={level.key === advice.level.key ? "now" : undefined}
-                        style={
-                          level.key === advice.level.key
-                            ? { boxShadow: `inset 3px 0 0 ${level.color}` }
-                            : undefined
-                        }
-                      >
-                        <div className="drisk-levels-name">
-                          <span>
-                            {/* จุดสีใช้สีมาตรฐานของระดับ ไม่ใช่เฉดเข้ม
-                                เพราะเป็นพื้นสี ไม่ได้อยู่ใต้เกณฑ์เดียวกับตัวอักษร
-                                และต้องตรงกับสีบนแผนที่กับแถบสัดส่วน */}
-                            <span
-                              className="drisk-levels-dot"
-                              style={{ background: level.color }}
-                            />
-                            {level.label_th}
-                            {level.key === advice.level.key && <em>ตอนนี้</em>}
-                          </span>
-                          <span className="drisk-levels-range">
-                            {level.pm25_to === null
-                              ? `เกิน ${level.pm25_from}`
-                              : `${level.pm25_from} – ${level.pm25_to}`}
-                          </span>
-                        </div>
-
-                        <div className="drisk-levels-acts">
-                          {level.protection.map((item) => (
-                            <span key={item.text_th}>
-                              <ProtectIcon
-                                name={item.icon}
-                                color={levelInk(level.color) ?? "currentColor"}
-                                size={18}
-                              />
-                              {item.text_th}
-                            </span>
-                          ))}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
-          )}
         </>
       ) : (
         <>
