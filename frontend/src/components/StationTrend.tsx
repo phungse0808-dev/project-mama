@@ -205,10 +205,10 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                 margin={{ top: 8, right: 16, bottom: 8, left: -8 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf1" />
-                <XAxis dataKey="label" tick={{ fontSize: 14.5 }} />
-                <YAxis tick={{ fontSize: 14.5 }} unit=" µg/m³" width={98} />
+                <XAxis dataKey="label" tick={{ fontSize: 13 }} />
+                <YAxis tick={{ fontSize: 13 }} unit=" µg/m³" width={87} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 8, borderColor: "#ccd6e0", background: "#ffffff", color: "#131a24", fontSize: 15.5 }}
+                  contentStyle={{ borderRadius: 8, borderColor: "#ccd6e0", background: "#ffffff", color: "#131a24", fontSize: 13.5 }}
                   labelFormatter={(label) => `วันที่ ${label}`}
                 />
                 <Legend />
@@ -220,7 +220,7 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                   label={{
                     value: `มาตรฐานไทย ${daily.thai_standard}`,
                     position: "insideTopRight",
-                    fontSize: 14.5,
+                    fontSize: 13,
                     fill: "#f08080",
                   }}
                 />
@@ -281,10 +281,10 @@ export function StationTrend({ history, loading, stations, onSelectStation }: Pr
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf1" />
-              <XAxis dataKey="label" tick={{ fontSize: 14.5 }} />
-              <YAxis tick={{ fontSize: 14.5 }} unit=" µg/m³" width={96} />
+              <XAxis dataKey="label" tick={{ fontSize: 13 }} />
+              <YAxis tick={{ fontSize: 13 }} unit=" µg/m³" width={85} />
               <Tooltip
-                contentStyle={{ borderRadius: 8, borderColor: "#ccd6e0", background: "#ffffff", color: "#131a24", fontSize: 15.5 }}
+                contentStyle={{ borderRadius: 8, borderColor: "#ccd6e0", background: "#ffffff", color: "#131a24", fontSize: 13.5 }}
                 labelFormatter={(label) => `เวลา ${label}`}
               />
               <Legend />
