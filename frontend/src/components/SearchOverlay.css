@@ -10,7 +10,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 12vh 20px 20px;
+  padding: 12vh 30px 30px;
 }
 
 .search-box {
@@ -20,8 +20,8 @@
 
 .search-input {
   width: 100%;
-  padding: 18px 22px;
-  font-size: 21.5px;
+  padding: 27px 33px;
+  font-size: 32px;
   font-family: inherit;
   color: var(--text);
   border: none;
@@ -47,22 +47,22 @@
 
 .search-summary {
   margin: 0;
-  padding: 14px 20px;
+  padding: 21px 30px;
   background: #f4f8fd;
   border-bottom: 1px solid #eef1f6;
-  font-size: 17.5px;
+  font-size: 26px;
   color: var(--text-soft);
 }
 
 .search-summary strong {
   color: var(--text);
-  font-size: 21.5px;
+  font-size: 32px;
 }
 
 .search-empty {
   margin: 0;
-  padding: 26px 18px;
-  font-size: 18px;
+  padding: 39px 27px;
+  font-size: 27px;
   color: var(--text-soft);
   text-align: center;
 }
@@ -82,10 +82,10 @@
 .search-results button {
   width: 100%;
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  padding: 13px 20px;
+  gap: 21px;
+  padding: 20px 30px;
   background: none;
   border: none;
   font-family: inherit;
@@ -107,13 +107,13 @@
 .search-name {
   display: flex;
   flex-direction: column;
-  font-size: 17.5px;
+  font-size: 26px;
   line-height: 1.35;
   min-width: 0;
 }
 
 .search-name small {
-  font-size: 16px;
+  font-size: 24px;
   color: var(--text-soft);
 }
 
@@ -121,13 +121,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  font-size: 25px;
+  font-size: 37.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .search-value small {
-  font-size: 15.5px;
+  font-size: 23px;
   font-weight: 500;
   color: var(--text-soft);
 }
@@ -135,6 +135,6 @@
 .search-hint {
   margin: 14px 0 0;
   text-align: center;
-  font-size: 16px;
+  font-size: 24px;
   color: var(--text-dim);
 }

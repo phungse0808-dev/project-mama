@@ -3,6 +3,8 @@ import { api } from "../api";
 import type { Summary, WeatherNow, Wind } from "../api";
 import { DiseaseRisk } from "./DiseaseRisk";
 import { WeatherIcon } from "./WeatherIcon";
+import { ProtectIcon } from "./ProtectIcon";
+import { levelInk } from "../levelInk";
 
 type Props = {
   summary: Summary | null;
@@ -136,7 +138,20 @@ export function HomePage({
         <div className="home-cols">
           {/* อ่านขอบเขตจากคำตอบของเซิร์ฟเวอร์ ไม่ใช่จากค่าที่เลือกไว้
               เพราะระหว่างที่คำขอใหม่ยังไม่กลับมา ตัวเลขบนจอยังเป็นของขอบเขตเดิม */}
-          <div className="home-col dust">
+          {/* ระบายสีใบฝุ่นตามระดับที่วัดได้ เหมือนการ์ดใหญ่ในหน้าวัดคุณภาพอากาศ
+              ผสมจากสีที่เซิร์ฟเวอร์ส่งมา ไม่ได้กำหนดสีตายตัว
+              ค่าฝุ่นสูงขึ้นใบนี้จึงเปลี่ยนเป็นเหลืองส้มแดงเองตามระดับ */}
+          <div
+            className="home-col dust"
+            style={
+              summary?.level
+                ? {
+                    background: `linear-gradient(160deg, ${summary.level.color}26, ${summary.level.color}08)`,
+                    borderColor: `${summary.level.color}59`,
+                  }
+                : undefined
+            }
+          >
             <p className="home-col-head">
               เรื่องของฝุ่น<span>{summary?.province ?? "ทั้งประเทศ"}</span>
             </p>
@@ -229,6 +244,39 @@ export function HomePage({
             </div>
           )}
         </div>
+
+        {/* วิธีป้องกันตัวชุดเดียวกับหน้าวัดคุณภาพอากาศ
+            ใช้ค่าที่มากับ summary อยู่แล้ว ไม่ได้ขอเพิ่ม
+            คำแนะนำกับระดับที่ใช้ระบายสีการ์ดจึงมาจากคำตอบเดียวกันเสมอ
+
+            อยู่ในการ์ดซึ่งทั้งใบเป็นปุ่ม กดตรงไหนก็เข้าหน้าฝุ่น
+            จึงไม่ใส่อะไรที่ต้องกดแยกไว้ตรงนี้ เป็นข้อความอ่านอย่างเดียว
+
+            ทำไมเอามาไว้หน้าหลักด้วย
+                หน้าหลักบอกได้แค่ว่าค่าเท่าไรกับระดับอะไร ซึ่งรู้แล้วยังทำอะไรต่อไม่ได้
+                คนที่เปิดมาดูเร็ว ๆ แล้วปิดไปจะไม่ได้อะไรกลับไปเลย
+                แถบนี้ทำให้อ่านจบแล้วรู้ว่าต้องทำอะไร โดยไม่ต้องกดเข้าไปอีกหน้า */}
+        {summary?.level && summary.protection.length > 0 && (
+          <div
+            className="protect home-protect"
+            style={{ boxShadow: `inset 4px 0 0 ${summary.level.color}` }}
+          >
+            <p className="protect-head">
+              ป้องกันตัวอย่างไรที่ระดับ{summary.level.label_th}
+            </p>
+            <div className="protect-list">
+              {summary.protection.map((item) => (
+                <div className="protect-item" key={item.text_th}>
+                  <ProtectIcon
+                    name={item.icon}
+                    color={levelInk(summary.level?.color) ?? "currentColor"}
+                  />
+                  <span>{item.text_th}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <span className="home-card-go">เข้าดูข้อมูล →</span>
       </button>
