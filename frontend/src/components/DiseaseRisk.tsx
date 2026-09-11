@@ -287,12 +287,39 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
   })();
 
   let cursor = 0;
+  // ช่วงความเชื่อมั่นของแต่ละโรค แปลงเป็นหน่วยเดียวกับคอลัมน์เพิ่มขึ้น
+  //
+  // เอา ci_low กับ ci_high เข้าสูตรเดียวกับค่ากลาง ไม่ได้โชว์ค่า RR ดิบ
+  // เพราะ RR 1.008 ถึง 1.413 เทียบกับตัวเลขข้าง ๆ ในตารางไม่ได้
+  const bands = allRows.map((row) => ({
+    group: row.group,
+    low: excessPct(current, row.risk.ci_low),
+    high: excessPct(current, row.risk.ci_high),
+  }));
+
+  // ขอบขวาของแถบ ตัดที่ช่วงกว้างสุดที่ยังไม่หลุดกรอบเกินไป
+  //
+  // ถ้าใช้ค่าสูงสุดจริงเป็นขอบ ภูมิแพ้ซึ่งปลายบนถึง +55 จะกินทั้งแถว
+  // แล้วอีกหกโรคที่อยู่ในช่วง 0 ถึง 4 จะถูกบีบจนเป็นจุดเดียวกันหมด เทียบอะไรไม่ได้เลย
+  //
+  // จึงตัดขอบที่ค่าที่ไม่เกินสามเท่าของค่ากลางสูงสุด แล้วโรคที่เลยขอบไปติดหัวลูกศรแทน
+  // เป็นวิธีเดียวกับที่ forest plot ในงานวิจัยใช้ และสื่อว่ากว้างมากได้ดีกว่าแถบยาว ๆ
+  const pointMax = Math.max(...allRows.map((row) => row.pct), 0.01);
+  const inScale = bands.map((b) => b.high).filter((v) => v <= pointMax * 3);
+  const bandMax = Math.max(...(inScale.length ? inScale : [pointMax]), pointMax) * 1.05;
+
   const slices = allRows.map((row) => {
     const share = row.pct / totalPct;
     const length = share * CIRCUMFERENCE;
+    const band = bands.find((b) => b.group === row.group);
+    const clamp = (v: number) => Math.min(100, Math.max(0, (v / bandMax) * 100));
     const slice = {
       ...row,
       share,
+      bandLeft: band ? clamp(band.low) : 0,
+      bandRight: band ? clamp(band.high) : 0,
+      bandPoint: clamp(row.pct),
+      bandOver: band ? band.high > bandMax : false,
       dash: `${Math.max(0, length - SLICE_GAP)} ${CIRCUMFERENCE - length + SLICE_GAP}`,
       offset: -cursor,
     };
@@ -454,6 +481,7 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
                 <span />
                 <span>โรค</span>
                 <span>เพิ่มขึ้น</span>
+                <span className="drisk-band-head">ช่วงที่เป็นไปได้</span>
                 <span>สัดส่วน</span>
               </li>
               {slices.map((slice) => {
@@ -475,6 +503,24 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
                       {slice.risk.uncertain && <em>*</em>}
                     </span>
                     <span className="drisk-legend-pct">+{slice.pct.toFixed(2)}%</span>
+
+                    {/* แถบช่วงความเชื่อมั่น ยาวแปลว่ายังสรุปไม่ได้แน่
+                        ทุกแถวใช้แกนเดียวกัน ความยาวจึงเทียบกันข้ามแถวได้
+                        โรคที่ช่วงเลยขอบไปติดหัวลูกศรที่ปลายขวา */}
+                    <span
+                      className="drisk-band"
+                      title={`ช่วงที่เป็นไปได้ +${(slice.bandLeft / 100 * bandMax).toFixed(2)}% ถึง +${slice.bandOver ? "มากกว่า " : ""}${(slice.bandRight / 100 * bandMax).toFixed(2)}%`}
+                    >
+                      <span
+                        className={slice.bandOver ? "drisk-band-line over" : "drisk-band-line"}
+                        style={{ left: `${slice.bandLeft}%`, right: `${100 - slice.bandRight}%` }}
+                      />
+                      <span
+                        className="drisk-band-point"
+                        style={{ left: `${slice.bandPoint}%`, background: slice.color }}
+                      />
+                    </span>
+
                     <span className="drisk-legend-share">{(slice.share * 100).toFixed(1)}%</span>
                   </li>
                 );
@@ -524,7 +570,9 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
               ตัวมันเองจึงไม่มีความหมาย บอกได้แค่ความแรงเมื่อเทียบกันเอง */}
           <p className="drisk-ring-note">
             เครื่องหมายดอกจันคือกลุ่มที่งานวิจัยยังให้ผลไม่ตรงกัน ตัวเลขจึงยังสรุปไม่ได้แน่ ·
-            คอลัมน์เพิ่มขึ้นคือค่าจริงของโรคนั้น ส่วนคอลัมน์สัดส่วนคือความแรงเมื่อเทียบกันเองในวงกลม
+            คอลัมน์เพิ่มขึ้นคือค่าจริงของโรคนั้น ส่วนคอลัมน์สัดส่วนคือความแรงเมื่อเทียบกันเองในวงกลม ·
+            แถบยิ่งยาวแปลว่างานวิจัยยิ่งให้ช่วงกว้าง ตัวเลขจึงยังสรุปไม่ได้แน่
+            แถบที่มีหัวลูกศรคือช่วงยาวเกินกรอบ
           </p>
 
           {/* แถบวิธีป้องกัน เปลี่ยนทั้งข้อความและสีตามค่าฝุ่นที่วัดได้

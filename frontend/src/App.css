@@ -3011,7 +3011,7 @@ button {
 
 .drisk-legend li {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) 60px 50px;
+  grid-template-columns: 12px minmax(0, 1fr) 60px minmax(74px, 1.1fr) 50px;
   align-items: center;
   gap: 9px;
   /* เว้นด้านข้างไว้ให้แถบไฮไลต์ของแถวที่เลือกใช้
@@ -3034,6 +3034,54 @@ button {
 .drisk-legend-head span:nth-child(3),
 .drisk-legend-head span:nth-child(4) {
   text-align: right;
+}
+
+/* แถบช่วงความเชื่อมั่นในตาราง
+   ทุกแถวใช้แกนเดียวกัน ความยาวจึงเทียบกันข้ามแถวได้
+   แถบยาวแปลว่างานวิจัยให้ช่วงกว้าง ตัวเลขยังสรุปไม่ได้แน่ */
+.drisk-band {
+  position: relative;
+  height: 13px;
+}
+
+.drisk-band-line {
+  position: absolute;
+  top: 5px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--text-dim);
+}
+
+/* ช่วงที่ยาวเกินกรอบ ปลายขวาเป็นหัวลูกศรแทนปลายตัด
+   บอกว่ายังไปต่ออีกไกล ไม่ใช่จบแค่ตรงนั้น */
+.drisk-band-line.over {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.drisk-band-line.over::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: -3px;
+  border-left: 7px solid var(--text-dim);
+  border-top: 4.5px solid transparent;
+  border-bottom: 4.5px solid transparent;
+}
+
+/* จุดค่ากลาง ใช้สีของโรคเพื่อโยงกับชิ้นในวงกลมและจุดหน้าชื่อ */
+.drisk-band-point {
+  position: absolute;
+  top: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  transform: translateX(-4.5px);
+  box-shadow: inset 0 0 0 1px var(--level-edge);
+}
+
+.drisk-band-head {
+  text-align: center;
 }
 
 .drisk-legend-dot {
@@ -3074,12 +3122,17 @@ button {
 @media (max-width: 549px) {
   /* จอแคบตัดคอลัมน์สัดส่วนออก ค่าจริงสำคัญกว่า
      ส่วนสัดส่วนยังอ่านได้จากขนาดชิ้นในวงกลมอยู่แล้ว */
+  /* จอแคบตัดคอลัมน์แถบกับสัดส่วนออก ค่าจริงสำคัญกว่า
+     สัดส่วนยังอ่านได้จากขนาดชิ้นในวงกลม
+     ส่วนช่วงความเชื่อมั่นยังดูได้ตอนกดเลือกโรคเดียว ซึ่งกางที่มาไว้ครบ */
   .drisk-legend li {
     grid-template-columns: 12px minmax(0, 1fr) 60px;
   }
 
+  .drisk-band,
+  .drisk-band-head,
   .drisk-legend-share,
-  .drisk-legend-head span:nth-child(4) {
+  .drisk-legend-head span:nth-child(5) {
     display: none;
   }
 }
