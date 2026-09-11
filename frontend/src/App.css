@@ -2630,6 +2630,67 @@ button {
   text-align: left;
 }
 
+/* คำแนะนำแยกตามกลุ่มเสี่ยง อยู่ใต้ข้อปฏิบัติทั่วไปในกล่องเดียวกัน
+   คั่นด้วยเส้นเพราะเป็นคนละชั้นของคำแนะนำ
+   ข้างบนคือสิ่งที่ทุกคนทำเหมือนกัน ข้างล่างคือส่วนที่ต่างกันตามกลุ่ม */
+.protect-groups {
+  list-style: none;
+  margin: 14px 0 0;
+  padding-top: 13px;
+  border-top: 1px solid var(--border);
+}
+
+.protect-groups li {
+  display: grid;
+  grid-template-columns: 11px minmax(0, 1fr);
+  gap: 11px;
+  align-items: start;
+  padding: 7px 0;
+}
+
+.protect-groups li + li {
+  border-top: 1px solid var(--border);
+}
+
+/* จุดสีใช้สีมาตรฐานของระดับ ไม่ใช่เฉดเข้ม เพราะเป็นพื้นสีไม่ใช่ตัวหนังสือ
+   ไม่ใช้ไอคอนรายกลุ่ม เพราะแปดกลุ่มนี้หาไอคอนที่สื่อได้ตรงจริงไม่ครบ
+   รูปที่เดาความหมายไม่ออกแย่กว่าไม่มีรูป */
+.protect-group-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-top: 6px;
+  box-shadow: inset 0 0 0 1px var(--level-edge);
+}
+
+.protect-group-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.protect-group-name em {
+  font-style: normal;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.protect-group-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+
 .protect-head {
   margin: 0 0 9px;
   font-size: 15px;

@@ -576,6 +576,7 @@ export default function App() {
             provinces={provinces}
             area={dustProvince}
             onAreaChange={setDustProvince}
+            riskGroup={user.risk_group}
           />
         )}
 

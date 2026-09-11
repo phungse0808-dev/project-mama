@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import type { Summary, WeatherNow, Wind } from "../api";
+import type { HealthAdvice, Summary, WeatherNow, Wind } from "../api";
 import { DiseaseRisk } from "./DiseaseRisk";
 import { WeatherIcon } from "./WeatherIcon";
 import { ProtectIcon } from "./ProtectIcon";
@@ -15,6 +15,8 @@ type Props = {
   /** พื้นที่ที่เลือกดู ค่าว่างแปลว่าทั้งประเทศ */
   area: string;
   onAreaChange: (area: string) => void;
+  /** กลุ่มเสี่ยงที่ผู้ใช้เลือกไว้ตอนตั้งโปรไฟล์ ว่างได้ถ้ายังไม่เคยเลือก */
+  riskGroup: string | null;
 };
 
 /** จังหวัดที่ใช้เมื่อผู้ใช้ยังไม่ได้ตั้ง
@@ -40,15 +42,36 @@ export function HomePage({
   provinces,
   area,
   onAreaChange,
+  riskGroup,
 }: Props) {
   const [weather, setWeather] = useState<WeatherNow | null>(null);
   const [wind, setWind] = useState<Wind | null>(null);
+  const [advice, setAdvice] = useState<HealthAdvice | null>(null);
 
   // จังหวัดที่ใช้ดึงอากาศ เรียงลำดับความสำคัญจากที่เจาะจงที่สุดลงมา
   //
   // เลือกไว้ > จังหวัดในโปรไฟล์ > ค่าตั้งต้น
   // เพราะอากาศต้องเจาะจงจังหวัดเสมอ ไม่มีตัวเลือกทั้งประเทศให้ตกไปใช้
   const target = area || province || DEFAULT_PROVINCE;
+
+  // คำแนะนำรายกลุ่มเสี่ยงของพื้นที่ที่เลือก
+  //
+  // ใช้ค่าฝุ่นของขอบเขตเดียวกับที่การ์ดแสดงอยู่ คำแนะนำกับตัวเลขจึงตรงกันเสมอ
+  // ถ้าดึงไม่สำเร็จก็แค่ไม่ขึ้นรายกลุ่ม ส่วนข้อปฏิบัติสามข้อยังอยู่ตามเดิม
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await api.healthAdvice(area || null);
+        if (!cancelled) setAdvice(result);
+      } catch {
+        if (!cancelled) setAdvice(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [area]);
 
   // ดึงสภาพอากาศของจังหวัดที่เลือก
   //
@@ -275,6 +298,40 @@ export function HomePage({
                 </div>
               ))}
             </div>
+
+            {/* คำแนะนำแยกตามกลุ่มเสี่ยงครบทุกกลุ่ม
+                ข้อปฏิบัติสามข้อข้างบนเป็นของทุกคนเหมือนกัน ส่วนตรงนี้คือส่วนที่ต่างกัน
+                ที่ระดับส้ม เด็กเล็กได้ว่าให้อยู่ในอาคารที่ปิดประตูหน้าต่าง
+                ส่วนคนทำงานกลางแจ้งได้ว่าให้สวมหน้ากากตลอดเวลาทำงานและพักในที่ร่มบ่อยขึ้น
+                ซึ่งคนละเรื่องกันแม้ค่าฝุ่นเท่ากัน
+
+                กลุ่มที่ผู้ใช้เลือกไว้ตอนตั้งโปรไฟล์ถูกยกขึ้นมาไว้บนสุดและติดป้ายกำกับ
+                ค่านั้นเก็บอยู่ในฐานข้อมูลมาตลอดแต่ไม่เคยมีที่ใช้ */}
+            {advice && advice.groups.length > 0 && (
+              <ul className="protect-groups">
+                {[...advice.groups]
+                  .sort((a, b) => {
+                    if (a.key === riskGroup) return -1;
+                    if (b.key === riskGroup) return 1;
+                    return 0;
+                  })
+                  .map((group) => (
+                    <li key={group.key}>
+                      <span
+                        className="protect-group-dot"
+                        style={{ background: summary.level?.color }}
+                      />
+                      <div>
+                        <p className="protect-group-name">
+                          {group.label_th}
+                          {group.key === riskGroup && <em>กลุ่มของคุณ</em>}
+                        </p>
+                        <p className="protect-group-text">{group.advice_th}</p>
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
         )}
 
