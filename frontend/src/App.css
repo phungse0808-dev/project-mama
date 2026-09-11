@@ -3333,16 +3333,19 @@ button {
   background: var(--surface-2);
 }
 
+/* ตัวหนังสือกล่องนี้เท่ากับกล่องคำแนะนำในหน้าหลักทุกชุด
+   สองกล่องทำหน้าที่เดียวกันคือบอกว่าใครต้องระวังอะไร
+   ถ้าขนาดต่างกัน คนอ่านจะรู้สึกว่าอันหนึ่งสำคัญกว่า ทั้งที่สำคัญเท่ากัน */
 .drisk-advice-head {
   margin: 0 0 3px;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--text);
 }
 
 .drisk-advice-sub {
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--text-dim);
 }
 
@@ -3362,7 +3365,7 @@ button {
   display: flex;
   gap: 8px;
   align-items: flex-start;
-  font-size: 13.5px;
+  font-size: 17.5px;
   line-height: 1.5;
   color: var(--text);
 }
@@ -3397,7 +3400,7 @@ button {
 
 .drisk-advice-group {
   margin: 0 0 3px;
-  font-size: 13.5px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--text);
 }
@@ -3412,7 +3415,7 @@ button {
 }
 
 .drisk-advice-chips span {
-  font-size: 11.5px;
+  font-size: 13.5px;
   padding: 1px 7px;
   border-radius: 999px;
   background: var(--surface);
@@ -3422,7 +3425,7 @@ button {
 
 .drisk-advice-text {
   margin: 0;
-  font-size: 13.5px;
+  font-size: 17px;
   line-height: 1.6;
   color: var(--text);
 }
