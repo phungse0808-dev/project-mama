@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { StationReading, StationSummary, Summary, WeatherNow } from "../api";
 import { formatThaiDateTime } from "../api";
-import { levelInk } from "../levelInk";
-import { ProtectIcon } from "./ProtectIcon";
 import { WeatherIcon } from "./WeatherIcon";
 
 type Props = { summary: Summary };
@@ -174,7 +172,6 @@ export function SummaryCards({
   // ดีกว่าปล่อยการ์ดว่างไว้ เพราะค่าของจังหวัดก็เป็นค่าจริงที่ถูกต้องอยู่แล้ว
   const picked = canPickStation && dustStation ? stationSummary : null;
   const level = picked ? picked.level : summary.level;
-  const protection = picked ? picked.protection : summary.protection;
 
   return (
     <section className="card-groups">
@@ -358,33 +355,6 @@ export function SummaryCards({
           </article>
         </div>
 
-        {/* วิธีป้องกันตัวที่ระดับนี้
-            เปลี่ยนทั้งแถบตามค่าฝุ่นที่วัดได้ ทั้งสีขอบซ้าย สีไอคอน และข้อความ
-
-            ทำไมเป็นแถบใต้การ์ด ไม่ใส่ไว้ในการ์ดใหญ่
-                การ์ดใหญ่ทำหน้าที่เป็นคำตอบหลักที่อ่านได้จากระยะไกลตอนนำเสนอ
-                ถ้าเพิ่มสามบรรทัดเข้าไป ตัวเลขจะไม่เด่นเท่าเดิม
-                แถบนี้ใช้ความกว้างที่มีอยู่แล้วเรียงสามคอลัมน์ จึงกินความสูงน้อยกว่า
-
-            สีไอคอนใช้เฉดเข้มจาก levelInk ไม่ใช่สีพื้นของระดับ
-            เพราะเหลือง #ffd400 บนพื้นขาววัดได้ 1.43:1 คืออ่านไม่ออก
-            ส่วนขอบซ้ายยังเป็นสีมาตรฐานเดิม เพราะเป็นพื้นสีไม่ใช่ตัวหนังสือ */}
-        {level && protection.length > 0 && (
-          <div className="protect" style={{ boxShadow: `inset 4px 0 0 ${level.color}` }}>
-            <p className="protect-head">ป้องกันตัวอย่างไรที่ระดับ{level.label_th}</p>
-            <div className="protect-list">
-              {protection.map((item) => (
-                <div className="protect-item" key={item.text_th}>
-                  <ProtectIcon
-                    name={item.icon}
-                    color={levelInk(level.color) ?? "currentColor"}
-                  />
-                  <span>{item.text_th}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </section>
 
       {/* สภาพอากาศ ณ ขณะนี้ ของจังหวัดที่เลือก
