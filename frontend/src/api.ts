@@ -107,6 +107,8 @@ export type StationSummary = {
  */
 export type HealthAdvice = {
   province: string | null;
+  /** รหัสสถานีที่เจาะดู ว่างแปลว่าเป็นค่าของทั้งจังหวัดหรือทั้งประเทศ */
+  station: string | null;
   scope: string;
   station_count: number;
   pm25: number | null;
@@ -479,12 +481,16 @@ export const api = {
         (province ? `&province=${encodeURIComponent(province)}` : "")
     ),
   stations: () => get<StationReading[]>("/api/stations"),
-  healthAdvice: (province?: string | null) =>
-    get<HealthAdvice>(
-      province
-        ? `/api/health-advice?province=${encodeURIComponent(province)}`
-        : "/api/health-advice",
-    ),
+  healthAdvice: (province?: string | null, station?: string | null) => {
+    // ระบุสถานีแล้วไม่ต้องส่งจังหวัดไปด้วย เพราะสถานีเจาะจงกว่าอยู่แล้ว
+    // ฝั่งหลังบ้านก็ข้ามเงื่อนไขจังหวัดเมื่อมีสถานี ส่งไปก็ไม่ได้ใช้
+    const query = station
+      ? `?station=${encodeURIComponent(station)}`
+      : province
+        ? `?province=${encodeURIComponent(province)}`
+        : "";
+    return get<HealthAdvice>(`/api/health-advice${query}`);
+  },
   provinceRanking: () => get<ProvinceRank[]>("/api/provinces/ranking"),
   stationDaily: (code: string, days = 30) =>
     get<StationDaily>(`/api/stations/${code}/daily?days=${days}`),

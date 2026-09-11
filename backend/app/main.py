@@ -384,10 +384,14 @@ def get_risk_groups() -> list[dict]:
 @app.get("/api/health-advice", tags=["สุขภาพ"])
 def get_health_advice(
     province: str | None = Query(None, description="เว้นว่างเพื่อดูภาพรวมทั้งประเทศ"),
+    station: str | None = Query(None, description="รหัสสถานี ระบุเพื่อเจาะดูจุดเดียว"),
     session: Session = Depends(get_session),
 ) -> dict:
-    """คำแนะนำสุขภาพของทุกกลุ่มเสี่ยง ตามค่าฝุ่นของพื้นที่ที่เลือก"""
-    return health_guidance(session, province)
+    """คำแนะนำสุขภาพของทุกกลุ่มเสี่ยง ตามค่าฝุ่นของพื้นที่ที่เลือก
+
+    ระบุสถานีจะใช้ค่าของสถานีนั้นแทนค่าเฉลี่ยของจังหวัด
+    """
+    return health_guidance(session, province, station)
 
 
 @app.get("/api/alerts", tags=["สุขภาพ"])

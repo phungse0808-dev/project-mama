@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import type { HealthAdvice, Summary, WeatherNow, Wind } from "../api";
+import type {
+  HealthAdvice,
+  StationReading,
+  StationSummary,
+  Summary,
+  WeatherNow,
+  Wind,
+} from "../api";
 import { DiseaseRisk } from "./DiseaseRisk";
 import { WeatherIcon } from "./WeatherIcon";
 import { ProtectIcon } from "./ProtectIcon";
@@ -14,7 +21,14 @@ type Props = {
   provinces: string[];
   /** พื้นที่ที่เลือกดู ค่าว่างแปลว่าทั้งประเทศ */
   area: string;
-  onAreaChange: (area: string) => void;
+  /** สถานีทั้งหมด ใช้สร้างรายการในช่องเลือก */
+  stations: StationReading[];
+  /** รหัสสถานีที่เจาะดู ค่าว่างแปลว่าดูทั้งขอบเขตที่เลือก */
+  station: string;
+  /** ค่าของสถานีที่เจาะดู เป็น null ระหว่างรอโหลดหรือเมื่อไม่ได้เจาะสถานี */
+  stationSummary: StationSummary | null;
+  /** เปลี่ยนขอบเขตที่ดู ส่งทั้งจังหวัดและสถานีพร้อมกันเพราะช่องเลือกมีช่องเดียว */
+  onScopeChange: (province: string, station: string) => void;
   /** กลุ่มเสี่ยงที่ผู้ใช้เลือกไว้ตอนตั้งโปรไฟล์ ว่างได้ถ้ายังไม่เคยเลือก */
   riskGroup: string | null;
 };
@@ -41,7 +55,10 @@ export function HomePage({
   province,
   provinces,
   area,
-  onAreaChange,
+  stations,
+  station,
+  stationSummary,
+  onScopeChange,
   riskGroup,
 }: Props) {
   const [weather, setWeather] = useState<WeatherNow | null>(null);
@@ -62,7 +79,7 @@ export function HomePage({
     let cancelled = false;
     void (async () => {
       try {
-        const result = await api.healthAdvice(area || null);
+        const result = await api.healthAdvice(area || null, station || null);
         if (!cancelled) setAdvice(result);
       } catch {
         if (!cancelled) setAdvice(null);
@@ -71,7 +88,7 @@ export function HomePage({
     return () => {
       cancelled = true;
     };
-  }, [area]);
+  }, [area, station]);
 
   // ดึงสภาพอากาศของจังหวัดที่เลือก
   //
@@ -124,6 +141,35 @@ export function HomePage({
   const now = weather?.available ? weather : null;
   const air = wind?.available ? wind : null;
 
+  // ค่าของสถานีที่เจาะดู ใช้ต่อเมื่อโหลดมาแล้วจริง ระหว่างรอยังแสดงค่าของขอบเขตเดิมไปก่อน
+  // ดีกว่าปล่อยการ์ดว่างไว้ เพราะค่าของจังหวัดก็เป็นค่าจริงที่ถูกต้องอยู่แล้ว
+  const picked = station ? stationSummary : null;
+
+  // ระดับที่ใช้ทั้งระบายสีการ์ดและเลือกชุดคำแนะนำ มาจากขอบเขตที่แสดงอยู่เสมอ
+  const level = picked ? picked.level : summary?.level ?? null;
+  const protection = picked ? picked.protection : summary?.protection ?? [];
+
+  // สถานีที่เลือกได้ เรียงตามชื่อไทยเพื่อให้ไล่หาในรายการยาวได้
+  //
+  // ชุดเดียวกับหน้าวัดคุณภาพอากาศ เลือกจังหวัดไว้ก็ได้เฉพาะสถานีในจังหวัดนั้น
+  // ดูทั้งประเทศก็ได้ทุกสถานี โดยจัดกลุ่มตามจังหวัดให้ ไม่ใช่เรียงยาวรวดเดียว
+  const stationChoices = [
+    ...(area ? stations.filter((item) => item.province === area) : stations),
+  ].sort((a, b) => a.name_th.localeCompare(b.name_th, "th"));
+
+  const stationsByProvince = area
+    ? []
+    : [...new Set(stationChoices.map((item) => item.province))]
+        .sort((a, b) => a.localeCompare(b, "th"))
+        .map((item) => ({
+          province: item,
+          items: stationChoices.filter((each) => each.province === item),
+        }));
+
+  // ซ่อนช่องสถานีกรณีเดียว คือจังหวัดที่มีสถานีเดียวจริง ๆ
+  // ตรงนั้นช่องเลือกมีตัวเลือกเดียว กดแล้วไม่เปลี่ยนอะไร จึงไม่ใช่ของที่หายไป
+  const canPickStation = stationChoices.length > 1;
+
   return (
     <div className="home-entry">
       {/* วางช่องเลือกไว้นอกการ์ด ไม่ใช่ในหัวการ์ดเหมือนหน้าฝุ่น
@@ -131,17 +177,59 @@ export function HomePage({
           การกดเลือกจะไปโดนปุ่มดักก่อนจนเปลี่ยนหน้าแทนที่จะเปิดรายการ
           และปุ่มซ้อนในปุ่มยังเป็นโครงสร้างที่ไม่ถูกต้องด้วย */}
       <div className="home-head">
-        <label className="card-group-picker">
-          <span className="sr-only">เลือกพื้นที่ที่ต้องการดู</span>
-          <select value={area} onChange={(event) => onAreaChange(event.target.value)}>
-            <option value="">ทั้งประเทศ</option>
-            {provinces.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
+        {/* สองช่องเรียงกัน ชุดเดียวกับหัวกลุ่มในหน้าวัดคุณภาพอากาศ
+            ทั้งสองหน้าใช้ค่าจังหวัดกับสถานีตัวเดียวกัน ถ้าทำคนละแบบ
+            ผู้ใช้ต้องเรียนรู้สองครั้งสำหรับของอย่างเดียวกัน
+
+            ตัวเลือกแรกของช่องสถานีเป็นภาพรวมของขอบเขตที่เลือกไว้
+            ซึ่งเป็นทั้งค่าตั้งต้นและเป็นทางกลับ ผู้ใช้จึงถอยออกจากการเจาะดูสถานี
+            ได้ในช่องเดียวกัน ไม่ต้องไปหาปุ่มยกเลิกที่อื่น */}
+        <div className="card-group-pickers">
+          <label className="card-group-picker">
+            <span className="sr-only">เลือกพื้นที่ที่ต้องการดู</span>
+            <select value={area} onChange={(event) => onScopeChange(event.target.value, "")}>
+              <option value="">ทั้งประเทศ</option>
+              {provinces.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {canPickStation && (
+            <label className="card-group-picker">
+              <span className="sr-only">เลือกสถานีตรวจวัดที่ต้องการเจาะดู</span>
+              <select
+                value={station}
+                onChange={(event) => {
+                  const code = event.target.value;
+                  // ตั้งจังหวัดตามสถานีด้วยเมื่อเลือกจากรายการรวมทั้งประเทศ
+                  // เพราะอากาศกับลมยังอ่านเป็นรายจังหวัด ถ้าไม่ตั้งจะเป็นคนละที่กับฝุ่น
+                  const found = stations.find((item) => item.station_code === code);
+                  onScopeChange(code ? found?.province ?? area : area, code);
+                }}
+              >
+                <option value="">{area ? "ทุกสถานีในจังหวัด" : "ทุกสถานีทั่วประเทศ"}</option>
+                {area
+                  ? stationChoices.map((item) => (
+                      <option key={item.station_code} value={item.station_code}>
+                        {item.name_th}
+                      </option>
+                    ))
+                  : stationsByProvince.map((group) => (
+                      <optgroup key={group.province} label={group.province}>
+                        {group.items.map((item) => (
+                          <option key={item.station_code} value={item.station_code}>
+                            {item.name_th}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+              </select>
+            </label>
+          )}
+        </div>
       </div>
 
       <button className="panel home-card" onClick={onOpenAir}>
@@ -167,31 +255,66 @@ export function HomePage({
           <div
             className="home-col dust"
             style={
-              summary?.level
+              level
                 ? {
-                    background: `linear-gradient(160deg, ${summary.level.color}26, ${summary.level.color}08)`,
-                    borderColor: `${summary.level.color}59`,
+                    background: `linear-gradient(160deg, ${level.color}26, ${level.color}08)`,
+                    borderColor: `${level.color}59`,
                   }
                 : undefined
             }
           >
+            {/* ป้ายมุมขวายังเป็นจังหวัดแม้เจาะดูสถานีเดียว ไม่ใช่ชื่อสถานี
+                เพราะชื่อสถานียาวได้ถึงเจ็ดสิบห้าตัวอักษร เช่น
+                สถานีสวนเฉลิมพระเกียรติพระบาทสมเด็จพระเจ้าอยู่หัว เฉลิมพระชนมพรรษา 80 พรรษา
+                ซึ่งกินสามบรรทัดในช่องกว้างไม่ถึงครึ่ง และยังต้องเรียงให้ตรงกับ
+                ป้ายของอีกสองใบที่เป็นจังหวัดเหมือนกัน ชื่อสถานีจึงไปอยู่บรรทัดคำอธิบายแทน */}
             <p className="home-col-head">
-              เรื่องของฝุ่น<span>{summary?.province ?? "ทั้งประเทศ"}</span>
+              เรื่องของฝุ่น<span>{picked?.province ?? summary?.province ?? "ทั้งประเทศ"}</span>
             </p>
 
             <p className="home-col-value">
-              {summary?.pm25_avg ?? "—"}
+              {picked ? picked.pm25 ?? "—" : summary?.pm25_avg ?? "—"}
               <span className="home-col-unit">µg/m³</span>
             </p>
-            <p className="home-col-note">
-              {summary?.province ? "เฉลี่ยในจังหวัด" : "เฉลี่ยทั้งประเทศ"}
-              {summary?.level ? ` · ระดับ${summary.level.label_th}` : ""}
-            </p>
 
-            <p className="home-col-sub">
-              <strong>{summary?.pm25_max ?? "—"}</strong>
-              สูงสุด{summary?.worst_station ? ` · ${summary.worst_station.province}` : ""}
-            </p>
+            {/* เจาะดูสถานีเดียวไม่ใช่ค่าเฉลี่ยแล้ว จึงต้องเปลี่ยนคำกำกับด้วย
+                ไม่ใช่แค่เปลี่ยนตัวเลข เพราะค่าเฉลี่ยกับค่าที่วัดได้จุดเดียว
+                เป็นคนละอย่างกัน
+
+                เขียนระดับไว้หน้าชื่อสถานี เพราะบรรทัดนี้ตัดท้ายเมื่อยาวเกิน
+                ระดับเป็นข้อมูลที่ต้องเห็นเสมอ ส่วนชื่อสถานีดูเต็ม ๆ ได้จากช่องเลือกข้างบน */}
+            {picked ? (
+              <p className="home-col-note home-col-one-line" title={picked.name_th}>
+                {`ระดับ${picked.level.label_th} · ${picked.name_th}`}
+              </p>
+            ) : (
+              <p className="home-col-note">
+                {summary?.province ? "เฉลี่ยในจังหวัด" : "เฉลี่ยทั้งประเทศ"}
+                {summary?.level ? ` · ระดับ${summary.level.label_th}` : ""}
+              </p>
+            )}
+
+            {/* บรรทัดล่างเปลี่ยนเรื่องไปเลยเมื่อเจาะดูสถานีเดียว
+                ของเดิมคือค่าสูงสุดระหว่างสถานี ซึ่งพอเหลือสถานีเดียวจะเป็นเลขตัวเดียว
+                กับที่อยู่ข้างบนเป๊ะ ๆ จึงเปลี่ยนเป็นช่วงตามเวลาของสถานีนั้นแทน
+
+                บอกจำนวนชั่วโมงที่มีค่าจริง ไม่ใช่ช่วงที่ขอไป
+                เพราะหลายสถานีส่งไม่ครบทุกชั่วโมง บางแห่งใน 24 ชั่วโมงมีแค่สิบ */}
+            {picked ? (
+              <p className="home-col-sub">
+                <strong>
+                  {picked.pm25_min ?? "—"}–{picked.pm25_max ?? "—"}
+                </strong>
+                {picked.hours_with_data > 0
+                  ? `ต่ำสุด–สูงสุดใน ${picked.hours_with_data} ชม.`
+                  : "ยังไม่มีค่าย้อนหลัง"}
+              </p>
+            ) : (
+              <p className="home-col-sub">
+                <strong>{summary?.pm25_max ?? "—"}</strong>
+                สูงสุด{summary?.worst_station ? ` · ${summary.worst_station.province}` : ""}
+              </p>
+            )}
           </div>
 
           {/* ซ่อนทั้งคอลัมน์เมื่อดึงอากาศไม่ได้ ไม่ใช่แสดงขีดกลาง
@@ -279,21 +402,16 @@ export function HomePage({
                 หน้าหลักบอกได้แค่ว่าค่าเท่าไรกับระดับอะไร ซึ่งรู้แล้วยังทำอะไรต่อไม่ได้
                 คนที่เปิดมาดูเร็ว ๆ แล้วปิดไปจะไม่ได้อะไรกลับไปเลย
                 แถบนี้ทำให้อ่านจบแล้วรู้ว่าต้องทำอะไร โดยไม่ต้องกดเข้าไปอีกหน้า */}
-        {summary?.level && summary.protection.length > 0 && (
+        {level && protection.length > 0 && (
           <div
             className="protect home-protect"
-            style={{ boxShadow: `inset 4px 0 0 ${summary.level.color}` }}
+            style={{ boxShadow: `inset 4px 0 0 ${level.color}` }}
           >
-            <p className="protect-head">
-              ป้องกันตัวอย่างไรที่ระดับ{summary.level.label_th}
-            </p>
+            <p className="protect-head">ป้องกันตัวอย่างไรที่ระดับ{level.label_th}</p>
             <div className="protect-list">
-              {summary.protection.map((item) => (
+              {protection.map((item) => (
                 <div className="protect-item" key={item.text_th}>
-                  <ProtectIcon
-                    name={item.icon}
-                    color={levelInk(summary.level?.color) ?? "currentColor"}
-                  />
+                  <ProtectIcon name={item.icon} color={levelInk(level.color) ?? "currentColor"} />
                   <span>{item.text_th}</span>
                 </div>
               ))}
@@ -319,7 +437,7 @@ export function HomePage({
                     <li key={group.key}>
                       <span
                         className="protect-group-dot"
-                        style={{ background: summary.level?.color }}
+                        style={{ background: level.color }}
                       />
                       <div>
                         <p className="protect-group-name">

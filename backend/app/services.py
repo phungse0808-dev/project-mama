@@ -937,22 +937,40 @@ def personal_summary(session: Session, user_id: int) -> dict | None:
     }
 
 
-def health_guidance(session: Session, province: str | None) -> dict:
-    """คำแนะนำสุขภาพรายกลุ่มเสี่ยง ตามค่าฝุ่นของจังหวัดที่เลือก
+def health_guidance(
+    session: Session, province: str | None, station: str | None = None
+) -> dict:
+    """คำแนะนำสุขภาพรายกลุ่มเสี่ยง ตามค่าฝุ่นของขอบเขตที่เลือก
 
-    ถ้าไม่ระบุจังหวัด จะใช้ค่าเฉลี่ยของทั้งประเทศ
+    ไม่ระบุอะไรเลยใช้ค่าเฉลี่ยทั้งประเทศ ระบุจังหวัดใช้ค่าเฉลี่ยของจังหวัดนั้น
+    ระบุสถานีใช้ค่าที่วัดได้ที่สถานีนั้นจุดเดียว
+
+    ทำไมต้องเจาะถึงระดับสถานี
+        หน้าเว็บให้เลือกสถานีเดียวได้ แล้วตัวเลขใหญ่บนการ์ดเปลี่ยนตาม
+        ถ้าคำแนะนำยังคิดจากค่าเฉลี่ยทั้งจังหวัด จะเกิดกรณีที่การ์ดบอกว่า
+        เริ่มมีผลกระทบ แต่คำแนะนำข้างล่างบอกว่าทำกิจกรรมกลางแจ้งได้ตามปกติ
+        ซึ่งขัดกันเองในจอเดียว และคนอ่านไม่มีทางรู้ว่าอันไหนใช้กับตัวเอง
+
+    สถานีที่ระบุมาแต่ไม่มีค่าล่าสุดจะได้ระดับว่าง เหมือนกรณีไม่มีข้อมูลอื่น ๆ
     """
     rows = [(s, r) for s, r in latest_readings(session) if not is_stale(r)]
-    if province:
+    if station:
+        rows = [(s, r) for s, r in rows if s.station_code == station]
+    elif province:
         rows = [(s, r) for s, r in rows if s.province == province]
 
     values = [r.pm25 for _, r in rows if r.pm25 is not None]
     average = round(statistics.fmean(values), 1) if values else None
     level = describe(None, average)
 
+    scope = province or "ทั้งประเทศ"
+    if station and rows:
+        scope = rows[0][0].name_th
+
     return {
         "province": province,
-        "scope": province or "ทั้งประเทศ",
+        "station": station,
+        "scope": scope,
         "station_count": len(rows),
         "pm25": average,
         "level": level,

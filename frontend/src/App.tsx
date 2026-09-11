@@ -245,13 +245,20 @@ export default function App() {
     };
   }, [user, dustProvince]);
 
-  // ล้างสถานีที่เลือกไว้ทุกครั้งที่เปลี่ยนจังหวัด
+  // ล้างสถานีที่เลือกไว้เมื่อสถานีนั้นไม่ได้อยู่ในจังหวัดที่เลือก
   //
   // ถ้าไม่ล้าง สถานีของจังหวัดเดิมจะค้างอยู่ แล้วการ์ดจะแสดงค่าของคนละจังหวัด
   // กับชื่อที่เขียนอยู่ในช่องเลือกข้างบน ซึ่งอ่านแล้วเข้าใจผิดทันที
+  //
+  // เดิมล้างทุกครั้งที่จังหวัดเปลี่ยน ซึ่งพอหน้าหลักรวมจังหวัดกับสถานีไว้ในช่องเดียว
+  // การเลือกสถานีข้ามจังหวัดจะตั้งค่าทั้งสองอย่างพร้อมกัน แล้วโดนล้างทิ้งทันที
+  // จึงเปลี่ยนมาตรวจว่าสถานีอยู่ในจังหวัดที่เลือกหรือไม่ ซึ่งตรงกับเหตุผลเดิมกว่า
   useEffect(() => {
+    if (!dustStation) return;
+    const picked = stations.find((item) => item.station_code === dustStation);
+    if (picked && (!dustProvince || picked.province === dustProvince)) return;
     setDustStation("");
-  }, [dustProvince]);
+  }, [dustProvince, dustStation, stations]);
 
   // ค่าของสถานีที่เจาะดู ดึงใหม่เมื่อเปลี่ยนสถานี
   //
@@ -575,7 +582,13 @@ export default function App() {
             province={user.province}
             provinces={provinces}
             area={dustProvince}
-            onAreaChange={setDustProvince}
+            stations={stations}
+            station={dustStation}
+            stationSummary={stationSummary}
+            onScopeChange={(nextProvince, nextStation) => {
+              setDustProvince(nextProvince);
+              setDustStation(nextStation);
+            }}
             riskGroup={user.risk_group}
           />
         )}
