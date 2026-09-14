@@ -7,7 +7,6 @@ import type {
   AppUser,
   CollectionHealth,
   ProvinceRank,
-  StationHistory,
   StationReading,
   StationSummary,
   Summary,
@@ -26,7 +25,6 @@ import { RainPanel } from "./components/RainPanel";
 import { SignIn } from "./components/SignIn";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { StationMap } from "./components/StationMap";
-import { StationTrend } from "./components/StationTrend";
 import { LevelBar, SummaryCards } from "./components/SummaryCards";
 import { loadSettings, sendIfDue } from "./dailyDigest";
 import { recordAlerts } from "./noticeRecorder";
@@ -116,8 +114,6 @@ export default function App() {
   //     แต่ใช้กับอากาศไม่ได้ อุณหภูมิเฉลี่ยของทั้งประเทศไม่ได้บอกอะไรกับใคร
   //     เมื่อเลือกทั้งประเทศจึงตกไปใช้จังหวัดในโปรไฟล์ แล้วค่อยตกไปที่ค่าตั้งต้น
   const weatherTarget = dustProvince || user?.province || "กรุงเทพฯ";
-  const [history, setHistory] = useState<StationHistory | null>(null);
-  const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
@@ -371,7 +367,6 @@ export default function App() {
   const handleSignOut = useCallback(() => {
     localStorage.removeItem(USER_KEY);
     setUser(null);
-    setHistory(null);
   }, []);
 
   // หน้าหลักที่ปุ่มกลับพากลับมา
@@ -404,23 +399,24 @@ export default function App() {
     };
   }, [user, handleSignOut]);
 
-  const selectStation = useCallback(async (code: string) => {
-    setHistoryLoading(true);
-    try {
-      setHistory(await api.stationHistory(code, 48));
-    } catch {
-      setHistory(null);
-    } finally {
-      setHistoryLoading(false);
-    }
-  }, []);
-
-  // เลือกสถานีที่ค่าฝุ่นสูงสุดให้อัตโนมัติ ผู้ใช้จะได้เห็นกราฟทันทีโดยไม่ต้องคลิก
-  useEffect(() => {
-    if (!history && stations.length > 0) {
-      void selectStation(stations[0].station_code);
-    }
-  }, [stations, history, selectStation]);
+  // เปิดดูสถานีที่กดจากแผนที่หรือช่องค้นหา
+  //
+  // เดิมพาไปโหลดกราฟแนวโน้มย้อนหลังของสถานีนั้น ซึ่งเอาออกจากหน้าไปแล้ว
+  // ถ้าปล่อยไว้แบบเดิม กดชื่อสถานีแล้วจะไม่มีอะไรเกิดขึ้นบนจอเลย
+  //
+  // จึงเปลี่ยนมาตั้งช่องเลือกจังหวัดกับสถานีของการ์ดฝุ่นบนสุดแทน
+  // การ์ดนั้นเจาะดูสถานีเดียวได้อยู่แล้ว ทั้งค่าล่าสุด ช่วง 24 ชั่วโมง และดัชนี
+  // แล้วเลื่อนขึ้นไปบนสุดให้เห็นการ์ดทันที
+  const showStation = useCallback(
+    (code: string) => {
+      const found = stations.find((item) => item.station_code === code);
+      if (!found) return;
+      setDustProvince(found.province);
+      setDustStation(found.station_code);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [stations]
+  );
 
   // กรอกชื่อเพื่อระบุตัวตนก่อน จากนั้นเข้าหน้าข้อมูลทันที
   if (!user) {
@@ -471,8 +467,8 @@ export default function App() {
           stations={stations}
           onSelect={(code) => {
             setSearching(false);
-            void selectStation(code);
             goTo("air");
+            showStation(code);
           }}
           onClose={() => setSearching(false)}
         />
@@ -511,7 +507,7 @@ export default function App() {
             <div className="two-column">
               <StationMap
                 stations={stations}
-                onSelect={selectStation}
+                onSelect={showStation}
                 ranking={ranking}
                 picked={pickedProvince}
                 onPick={setPickedProvince}
@@ -523,15 +519,8 @@ export default function App() {
 
             <h2 className="section-heading">
               ย้อนหลังและปัจจัยแวดล้อม
-              <span>แนวโน้ม สภาพอากาศ และผลกระทบต่อสุขภาพ</span>
+              <span>สภาพอากาศ การพยากรณ์ และผลกระทบต่อสุขภาพ</span>
             </h2>
-
-            <StationTrend
-              history={history}
-              loading={historyLoading}
-              stations={stations}
-              onSelectStation={selectStation}
-            />
 
             {alertData && <AlertPanel alerts={alertData} />}
 

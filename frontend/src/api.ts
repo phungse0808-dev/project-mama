@@ -131,44 +131,6 @@ export type ProvinceRank = {
   level: AqiLevel;
 };
 
-export type HistoryPoint = {
-  measured_at: string;
-  label: string;
-  pm25: number | null;
-  pm10: number | null;
-  aqi: number | null;
-};
-
-export type StationHistory = {
-  station_code: string;
-  name_th: string;
-  province: string;
-  points: HistoryPoint[];
-};
-
-export type DailyPoint = {
-  observed_on: string;
-  label: string;
-  pm25_avg: number;
-  pm25_min: number;
-  pm25_max: number;
-  hours: number;
-  complete: boolean;
-  over_thai_standard: boolean;
-};
-
-export type StationDaily = {
-  station_code: string;
-  name_th: string;
-  province: string;
-  thai_standard: number;
-  min_hours_per_day: number;
-  days_total: number;
-  days_complete: number;
-  days_over_standard: number;
-  points: DailyPoint[];
-};
-
 export type WeatherPoint = {
   observed_on: string;
   label: string;
@@ -492,10 +454,6 @@ export const api = {
     return get<HealthAdvice>(`/api/health-advice${query}`);
   },
   provinceRanking: () => get<ProvinceRank[]>("/api/provinces/ranking"),
-  stationDaily: (code: string, days = 30) =>
-    get<StationDaily>(`/api/stations/${code}/daily?days=${days}`),
-  stationHistory: (code: string, hours = 48) =>
-    get<StationHistory>(`/api/stations/${code}/history?hours=${hours}`),
   stationSummary: (code: string, hours = 24) =>
     get<StationSummary>(`/api/stations/${code}/summary?hours=${hours}`),
   weather: (province: string, days = 30) =>

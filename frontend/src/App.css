@@ -2443,45 +2443,6 @@ button {
 }
 
 /* สรุปตัวเลขของกราฟรายวัน */
-.daily-summary {
-  display: flex;
-  gap: 19px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-  font-size: 15.5px;
-  color: var(--text-soft);
-}
-
-.daily-summary strong {
-  color: var(--text);
-  font-size: 19px;
-}
-
-/* ป้ายบอกระดับคุณภาพอากาศของสถานีที่กำลังดูในกราฟ */
-.trend-status {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(11, 107, 203, 0.26);
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
-}
-
-.trend-status strong {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.trend-status small {
-  font-size: 13.5px;
-  font-weight: 500;
-  opacity: 0.9;
-}
-
 /* ---------- โรคที่มากับฝุ่น ---------- */
 
 /* บรรทัดตัวตั้ง วางค่าฝุ่นที่วัดได้ไว้เหนือผลลัพธ์
