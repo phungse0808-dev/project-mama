@@ -3549,3 +3549,97 @@ button {
     display: none;
   }
 }
+
+/* ตารางเทียบผลกระทบที่ค่าฝุ่นระดับต่าง ๆ ในหน้าโรค */
+.drisk-whatif {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.drisk-whatif-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.drisk-whatif-head span {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-soft);
+}
+
+/* ห้าคอลัมน์ไม่พอดีจอมือถือ ให้เลื่อนในกรอบของตัวเอง ไม่ดันทั้งหน้าให้เลื่อน */
+.drisk-whatif-scroll {
+  overflow-x: auto;
+}
+
+/* จำกัดความกว้างบนจอใหญ่ ไม่งั้นแผงกว้างพันกว่าพิกเซลจะดันตัวเลขไปไกลจากชื่อโรค
+   จนสายตาต้องลากข้ามช่องว่างครึ่งจอกว่าจะจับคู่แถวได้ */
+.drisk-whatif table {
+  width: 100%;
+  max-width: 760px;
+  min-width: 460px;
+  border-collapse: collapse;
+  font-size: 15.5px;
+}
+
+.drisk-whatif th {
+  padding: 0 8px 8px;
+  font-size: 13.5px;
+  font-weight: 400;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--text-soft);
+}
+
+.drisk-whatif th:first-child,
+.drisk-whatif td:first-child {
+  padding-left: 0;
+  text-align: left;
+}
+
+.drisk-whatif td {
+  padding: 7px 8px;
+  border-top: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.drisk-whatif td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+}
+
+.drisk-whatif td em {
+  font-style: normal;
+  color: var(--text-dim);
+}
+
+/* คอลัมน์ค่าตอนนี้มีพื้นจาง ๆ ให้เห็นว่าเป็นค่าจริง ส่วนคอลัมน์อื่นเป็นค่าสมมติ */
+.drisk-whatif .now {
+  background: var(--surface-2);
+}
+
+.drisk-whatif th.now {
+  font-weight: 700;
+  color: var(--text);
+  border-radius: 8px 8px 0 0;
+}
+
+.drisk-whatif-note {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-soft);
+}
