@@ -278,8 +278,10 @@ export type DiseaseSummary = {
       outcome_th: string;
       source_th: string;
       evidence_th: string;
-      /** ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ */
+      /** งานวิจัยหลายชิ้นให้ผลไม่ตรงกัน ตัวเลขจึงยังสรุปไม่ได้แน่ */
       uncertain: boolean;
+      /** การอ้างอิงเต็มของงานวิจัยที่ให้ค่านี้ */
+      reference?: { text: string; url: string; note_th?: string };
     }
   >;
   risk_note_th?: string;
