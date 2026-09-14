@@ -67,6 +67,9 @@ export default function App() {
   const [user, setUser] = useState<AppUser | null>(loadSavedUser);
   const [theme, setTheme] = useState<"light" | "dark">(loadTheme);
   const [summary, setSummary] = useState<Summary | null>(null);
+  // ค่าสรุปทั้งประเทศ แยกจาก summary ที่เปลี่ยนตามพื้นที่ที่เลือก
+  // ใช้กับแถบสัดส่วนสถานีซึ่งเป็นภาพรวมของทั้งเครือข่ายเสมอ
+  const [nationalSummary, setNationalSummary] = useState<Summary | null>(null);
   const [stations, setStations] = useState<StationReading[]>([]);
   const [ranking, setRanking] = useState<ProvinceRank[]>([]);
   const [health, setHealth] = useState<CollectionHealth | null>(null);
@@ -244,6 +247,31 @@ export default function App() {
       clearInterval(timer);
     };
   }, [user, dustProvince]);
+
+  // ภาพรวมทั้งประเทศสำหรับแถบสัดส่วนสถานี ไม่ขึ้นกับพื้นที่ที่เลือก
+  //
+  // แถบนี้ตอบว่าตอนนี้ทั้งเครือข่ายอยู่ระดับไหนกันบ้าง ถ้าเปลี่ยนตามจังหวัด
+  // จังหวัดที่มีสถานีเดียวจะได้แถบสีเดียวเต็มแถว ซึ่งไม่ได้บอกอะไรเพิ่มจากการ์ดข้างบน
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const result = await api.summary(null);
+        if (!cancelled) setNationalSummary(result);
+      } catch {
+        // ดึงไม่สำเร็จก็แค่ไม่ขึ้นแถบ ข้อผิดพลาดหลักแจ้งจากค่าสรุปของพื้นที่อยู่แล้ว
+      }
+    };
+
+    void load();
+    const timer = setInterval(() => void load(), 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [user]);
 
   // ล้างสถานีที่เลือกไว้เมื่อสถานีนั้นไม่ได้อยู่ในจังหวัดที่เลือก
   //
@@ -473,7 +501,7 @@ export default function App() {
                 stationSummary={stationSummary}
               />
             )}
-            {summary && <LevelBar summary={summary} />}
+            {nationalSummary && <LevelBar summary={nationalSummary} />}
 
             <h2 className="section-heading">
               สถานการณ์ตอนนี้
