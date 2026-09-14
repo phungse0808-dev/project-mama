@@ -135,6 +135,56 @@ def record_wind(session: Session) -> int:
     return added
 
 
+# ข้อมูลอากาศย้อนหลังจาก NASA POWER ลองดึงอย่างมากวันละครั้ง
+#
+# ต้นทางออกข้อมูลเป็นรายวันและตามหลังวันจริงอยู่หลายวัน การถามทุกชั่วโมง
+# ได้แค่คำตอบว่ายังไม่มีวันใหม่ แต่ต้องยิงคำขอเจ็ดสิบกว่าจังหวัดทุกรอบ
+WEATHER_EVERY_HOURS = 20
+
+# ต้นทางตามหลังวันจริงราวสามวัน ขอถึงแค่นั้นพอ ตรงกับสคริปต์ดึงด้วยมือ
+WEATHER_LAG_DAYS = 3
+
+
+def record_weather(session: Session) -> int:
+    """เติมข้อมูลอากาศรายวันต่อจากวันล่าสุดที่มี คืนจำนวนแถวที่เพิ่มใหม่
+
+    ทำไมต้องมี
+        เดิมตัวเก็บอัตโนมัติเก็บแค่ค่าฝุ่นกับลม ส่วนข้อมูลอากาศรายวันต้องสั่งด้วยมือ
+        ซึ่งไม่มีใครสั่งเลยตั้งแต่ 17 ส.ค. 2569 ข้อมูลค้างอยู่ที่ 14 ส.ค.
+        พอค้างเกินสามสิบวัน กราฟอากาศย้อนหลังสามสิบวันก็หาข้อมูลไม่เจอสักแถว
+        แล้วหน้าเว็บขึ้นข้อผิดพลาด 404 แทนกราฟ
+
+    ข้ามทันทีโดยไม่ยิงคำขอเมื่อไม่มีวันใหม่ให้ดึง
+    หรือเมื่อเพิ่งลองดึงไปภายในยี่สิบชั่วโมง ไม่ว่าครั้งนั้นจะได้ข้อมูลหรือไม่
+
+    กลืนข้อผิดพลาดที่ชั้นผู้เรียก เพราะเป็นข้อมูลเสริม
+    ถ้าต้นทางล่มก็ไม่ควรทำให้รอบเก็บค่าฝุ่นซึ่งเป็นงานหลักล้มไปด้วย
+    """
+    from datetime import date, timedelta
+
+    from sqlmodel import col, func
+
+    from app.models import CollectionLog
+    from app.weather import collect, latest_observed
+
+    end = date.today() - timedelta(days=WEATHER_LAG_DAYS)
+    last = latest_observed(session)
+    start = (last + timedelta(days=1)) if last else None
+    if start is None or start > end:
+        return 0
+
+    tried = session.exec(
+        select(func.max(col(CollectionLog.started_at))).where(
+            CollectionLog.source == "nasa_power"
+        )
+    ).one()
+    if tried and datetime.now() - tried < timedelta(hours=WEATHER_EVERY_HOURS):
+        return 0
+
+    log = collect(session, start, end)
+    return log.records_new
+
+
 def collect_once() -> int:
     """เก็บข้อมูลหนึ่งรอบ คืนจำนวนค่าตรวจวัดที่บันทึกใหม่
 
@@ -152,6 +202,14 @@ def collect_once() -> int:
         else:
             if winds:
                 logger.info("บันทึกลมรายชั่วโมงเพิ่ม %s จังหวัด", winds)
+
+        try:
+            weather = record_weather(session)
+        except Exception:
+            logger.warning("เติมข้อมูลอากาศรายวันไม่สำเร็จ จะลองใหม่รอบถัดไป", exc_info=True)
+        else:
+            if weather:
+                logger.info("เติมข้อมูลอากาศรายวันเพิ่ม %s แถว", weather)
 
         return log.records_new
 
