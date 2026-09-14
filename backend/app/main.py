@@ -13,7 +13,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from sqlmodel import Session, col, desc, func, select
+from sqlmodel import Session, col, select
 
 from app import collector
 from app.config import CORS_ORIGINS
@@ -26,7 +26,6 @@ from app.services import (
     all_stations_latest,
     collection_health,
     disease_summary,
-    forecast_accuracy,
     health_guidance,
     national_summary,
     personal_summary,
@@ -34,9 +33,7 @@ from app.services import (
     province_ranking,
     rain_chance,
     sign_in,
-    station_daily,
     pm25_hourly_series,
-    station_history,
     station_summary,
     update_profile,
     weather_history,
@@ -166,19 +163,6 @@ def get_pm25_hourly(
     return pm25_hourly_series(session, province, min(max(hours, 2), 168))
 
 
-@app.get("/api/stations/{station_code}/history", tags=["แดชบอร์ด"])
-def get_station_history(
-    station_code: str,
-    hours: int = Query(48, ge=1, le=720),
-    session: Session = Depends(get_session),
-) -> dict:
-    """ประวัติค่าตรวจวัดย้อนหลังของหนึ่งสถานี"""
-    result = station_history(session, station_code, hours)
-    if not result:
-        raise HTTPException(status_code=404, detail=f"ไม่พบสถานีรหัส {station_code}")
-    return result
-
-
 @app.get("/api/stations/{station_code}/summary", tags=["แดชบอร์ด"])
 def get_station_summary(
     station_code: str,
@@ -191,19 +175,6 @@ def get_station_summary(
     ขอบเขตนี้มีผลเฉพาะกลุ่มการ์ดนั้น ส่วนอื่นของหน้ายังเป็นของทั้งจังหวัด
     """
     result = station_summary(session, station_code, hours)
-    if not result:
-        raise HTTPException(status_code=404, detail=f"ไม่พบสถานีรหัส {station_code}")
-    return result
-
-
-@app.get("/api/stations/{station_code}/daily", tags=["แดชบอร์ด"])
-def get_station_daily(
-    station_code: str,
-    days: int = Query(30, ge=1, le=730),
-    session: Session = Depends(get_session),
-) -> dict:
-    """ค่าเฉลี่ยรายวันของสถานี สำหรับเทียบกับมาตรฐาน 24 ชั่วโมงของประเทศไทย"""
-    result = station_daily(session, station_code, days)
     if not result:
         raise HTTPException(status_code=404, detail=f"ไม่พบสถานีรหัส {station_code}")
     return result
@@ -242,24 +213,6 @@ class ProfileRequest(BaseModel):
 
     province: str | None = Field(default=None, max_length=60)
     risk_group: str | None = Field(default=None, max_length=40)
-
-
-@app.get("/api/forecast-accuracy/{province}", tags=["ข้อมูลอากาศ"])
-def get_forecast_accuracy(
-    province: str,
-    station: str | None = Query(None, description="รหัสสถานี ถ้าไม่ระบุจะเฉลี่ยทั้งจังหวัด"),
-    session: Session = Depends(get_session),
-) -> dict:
-    """ความแม่นยำของแบบจำลองพยากรณ์ เทียบกับค่าที่สถานีตรวจวัดของระบบวัดได้จริง
-
-    เป็นการตรวจสอบว่าแบบจำลองบรรยากาศระดับโลกใช้กับพื้นที่ไทยได้ดีเพียงใด
-    ซึ่งทำได้เพราะระบบเก็บค่าที่วัดได้จริงรายชั่วโมงไว้เอง
-
-    ดึงค่าฝุ่นล่าสุดเข้าฐานข้อมูลก่อนคำนวณเสมอ เพราะความคลาดเคลื่อนคิดจาก
-    ค่าที่วัดได้จริง ถ้าฐานข้อมูลค้างอยู่ที่ชั่วโมงเก่า ค่าที่ได้จะไม่สะท้อนของล่าสุด
-    """
-    refresh_if_stale(session)
-    return forecast_accuracy(session, province, station)
 
 
 @app.get("/api/pm25-forecast/{province}", tags=["ข้อมูลอากาศ"])
@@ -414,17 +367,6 @@ def get_disease_summary(session: Session = Depends(get_session)) -> dict:
 def get_collection_health(session: Session = Depends(get_session)) -> dict:
     """สถานะและความครบถ้วนของการเก็บข้อมูล"""
     return collection_health(session)
-
-
-@app.get("/api/stats", tags=["ระบบ"])
-def get_stats(session: Session = Depends(get_session)) -> dict:
-    """จำนวนสถานีแยกตามจังหวัด ใช้ตรวจสอบความครอบคลุมของเครือข่ายสถานี"""
-    rows = session.exec(
-        select(Station.province, func.count())
-        .group_by(Station.province)
-        .order_by(desc(func.count()))
-    ).all()
-    return {"provinces": [{"province": row[0], "stations": row[1]} for row in rows]}
 
 
 mount_frontend()

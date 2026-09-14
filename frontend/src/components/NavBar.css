@@ -134,10 +134,6 @@
 }
 
 @media (max-width: 797px) {
-  .navbar-time {
-    display: none;
-  }
-
   .navbar-item {
     padding: 9px 13px;
     font-size: 16px;

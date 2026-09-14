@@ -731,40 +731,6 @@ def rain_chance(session: Session, province: str) -> dict:
     }
 
 
-def station_history(session: Session, station_code: str, hours: int) -> dict:
-    """ประวัติค่าตรวจวัดย้อนหลังของหนึ่งสถานี"""
-    station = session.exec(
-        select(Station).where(Station.station_code == station_code)
-    ).first()
-    if station is None:
-        return {}
-
-    since = datetime.now() - timedelta(hours=hours)
-    readings = session.exec(
-        select(Reading)
-        .where(Reading.station_id == station.id, col(Reading.measured_at) >= since)
-        .order_by(col(Reading.measured_at))
-    ).all()
-
-    return {
-        "station_code": station.station_code,
-        "name_th": station.name_th,
-        "province": station.province,
-        "latitude": station.latitude,
-        "longitude": station.longitude,
-        "points": [
-            {
-                "measured_at": r.measured_at.isoformat(),
-                "label": f"{r.measured_at:%H:%M}",
-                "pm25": r.pm25,
-                "pm10": r.pm10,
-                "aqi": r.aqi,
-            }
-            for r in readings
-        ],
-    }
-
-
 def station_summary(session: Session, station_code: str, hours: int = 24) -> dict:
     """สรุปค่าฝุ่นของสถานีเดียว สำหรับตอนที่ผู้ใช้เจาะดูทีละสถานี
 
@@ -1009,79 +975,6 @@ def alerts(session: Session) -> dict:
         "who_guideline": WHO_GUIDELINE_PM25,
         "over_thai_standard": over_thai,
         "over_who_guideline": over_who,
-    }
-
-
-# จำนวนชั่วโมงขั้นต่ำที่ต้องมีในหนึ่งวัน จึงจะถือว่าค่าเฉลี่ยรายวันนั้นใช้อ้างอิงได้
-#
-# ใช้เกณฑ์ 18 ชั่วโมงจาก 24 ชั่วโมง หรือ 75 เปอร์เซ็นต์ ซึ่งเป็นเกณฑ์ที่ใช้กันทั่วไป
-# ในงานด้านคุณภาพอากาศ ถ้าวันไหนมีข้อมูลน้อยกว่านี้ ค่าเฉลี่ยจะเอนไปตามช่วงเวลา
-# ที่บังเอิญเก็บได้ เช่นเก็บได้แต่ตอนกลางคืนซึ่งฝุ่นสะสมมากกว่ากลางวัน
-MIN_HOURS_PER_DAY = 18
-
-
-def station_daily(session: Session, station_code: str, days: int) -> dict:
-    """ค่าเฉลี่ยรายวันของหนึ่งสถานี
-
-    ทำไมต้องมีค่ารายวัน
-        มาตรฐาน PM2.5 ของประเทศไทยที่ 37.5 ไมโครกรัมต่อลูกบาศก์เมตร
-        เป็นค่าเฉลี่ย 24 ชั่วโมง ไม่ใช่ค่า ณ ชั่วโมงใดชั่วโมงหนึ่ง
-        การเทียบค่ารายชั่วโมงกับมาตรฐานรายวันโดยตรงจึงไม่ถูกต้องตามหลักวิชาการ
-    """
-    station = session.exec(
-        select(Station).where(Station.station_code == station_code)
-    ).first()
-    if station is None:
-        return {}
-
-    since = datetime.now() - timedelta(days=days)
-    day = func.date(Reading.measured_at)
-
-    rows = session.exec(
-        select(
-            day.label("day"),
-            func.avg(Reading.pm25),
-            func.min(Reading.pm25),
-            func.max(Reading.pm25),
-            func.count(Reading.pm25),
-        )
-        .where(
-            Reading.station_id == station.id,
-            col(Reading.measured_at) >= since,
-            col(Reading.pm25).is_not(None),
-        )
-        .group_by(day)
-        .order_by(day)
-    ).all()
-
-    points = []
-    for value, average, lowest, highest, hours in rows:
-        observed = date.fromisoformat(str(value))
-        points.append(
-            {
-                "observed_on": observed.isoformat(),
-                "label": f"{observed:%d/%m}",
-                "pm25_avg": round(float(average), 1),
-                "pm25_min": round(float(lowest), 1),
-                "pm25_max": round(float(highest), 1),
-                "hours": int(hours),
-                # วันที่ชั่วโมงไม่ครบ ค่าเฉลี่ยยังใช้เทียบมาตรฐานไม่ได้
-                "complete": int(hours) >= MIN_HOURS_PER_DAY,
-                "over_thai_standard": float(average) > THAI_STANDARD_PM25,
-            }
-        )
-
-    complete_days = [item for item in points if item["complete"]]
-    return {
-        "station_code": station.station_code,
-        "name_th": station.name_th,
-        "province": station.province,
-        "thai_standard": THAI_STANDARD_PM25,
-        "min_hours_per_day": MIN_HOURS_PER_DAY,
-        "days_total": len(points),
-        "days_complete": len(complete_days),
-        "days_over_standard": len([d for d in complete_days if d["over_thai_standard"]]),
-        "points": points,
     }
 
 
