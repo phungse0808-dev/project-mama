@@ -387,7 +387,12 @@ export function SummaryCards({
                   </p>
                   {/* คำอธิบายสภาพอากาศคือคำตอบว่าตอนนี้เป็นอย่างไร
                       จึงให้เด่นพอกับตัวเลข ไม่ใช่ตัวเล็กปนกับข้อมูลอื่นเหมือนเดิม */}
-                  <p className="weather-now-condition">{now.condition}</p>
+                  <p className="weather-now-condition">
+                    {now.condition}
+                    {/* ป้ายบอกว่าคำนี้มาจากเครื่องวัด ไม่ใช่แบบจำลอง
+                        คนอ่านจะได้รู้ว่าทำไมคำบอกไม่ตรงกับไอคอนของแหล่งอื่น */}
+                    {now.condition_measured && <span className="weather-measured-pill">วัดได้จริง</span>}
+                  </p>
                 </div>
 
                 {/* ลมอยู่คู่กับอุณหภูมิ คั่นด้วยเส้นตั้ง
@@ -459,6 +464,52 @@ export function SummaryCards({
                     <p className="weather-range-label">สูงสุด</p>
                     <p className="weather-range-value high">{now.temp_max}°</p>
                   </div>
+                </div>
+              )}
+
+              {/* ฝนที่วัดได้จริงจากเครื่องวัดรอบจุดกลางจังหวัด ชั่วโมงล่าสุด
+
+                  ทำไมต้องมี
+                      คำบอกสภาพอากาศข้างบนเป็นค่าที่แบบจำลองคำนวณ ฝนหน้าฝนตกเป็นหย่อม ๆ
+                      แบบจำลองจับไม่ทัน เคยบอกว่ามีเมฆเป็นส่วนมากทั้งที่ฝนตกอยู่
+                      กล่องนี้บอกค่าจากเครื่องวัดจริง พร้อมจำนวนเครื่องที่นับ
+
+                  บอกช่วงชั่วโมงไว้ทุกครั้ง เพราะต้นทางออกข้อมูลเป็นชั่วโมงเต็ม
+                  ฝนที่เพิ่งเริ่มตกหลังต้นชั่วโมงจะยังไม่มีในกล่องนี้ คนอ่านต้องรู้
+
+                  ซ่อนทั้งกล่องเมื่อเรียกต้นทางไม่สำเร็จ ไม่ใช่ขึ้นว่าไม่มีฝน
+                  เพราะไม่มีข้อมูลกับวัดได้ศูนย์เป็นคนละความหมายกัน */}
+              {now.measured_rain && (
+                <div
+                  className={
+                    now.measured_rain.raining > 0 ? "weather-measured rainy" : "weather-measured"
+                  }
+                >
+                  <p className="weather-measured-head">
+                    ฝนที่วัดได้จริง
+                    {now.measured_rain.hour_end
+                      ? ` · ชั่วโมง ${now.measured_rain.hour_start}–${now.measured_rain.hour_end}`
+                      : ""}
+                  </p>
+                  <p className="weather-measured-value">
+                    {now.measured_rain.stations === 0 ? (
+                      <>ไม่มีเครื่องวัดฝนในรัศมี {now.measured_rain.radius_km} กม. ของจุดกลางจังหวัด</>
+                    ) : now.measured_rain.raining > 0 ? (
+                      <>
+                        <strong>
+                          {now.measured_rain.raining} จาก {now.measured_rain.stations} สถานี
+                        </strong>{" "}
+                        รอบ {now.measured_rain.radius_km} กม. มากสุด {now.measured_rain.max_mm} มม. ที่{" "}
+                        {now.measured_rain.max_station}
+                      </>
+                    ) : (
+                      <>
+                        <strong>ไม่มีฝน</strong> ใน {now.measured_rain.stations} สถานีวัดฝนรอบ{" "}
+                        {now.measured_rain.radius_km} กม.
+                      </>
+                    )}
+                  </p>
+                  <p className="weather-measured-source">จาก{now.measured_rain.source}</p>
                 </div>
               )}
             </article>

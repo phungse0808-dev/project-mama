@@ -385,6 +385,25 @@ export type WeatherNow = {
   temp_max?: number | null;
   temp_min?: number | null;
   rain_today_mm?: number | null;
+  /** ฝนชั่วโมงล่าสุดจากเครื่องวัดรอบจุดกลางจังหวัด null เมื่อเรียกต้นทางไม่สำเร็จ */
+  measured_rain?: MeasuredRain | null;
+  /** true เมื่อคำบอกสภาพอากาศถูกเปลี่ยนตามเครื่องวัด ไม่ใช่คำของแบบจำลอง */
+  condition_measured?: boolean;
+  /** คำของแบบจำลองก่อนถูกเปลี่ยน มีเฉพาะตอน condition_measured เป็น true */
+  model_condition?: string;
+};
+
+export type MeasuredRain = {
+  radius_km: number;
+  stations: number;
+  raining: number;
+  hour_start?: string;
+  hour_end?: string;
+  measured_at?: string;
+  max_mm?: number;
+  max_station?: string | null;
+  max_amphoe?: string | null;
+  source: string;
 };
 
 async function get<T>(path: string): Promise<T> {

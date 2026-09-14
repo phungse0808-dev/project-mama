@@ -3435,3 +3435,54 @@ button {
   stroke: var(--level-edge);
   stroke-width: 0.6;
 }
+
+/* ฝนที่วัดได้จริงในการ์ดอากาศตอนนี้ */
+.weather-measured {
+  margin: 12px 0 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+/* มีเครื่องวัดฝนได้ ใช้สีเน้นของธีม ไม่ใช้สีระดับคุณภาพอากาศ
+   เพราะฝนไม่ใช่ระดับฝุ่น ถ้าใช้เขียวเหลืองแดงจะอ่านว่าเป็นเรื่องฝุ่น */
+.weather-measured.rainy {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.weather-measured-head {
+  margin: 0 0 3px;
+  font-size: 13.5px;
+  color: var(--text-soft);
+}
+
+.weather-measured-value {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.weather-measured-value strong {
+  font-weight: 700;
+}
+
+.weather-measured-source {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.weather-measured-pill {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  vertical-align: 2px;
+  background: var(--accent);
+  color: var(--on-accent);
+}

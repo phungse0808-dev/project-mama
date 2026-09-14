@@ -16,6 +16,7 @@ from app.health_advice import (
 )
 from app.forecast import fetch_now, fetch_pm25_forecast, fetch_wind
 from app.live import minutes_behind
+from app.thaiwater import rain_near
 from app.models import AppUser, CollectionLog, DiseaseDaily, Reading, Station, WeatherDaily
 
 # ถ้าสถานีไม่ส่งข้อมูลใหม่เกินจำนวนชั่วโมงนี้ ถือว่าข้อมูลค้าง ไม่นำมาคิดภาพรวม
@@ -249,7 +250,32 @@ def weather_now(session: Session, province: str) -> dict:
             "reason": "เรียกข้อมูลสภาพอากาศปัจจุบันไม่สำเร็จ อาจเป็นเพราะไม่มีอินเทอร์เน็ต",
         }
 
-    return {"available": True, "province": province, **data}
+    result = {"available": True, "province": province, **data}
+
+    # ฝนที่วัดได้จริงจากเครื่องวัดรอบจุดกลางจังหวัด ชั่วโมงล่าสุด
+    #
+    # ถ้าเครื่องวัดในรัศมีวัดฝนได้ แต่แบบจำลองยังบอกว่าไม่มีฝน ให้เชื่อเครื่องวัด
+    # เปลี่ยนคำบอกกับไอคอนเป็นมีฝนตก และเก็บคำของแบบจำลองไว้ใน model_condition
+    # ถ้าแบบจำลองบอกฝนอยู่แล้วไม่ต้องแตะ เพราะคำของแบบจำลองละเอียดกว่า เช่น ฝนฟ้าคะนอง
+    #
+    # สร้าง dict ใหม่ ไม่แก้ของเดิม เพราะ fetch_now เก็บผลไว้ใช้ซ้ำ
+    # ถ้าแก้ในที่ คำว่ามีฝนตกจะค้างอยู่ต่อแม้เครื่องวัดรอบถัดไปไม่มีฝนแล้ว
+    measured = rain_near(*coords)
+    result["measured_rain"] = measured
+    result["condition_measured"] = False
+    if measured and measured["raining"] > 0 and not _code_is_rain(data.get("weather_code")):
+        result["model_condition"] = data.get("condition")
+        result["condition"] = "มีฝนตก"
+        result["weather_code"] = 61
+        result["condition_measured"] = True
+    return result
+
+
+def _code_is_rain(code: int | None) -> bool:
+    """รหัสสภาพอากาศของ WMO ที่หมายถึงมีฝนหรือฝนฟ้าคะนองแล้ว"""
+    if code is None:
+        return False
+    return 51 <= code <= 67 or 80 <= code <= 82 or 95 <= code <= 99
 
 
 def wind_now(session: Session, province: str, hours: int = 24) -> dict:
