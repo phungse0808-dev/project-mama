@@ -112,8 +112,20 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  *
  * กว้างขึ้นจาก 2 เป็น 4 พร้อมกับเปลี่ยนไปใช้สีที่อ่อนลง
  * ช่องขาวที่กว้างขึ้นทำให้แต่ละชิ้นแยกจากกันด้วยตัวมันเอง ไม่ต้องพึ่งสีเข้มช่วย
+ *
+ * ขยายเป็น 6 ตอนเปลี่ยนเป็นปลายมน ช่องนี้วัดจากขอบมนถึงขอบมน
+ * ปลายมนกินที่เข้าไปในช่องครึ่งหนึ่งของความหนาวงทั้งสองข้าง
+ * จึงหักความหนาวงออกจากความยาวชิ้นแยกต่างหากอีกที ไม่ใช่รวมไว้ในตัวเลขนี้
  */
-const SLICE_GAP = 4;
+const SLICE_GAP = 6;
+
+/** ความหนาของวง หน่วยเดียวกับรัศมี
+ *
+ * บางลงจาก 26 เป็น 16 พร้อมปลายชิ้นมน วงหนาปลายเหลี่ยมดูเป็นกราฟรุ่นเก่า
+ * วงที่บางลงยังเห็นสัดส่วนชิ้นได้เท่าเดิม เพราะสิ่งที่ตาใช้เทียบคือความยาวรอบวง ไม่ใช่ความหนา
+ * และได้ที่ตรงกลางเพิ่ม พอให้ใส่ป้ายระดับฝุ่นใต้ตัวเลขได้
+ */
+const RING_STROKE = 16;
 
 /** เกณฑ์ที่ใช้เทียบ ตรงกับค่าใน backend/app/health_advice.py
  *
@@ -301,8 +313,16 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
     const slice = {
       ...row,
       share,
-      dash: `${Math.max(0, length - SLICE_GAP)} ${CIRCUMFERENCE - length + SLICE_GAP}`,
-      offset: -cursor,
+      // ปลายมนยื่นออกไปครึ่งหนึ่งของความหนาวงทั้งสองข้าง
+      // จึงวาดเส้นสั้นกว่าชิ้นจริงเท่ากับความหนาวงบวกช่องว่าง แล้วเลื่อนจุดเริ่มเข้าไปครึ่งหนึ่ง
+      // ขอบมนของชิ้นจึงอยู่ในขอบเขตสัดส่วนของตัวเองพอดี ไม่ไปกินที่ชิ้นข้าง ๆ
+      // ชิ้นเล็กสุดตอนนี้ยาวราว 24 หน่วย ยังยาวกว่าที่หักออก 22 หน่วย
+      // ถ้าเล็กกว่านั้นจะเหลือเป็นจุดกลมเท่าความหนาวง ซึ่งยังเห็นว่ามีอยู่
+      dash: (() => {
+        const drawn = Math.max(0.01, length - SLICE_GAP - RING_STROKE);
+        return `${drawn} ${CIRCUMFERENCE - drawn}`;
+      })(),
+      offset: -(cursor + RING_STROKE / 2 + SLICE_GAP / 2),
     };
     cursor += length;
     return slice;
@@ -391,7 +411,7 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
                   : "สัดส่วนผลของฝุ่นต่อแต่ละโรค"
               }
             >
-              <g transform="rotate(-90 90 90)" fill="none" strokeWidth="26">
+              <g transform="rotate(-90 90 90)" fill="none" strokeWidth={RING_STROKE}>
                 {picked ? (
                   <>
                     {/* รางสีเทาคืออีกหกโรคที่ไม่ได้เลือก ไม่ใช่ที่ว่างเปล่า ๆ
@@ -414,6 +434,7 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
                       cy="90"
                       r={RADIUS}
                       stroke={slice.color}
+                      strokeLinecap="round"
                       strokeDasharray={slice.dash}
                       strokeDashoffset={slice.offset}
                     />
@@ -440,12 +461,66 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
                 </>
               ) : (
                 <>
-                  <text className="drisk-ring-value" x="90" y="84" textAnchor="middle">
+                  <text
+                    className="drisk-ring-value"
+                    x="90"
+                    y={summary?.level ? 78 : 84}
+                    textAnchor="middle"
+                  >
                     {current}
                   </text>
-                  <text className="drisk-ring-unit" x="90" y="104" textAnchor="middle">
+                  <text
+                    className="drisk-ring-unit"
+                    x="90"
+                    y={summary?.level ? 94 : 104}
+                    textAnchor="middle"
+                  >
                     µg/m³ ที่วัดได้
                   </text>
+
+                  {/* ป้ายระดับฝุ่นใต้ตัวเลข สีตามระดับจริง ชุดเดียวกับการ์ดหน้าอื่น
+                      วงจึงบอกได้ทั้งฝุ่นระดับไหน และระดับนั้นกระทบโรคไหนหนักกว่ากัน
+
+                      ความกว้างป้ายประมาณจากจำนวนตัวอักษรที่กินที่จริง
+                      ตัดสระบนล่างกับวรรณยุกต์ออกก่อนนับ เพราะซ้อนอยู่บนตัวอักษรอื่น ไม่เพิ่มความกว้าง
+                      ชื่อยาวถูกย่อก่อนวาด ดูเหตุผลในโค้ดข้างล่าง */}
+                  {summary?.level &&
+                    (() => {
+                      // รูกลางของวงกว้างแค่ 124 หน่วย ชื่อระดับเต็มอย่าง ระดับเริ่มมีผลกระทบต่อสุขภาพ
+                      // วัดได้ 123 หน่วย ล้นออกไปทับตัววง จึงตัดคำว่าต่อสุขภาพท้ายชื่อทิ้ง
+                      // และเติมคำว่าระดับข้างหน้าเฉพาะชื่อที่สั้นพอ ได้ ระดับดี ระดับปานกลาง
+                      // แต่ชื่อยาวเหลือแค่ เริ่มมีผลกระทบ
+                      //
+                      // วัดจริงในเบราว์เซอร์ได้ราว 5.4 ถึง 5.9 หน่วยต่อตัวอักษร ใช้ 6 เผื่อไว้
+                      // ป้ายกว้างสุดจึงไม่เกิน 104 มุมป้ายยังอยู่ในรูกลาง
+                      const stripMarks = (text: string) =>
+                        text.replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, "");
+                      const short = summary.level.label_th.replace(/ต่อสุขภาพ$/, "");
+                      const label = stripMarks(short).length <= 9 ? `ระดับ${short}` : short;
+                      const width = Math.min(104, stripMarks(label).length * 6 + 24);
+                      return (
+                        <g className="drisk-ring-level">
+                          <rect
+                            x={90 - width / 2}
+                            y={102}
+                            width={width}
+                            height={17}
+                            rx={8.5}
+                            fill={summary.level.color}
+                            fillOpacity={0.18}
+                          />
+                          <circle
+                            cx={90 - width / 2 + 9}
+                            cy={110.5}
+                            r={3.2}
+                            fill={summary.level.color}
+                          />
+                          <text x={90 + 5} y={114} textAnchor="middle">
+                            {label}
+                          </text>
+                        </g>
+                      );
+                    })()}
                 </>
               )}
             </svg>
