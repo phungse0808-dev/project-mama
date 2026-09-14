@@ -294,25 +294,13 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
   })();
 
   let cursor = 0;
-  // ช่วงความเชื่อมั่นของแต่ละโรค แปลงเป็นหน่วยเดียวกับคอลัมน์เพิ่มขึ้น
-  //
-  // เอา ci_low กับ ci_high เข้าสูตรเดียวกับค่ากลาง ไม่ได้โชว์ค่า RR ดิบ
-  // เพราะ RR 1.008 ถึง 1.413 เทียบกับตัวเลขข้าง ๆ ในตารางไม่ได้
-  const bands = allRows.map((row) => ({
-    group: row.group,
-    low: excessPct(current, row.risk.ci_low),
-    high: excessPct(current, row.risk.ci_high),
-  }));
 
   const slices = allRows.map((row) => {
     const share = row.pct / totalPct;
     const length = share * CIRCUMFERENCE;
-    const band = bands.find((b) => b.group === row.group);
     const slice = {
       ...row,
       share,
-      bandLow: band?.low ?? null,
-      bandHigh: band?.high ?? null,
       dash: `${Math.max(0, length - SLICE_GAP)} ${CIRCUMFERENCE - length + SLICE_GAP}`,
       offset: -cursor,
     };
@@ -462,20 +450,33 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
               )}
             </svg>
 
-            {/* ตารางข้างวงเก็บค่าจริงของทุกโรคไว้ครบ
-                วงกลมบอกได้แค่ว่าชิ้นไหนใหญ่กว่า แต่บอกไม่ได้ว่าเท่าไร
-                ถ้ามีแต่วงอย่างเดียว ตัวเลขที่เป็นสาระจะหายไป
+            {/* ตารางข้างวง ค่าที่เพิ่มขึ้นของทุกโรค ที่ค่าฝุ่นสี่ระดับ
+
+                คอลัมน์แรกคือค่าจริงตอนนี้ อีกสามคอลัมน์ใช้สูตรกับค่าความเสี่ยงชุดเดียวกัน
+                แต่เปลี่ยนค่าฝุ่นที่ใส่เป็นเส้นที่มีที่มา คือค่าแนะนำ WHO มาตรฐานไทย
+                และขอบบนของระดับเริ่มมีผลกระทบ
+
+                เดิมตารางนี้มีคอลัมน์ช่วงที่เป็นไปได้กับสัดส่วน และมีตารางเทียบแยกอยู่ข้างล่าง
+                ค่าตอนนี้จึงโผล่สองที่ในหน้าเดียว ยุบรวมเป็นตารางเดียว
+                สัดส่วนยังดูได้จากขนาดชิ้นในวงกลม
+
+                ช่วงหน้าฝนฝุ่นทั้งประเทศอยู่ราวสิบกว่า ค่าตอนนี้ทุกโรคจึงเล็กมาก
+                ถ้าไม่มีคอลัมน์เทียบ หน้านี้จะดูเหมือนไม่มีอะไรน่ากังวลเลย
 
                 แสดงครบเจ็ดแถวเสมอ แม้ตอนเจาะดูโรคเดียว
                 เพราะค่าของโรคหนึ่งไม่มีความหมายถ้าไม่รู้ว่าโรคอื่นเท่าไร
-                และการที่แถวไม่หายไปไหนทำให้กดสลับแล้วสายตาไม่ต้องหาที่อยู่ใหม่ */}
+                และการที่แถวไม่หายไปไหนทำให้กดสลับแล้วสายตาไม่ต้องหาที่อยู่ใหม่
+
+                ห้าคอลัมน์ไม่พอดีจอมือถือ ห่อไว้ให้เลื่อนแนวนอนในกรอบของตัวเอง */}
+            <div className="drisk-legend-wrap">
             <ul className="drisk-legend">
               <li className="drisk-legend-head">
                 <span />
                 <span>โรค</span>
-                <span>เพิ่มขึ้น</span>
-                <span className="drisk-range-head">ช่วงที่เป็นไปได้</span>
-                <span>สัดส่วน</span>
+                <span className="drisk-legend-now">ตอนนี้ {current}</span>
+                <span>WHO {WHO_GUIDELINE}</span>
+                <span>ไทย {THAI_STANDARD}</span>
+                <span>{HEALTH_EFFECT_LEVEL}</span>
               </li>
               {slices.map((slice) => {
                 const isPicked = picked?.group === slice.group;
@@ -495,22 +496,21 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
                       {slice.short}
                       {slice.risk.uncertain && <em>*</em>}
                     </span>
-                    <span className="drisk-legend-pct">+{slice.pct.toFixed(2)}%</span>
-
-                    {/* ช่วงความเชื่อมั่นเป็นตัวเลขสองตัว ห่างกันมากแปลว่ายังสรุปไม่ได้แน่
-                        เช่น ภูมิแพ้กว้างตั้งแต่ +1 ถึง +55 ขณะที่ผิวหนังอักเสบกว้างไม่ถึงจุดเดียว
-                        ทั้งที่ค่ากลางต่างกันไม่ถึงครึ่งจุด */}
-                    <span className="drisk-range">
-                      {slice.bandLow != null && slice.bandHigh != null
-                        ? `+${slice.bandLow.toFixed(2)} – +${slice.bandHigh.toFixed(2)}`
-                        : "—"}
+                    {/* คอลัมน์ตอนนี้ตัวหนาและมีพื้นจาง ให้เห็นว่าเป็นค่าจริง
+                        สามคอลัมน์ที่เหลือเป็นค่าสมมติ จึงตัวบางกว่า */}
+                    <span className="drisk-legend-pct drisk-legend-now">
+                      +{slice.pct.toFixed(1)}%
                     </span>
-
-                    <span className="drisk-legend-share">{(slice.share * 100).toFixed(1)}%</span>
+                    {[WHO_GUIDELINE, THAI_STANDARD, HEALTH_EFFECT_LEVEL].map((level) => (
+                      <span key={level} className="drisk-legend-val">
+                        +{excessPct(level, slice.risk.relative_risk_per_10).toFixed(1)}%
+                      </span>
+                    ))}
                   </li>
                 );
               })}
             </ul>
+            </div>
           </div>
 
           {/* ที่มาของตัวเลขโผล่ขึ้นมาต่อท้าย ไม่ได้ไปแทนที่ตาราง
@@ -554,69 +554,12 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
               ซึ่งไม่มี ตัวหารเกิดจากการบวกเปอร์เซ็นต์ที่วัดจากฐานคนละฐาน
               ตัวมันเองจึงไม่มีความหมาย บอกได้แค่ความแรงเมื่อเทียบกันเอง */}
           <p className="drisk-ring-note">
-            เครื่องหมายดอกจันคือกลุ่มที่งานวิจัยยังให้ผลไม่ตรงกัน ตัวเลขจึงยังสรุปไม่ได้แน่ ·
-            คอลัมน์เพิ่มขึ้นคือค่าจริงของโรคนั้น ส่วนคอลัมน์สัดส่วนคือความแรงเมื่อเทียบกันเองในวงกลม ·
-            ช่วงที่เป็นไปได้คือขอบล่างกับขอบบนที่งานวิจัยให้ไว้ ห่างกันมากแปลว่ายังสรุปไม่ได้แน่
+            ตัวเลขคือจำนวนผู้เข้ารักษาที่เพิ่มขึ้นเทียบกับวันที่อากาศสะอาด ·
+            คอลัมน์ตอนนี้ใช้ค่าฝุ่นที่วัดได้จริง อีกสามคอลัมน์ใช้สูตรเดียวกันแต่เปลี่ยนค่าฝุ่นที่ใส่ ·
+            15 คือค่าแนะนำขององค์การอนามัยโลก 37.5 และ 75 คือเส้นแบ่งระดับของกรมควบคุมมลพิษ ·
+            ขนาดชิ้นในวงกลมคือความแรงเมื่อเทียบกันเอง ·
+            เครื่องหมายดอกจันคือกลุ่มที่งานวิจัยยังให้ผลไม่ตรงกัน ตัวเลขจึงยังสรุปไม่ได้แน่
           </p>
-
-          {/* ตารางเทียบว่าถ้าฝุ่นหนักขึ้น แต่ละโรคเพิ่มขึ้นแค่ไหน
-
-              ทำไมต้องมี
-                  ช่วงหน้าฝนฝุ่นทั้งประเทศอยู่ราวสิบกว่า ตัวเลขทุกโรคจึงเล็กมาก
-                  ถ้าดูแค่ค่าตอนนี้ หน้านี้จะดูเหมือนไม่มีอะไรน่ากังวลเลย
-                  ทั้งที่หน้าแล้งค่าเดียวกันโตขึ้นหลายเท่า
-
-              ทำไมเป็นตาราง ไม่ใช่ปุ่มสลับค่าฝุ่น
-                  คำถามของส่วนนี้คือโตขึ้นเท่าไร ซึ่งต้องเห็นหลายระดับพร้อมกัน
-                  ปุ่มทำให้ต้องจำตัวเลขข้ามการกด และวงกลมแทบไม่ขยับเลย
-                  เพราะทุกโรคโตพร้อมกัน สัดส่วนภูมิแพ้จาก 17.6 ถึง 75 ขยับไม่ถึงหนึ่งจุด
-                  คนกดจะนึกว่าปุ่มไม่ทำงาน
-
-              ไม่ใส่ช่วงที่เป็นไปได้ในตารางนี้ เพราะห้าคอลัมน์คูณสองตัวเลขแน่นเกินจะอ่าน
-              ช่วงของค่าตอนนี้ยังดูได้ในตารางข้างบน
-
-              ใช้สูตรกับค่าความเสี่ยงชุดเดียวกับตารางข้างบนทุกตัว เปลี่ยนแค่ค่าฝุ่นที่ใส่
-              เรียงแถวตามตารางข้างบน สายตาจึงไล่หาโรคเดิมได้ที่ตำแหน่งเดิม */}
-          <div className="drisk-whatif">
-            <p className="drisk-whatif-head">
-              ถ้าฝุ่นหนักขึ้น แต่ละโรคเพิ่มขึ้นแค่ไหน
-              <span>คิดด้วยสูตรเดียวกับตารางข้างบน เปลี่ยนแค่ค่าฝุ่น</span>
-            </p>
-            <div className="drisk-whatif-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>โรค</th>
-                    <th className="now">ตอนนี้ {current}</th>
-                    <th>WHO {WHO_GUIDELINE}</th>
-                    <th>ไทย {THAI_STANDARD}</th>
-                    <th>{HEALTH_EFFECT_LEVEL}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {slices.map((slice) => (
-                    <tr key={slice.group}>
-                      <td>
-                        <span className="drisk-legend-dot" style={{ background: slice.color }} />
-                        {slice.short}
-                        {slice.risk.uncertain && <em>*</em>}
-                      </td>
-                      {[current, WHO_GUIDELINE, THAI_STANDARD, HEALTH_EFFECT_LEVEL].map(
-                        (level, index) => (
-                          <td key={index} className={index === 0 ? "now" : undefined}>
-                            +{excessPct(level, slice.risk.relative_risk_per_10).toFixed(1)}%
-                          </td>
-                        )
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="drisk-whatif-note">
-              15 คือค่าแนะนำขององค์การอนามัยโลก · 37.5 และ 75 คือเส้นแบ่งระดับคุณภาพอากาศของกรมควบคุมมลพิษ
-            </p>
-          </div>
 
           {/* แถบวิธีป้องกัน เปลี่ยนทั้งข้อความและสีตามค่าฝุ่นที่วัดได้
 

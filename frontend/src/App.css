@@ -3011,20 +3011,32 @@ button {
    คุมความกว้างไว้ไม่เกิน 430
    ถ้าปล่อยให้ยืดเต็มแถว ชื่อโรคจะอยู่ซ้ายสุดและตัวเลขไปอยู่ขวาสุด
    ห่างกันเกินเจ็ดร้อยพิกเซล ต้องกวาดตาข้ามทั้งจอกว่าจะรู้ว่าเลขไหนของโรคไหน */
+/* กรอบของตารางข้างวง ตารางมีห้าคอลัมน์ ไม่พอดีจอมือถือ
+   ให้เลื่อนแนวนอนในกรอบนี้ ไม่ดันทั้งหน้าให้เลื่อน
+
+   ห่อ 280 ด้วย min(...) ให้ยุบตามพื้นที่จริงได้เมื่อจอแคบกว่านั้น
+   บนจอ 375 พื้นที่ในแผงเหลือ 277 ถ้าใส่ 280 ดิบ ๆ จะล้นออกไปสามพิกเซล
+
+   คุมความกว้างไว้ไม่เกิน 600 ถ้ายืดเต็มแถว ชื่อโรคกับตัวเลขจะห่างกันจนต้องกวาดตาข้ามจอ */
+.drisk-legend-wrap {
+  flex: 1;
+  min-width: min(280px, 100%);
+  max-width: 600px;
+  overflow-x: auto;
+}
+
 .drisk-legend {
   list-style: none;
   margin: 0;
   padding: 0;
-  flex: 1;
-  /* ห่อ 280 ด้วย min(...) ให้ยุบตามพื้นที่จริงได้เมื่อจอแคบกว่านั้น
-     บนจอ 375 พื้นที่ในแผงเหลือ 277 ถ้าใส่ 280 ดิบ ๆ จะล้นออกไปสามพิกเซล */
-  min-width: min(280px, 100%);
-  max-width: 430px;
+  min-width: 500px;
 }
 
 .drisk-legend li {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) 60px 116px 50px;
+  /* คอลัมน์ตอนนี้กว้างกว่าอีกสามคอลัมน์ เพราะหัวต้องใส่ค่าฝุ่นจริงต่อท้าย เช่น ตอนนี้ 17.6
+     ที่ 64 เท่ากันหมด หัวคอลัมน์นี้ยาวเกินช่องไป 14 พิกเซลจนไปชิดหัวคอลัมน์ข้าง ๆ */
+  grid-template-columns: 12px minmax(0, 1fr) 86px repeat(3, 70px);
   align-items: center;
   gap: 9px;
   /* เว้นด้านข้างไว้ให้แถบไฮไลต์ของแถวที่เลือกใช้
@@ -3044,24 +3056,31 @@ button {
   color: var(--text-soft);
 }
 
-.drisk-legend-head span:nth-child(3),
-.drisk-legend-head span:nth-child(4) {
+.drisk-legend-head span:nth-child(n + 3) {
   text-align: right;
+  white-space: nowrap;
 }
 
-/* ช่วงความเชื่อมั่นในตาราง เป็นตัวเลขปลายล่างกับปลายบน
-   ห่างกันมากแปลว่างานวิจัยยังให้คำตอบที่แน่นอนไม่ได้
-
-   ชิดขวาและใช้ตัวเลขความกว้างเท่ากัน หลักจึงตรงกันทุกแถว
-   อ่านไล่ลงมาแล้วเทียบได้โดยไม่ต้องนับหลักทีละตัว */
-.drisk-range,
-.drisk-range-head {
-  text-align: right;
+/* คอลัมน์ตอนนี้มีพื้นจาง ๆ ให้เห็นว่าเป็นค่าจริง อีกสามคอลัมน์เป็นค่าสมมติ */
+.drisk-legend-now {
+  margin: -7px 0;
+  padding: 7px 4px;
+  background: var(--surface-2);
 }
 
-.drisk-range {
-  color: var(--text-soft);
+.drisk-legend-head .drisk-legend-now {
+  margin: 0;
+  padding: 0 4px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.drisk-legend-val {
+  text-align: right;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  color: var(--text);
 }
 
 .drisk-legend-dot {
@@ -3084,14 +3103,6 @@ button {
   font-weight: 700;
 }
 
-.drisk-legend-share {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 14px;
-  color: var(--text-dim);
-}
-
 .drisk-ring-note {
   margin: 18px 0 0;
   font-size: 15px;
@@ -3099,23 +3110,6 @@ button {
   color: var(--text-soft);
 }
 
-@media (max-width: 549px) {
-  /* จอแคบตัดคอลัมน์สัดส่วนออก ค่าจริงสำคัญกว่า
-     ส่วนสัดส่วนยังอ่านได้จากขนาดชิ้นในวงกลมอยู่แล้ว */
-  /* จอแคบตัดคอลัมน์ช่วงกับสัดส่วนออก ค่ากลางสำคัญกว่า
-     สัดส่วนยังอ่านได้จากขนาดชิ้นในวงกลม
-     ส่วนช่วงความเชื่อมั่นยังดูได้ตอนกดเลือกโรคเดียว ซึ่งกางที่มาไว้ครบ */
-  .drisk-legend li {
-    grid-template-columns: 12px minmax(0, 1fr) 60px;
-  }
-
-  .drisk-range,
-  .drisk-range-head,
-  .drisk-legend-share,
-  .drisk-legend-head span:nth-child(5) {
-    display: none;
-  }
-}
 
 /* จอมือถือ ขนาดที่ตั้งไว้สำหรับจอคอมใหญ่เกินกว่าจะใส่ลงได้
    ชื่อโรคยาวสุดคือ ปอดอุดกั้นเรื้อรัง ซึ่งที่ขนาด 26 ต้องการราวสองร้อยสี่สิบ
@@ -3138,25 +3132,6 @@ button {
     height: 210px;
   }
 
-  .drisk-legend li {
-    grid-template-columns: 12px minmax(0, 1fr);
-    gap: 6px;
-    padding: 6px 5px;
-  }
-
-  .drisk-legend-name {
-    font-size: 11.5px;
-  }
-
-  .drisk-legend-pct {
-    grid-column: 2;
-    text-align: left;
-    font-size: 13px;
-  }
-
-  .drisk-legend li.drisk-legend-head {
-    display: none;
-  }
 }
 
 /* ---------- ช่องเลือกของหน้าโรค ---------- */
@@ -3227,7 +3202,7 @@ button {
    วัดแล้วสีนี้บนพื้นขาวได้ 4.6:1 ยังผ่านเกณฑ์ตัวอักษร */
 .drisk-legend li.off .drisk-legend-name,
 .drisk-legend li.off .drisk-legend-pct,
-.drisk-legend li.off .drisk-legend-share {
+.drisk-legend li.off .drisk-legend-val {
   color: var(--text-dim);
 }
 
@@ -3550,96 +3525,3 @@ button {
   }
 }
 
-/* ตารางเทียบผลกระทบที่ค่าฝุ่นระดับต่าง ๆ ในหน้าโรค */
-.drisk-whatif {
-  margin: 18px 0 0;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
-
-.drisk-whatif-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  margin: 0 0 8px;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.drisk-whatif-head span {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--text-soft);
-}
-
-/* ห้าคอลัมน์ไม่พอดีจอมือถือ ให้เลื่อนในกรอบของตัวเอง ไม่ดันทั้งหน้าให้เลื่อน */
-.drisk-whatif-scroll {
-  overflow-x: auto;
-}
-
-/* จำกัดความกว้างบนจอใหญ่ ไม่งั้นแผงกว้างพันกว่าพิกเซลจะดันตัวเลขไปไกลจากชื่อโรค
-   จนสายตาต้องลากข้ามช่องว่างครึ่งจอกว่าจะจับคู่แถวได้ */
-.drisk-whatif table {
-  width: 100%;
-  max-width: 760px;
-  min-width: 460px;
-  border-collapse: collapse;
-  font-size: 15.5px;
-}
-
-.drisk-whatif th {
-  padding: 0 8px 8px;
-  font-size: 13.5px;
-  font-weight: 400;
-  text-align: right;
-  white-space: nowrap;
-  color: var(--text-soft);
-}
-
-.drisk-whatif th:first-child,
-.drisk-whatif td:first-child {
-  padding-left: 0;
-  text-align: left;
-}
-
-.drisk-whatif td {
-  padding: 7px 8px;
-  border-top: 1px solid var(--border);
-  text-align: right;
-  white-space: nowrap;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
-.drisk-whatif td:first-child {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: inherit;
-}
-
-.drisk-whatif td em {
-  font-style: normal;
-  color: var(--text-dim);
-}
-
-/* คอลัมน์ค่าตอนนี้มีพื้นจาง ๆ ให้เห็นว่าเป็นค่าจริง ส่วนคอลัมน์อื่นเป็นค่าสมมติ */
-.drisk-whatif .now {
-  background: var(--surface-2);
-}
-
-.drisk-whatif th.now {
-  font-weight: 700;
-  color: var(--text);
-  border-radius: 8px 8px 0 0;
-}
-
-.drisk-whatif-note {
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-soft);
-}
