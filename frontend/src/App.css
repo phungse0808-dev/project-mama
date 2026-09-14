@@ -3437,3 +3437,115 @@ button {
 .recharts-cartesian-axis-tick-value {
   fill: var(--text-soft);
 }
+
+/* ป้ายสีใต้แถบสัดส่วนเป็นปุ่ม กดแล้วกางรายชื่อสถานีของระดับนั้น
+   หน้าตาเหมือนป้ายเดิมทุกอย่าง เพิ่มแค่ขอบตอนชี้และตอนเปิด
+   ปุ่มจึงไม่แย่งความสนใจจากแถบ แต่ยังบอกได้ว่ากดได้ */
+.legend li {
+  padding: 0;
+  background: none;
+}
+
+.legend-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px 4px 7px;
+  font: inherit;
+  color: inherit;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.legend-btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.legend-btn.on {
+  border-width: 2px;
+  padding: 3px 8px 3px 6px;
+}
+
+/* ระดับที่มีศูนย์สถานีกดไม่ได้ แต่ยังอ่านออก ไม่จางลง
+   เพราะศูนย์เป็นข้อมูลจริงที่ควรเห็น ไม่ใช่ปุ่มที่ปิดไว้ */
+.legend-btn:disabled {
+  cursor: default;
+}
+
+.level-list {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.level-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.level-list-head span {
+  font-size: 13.5px;
+  color: var(--text-soft);
+}
+
+/* รายชื่อยาวได้ถึงร้อยกว่าแห่งเมื่อกดระดับดี จำกัดความสูงแล้วเลื่อนในกล่อง
+   ไม่ให้ดันแผงที่เหลือของหน้าลงไปจนหาไม่เจอ */
+.level-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 330px;
+  overflow-y: auto;
+}
+
+.level-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 56px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  font-size: 15px;
+}
+
+.level-list-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.level-list-province {
+  color: var(--text-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.level-list-value {
+  text-align: right;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .level-list li {
+    grid-template-columns: minmax(0, 1fr) 52px;
+  }
+
+  /* จอแคบตัดจังหวัดออก ชื่อสถานีส่วนใหญ่บอกที่อยู่ในตัวอยู่แล้ว
+     ส่วนชื่อที่ไม่บอก ยังชี้ค้างดูชื่อเต็มได้ */
+  .level-list-province {
+    display: none;
+  }
+}

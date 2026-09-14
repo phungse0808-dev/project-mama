@@ -501,7 +501,7 @@ export default function App() {
                 stationSummary={stationSummary}
               />
             )}
-            {nationalSummary && <LevelBar summary={nationalSummary} />}
+            {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
 
             <h2 className="section-heading">
               สถานการณ์ตอนนี้

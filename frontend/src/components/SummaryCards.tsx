@@ -496,12 +496,35 @@ export function SummaryCards({
   );
 }
 
+type LevelBarProps = Props & {
+  /** สถานีทั้งประเทศ ใช้กางรายชื่อเมื่อกดป้ายสี */
+  stations: StationReading[];
+};
+
 /** แถบแสดงจำนวนสถานีแยกตามระดับคุณภาพอากาศ */
-export function LevelBar({ summary }: Props) {
+export function LevelBar({ summary, stations }: LevelBarProps) {
   const [barRef, barWidth] = useWidth<HTMLDivElement>();
+  // ระดับที่กางรายชื่ออยู่ ครั้งละระดับเดียว ค่าว่างแปลว่าปิดอยู่
+  const [openLevel, setOpenLevel] = useState<string | null>(null);
   const total = Object.values(summary.level_counts).reduce((a, b) => a + b, 0);
   const worst = summary.worst_station;
   if (total === 0) return null;
+
+  // รายชื่อของระดับที่เปิดอยู่ เรียงจากค่าสูงสุดลงมา
+  //
+  // ตัดสถานีที่ข้อมูลค้างออก ให้ตรงกับตัวเลขบนป้ายซึ่งนับเฉพาะสถานีที่ส่งข้อมูล
+  // ถ้าไม่ตัด กดป้ายที่เขียนว่า 8 แล้วได้รายชื่อ 9 แห่ง จะดูเหมือนตัวเลขผิด
+  //
+  // ถ้ารอบดึงข้อมูลใหม่ทำให้ระดับที่เปิดอยู่เหลือศูนย์ รายการก็ปิดไปเอง
+  // ไม่ค้างกล่องว่างไว้ให้งงว่าข้อมูลหายไปไหน
+  const openCount = openLevel ? summary.level_counts[openLevel] ?? 0 : 0;
+  const openInfo = summary.levels.find((level) => level.key === openLevel);
+  const openStations =
+    openLevel && openCount > 0
+      ? stations
+          .filter((item) => !item.is_stale && item.level.key === openLevel)
+          .sort((a, b) => (b.pm25 ?? -1) - (a.pm25 ?? -1))
+      : [];
 
   return (
     <section className="panel">
@@ -542,15 +565,55 @@ export function LevelBar({ summary }: Props) {
           );
         })}
       </div>
+      {/* ป้ายสีเป็นปุ่ม กดแล้วกางรายชื่อสถานีของระดับนั้นใต้แถบ กดซ้ำเพื่อปิด
+          ใช้ได้ทุกระดับ ไม่ใช่แค่สีเหลือง เพราะหน้าแล้งคำถามจะย้ายไปเป็นสีส้มกับแดง
+
+          ไม่กางค้างไว้ตลอด เพราะช่วงฝุ่นหนักสถานีสีเหลืองขึ้นไปมีเป็นร้อย
+          กล่องที่เปิดค้างจะดันแผงที่เหลือของหน้าลงไปไกล
+
+          ระดับที่มีศูนย์สถานีกดไม่ได้ เพราะกดแล้วไม่มีอะไรให้ดู */}
       <ul className="legend">
-        {summary.levels.map((level) => (
-          <li key={level.key}>
-            <span className="legend-dot" style={{ background: level.color }} />
-            {level.label_th}
-            <strong>{summary.level_counts[level.key] ?? 0}</strong>
-          </li>
-        ))}
+        {summary.levels.map((level) => {
+          const count = summary.level_counts[level.key] ?? 0;
+          const isOpen = openLevel === level.key && count > 0;
+          return (
+            <li key={level.key}>
+              <button
+                type="button"
+                className={isOpen ? "legend-btn on" : "legend-btn"}
+                disabled={count === 0}
+                aria-expanded={isOpen}
+                onClick={() => setOpenLevel(isOpen ? null : level.key)}
+                style={isOpen ? { borderColor: level.color } : undefined}
+              >
+                <span className="legend-dot" style={{ background: level.color }} />
+                {level.label_th}
+                <strong>{count}</strong>
+              </button>
+            </li>
+          );
+        })}
       </ul>
+
+      {openInfo && openStations.length > 0 && (
+        <div className="level-list">
+          <p className="level-list-head">
+            สถานีระดับ{openInfo.label_th} {openStations.length} แห่ง เรียงจากค่าสูงสุด
+            <span>กดป้ายอีกครั้งเพื่อปิด</span>
+          </p>
+          <ul>
+            {openStations.map((item) => (
+              <li key={item.station_code}>
+                <span className="level-list-name" title={item.name_th}>
+                  {item.name_th}
+                </span>
+                <span className="level-list-province">{item.province}</span>
+                <strong className="level-list-value">{item.pm25 ?? "-"}</strong>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* สถานีที่ค่าสูงสุดของประเทศ
           ก่อนหน้านี้มองไม่เห็นเลยสักที่ในหน้าจอ เพราะแผงอันดับเฉลี่ยรายจังหวัด
