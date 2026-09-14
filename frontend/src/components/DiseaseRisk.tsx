@@ -290,7 +290,7 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
   // ช่วงความเชื่อมั่นของแต่ละโรค แปลงเป็นหน่วยเดียวกับคอลัมน์เพิ่มขึ้น
   //
   // เอา ci_low กับ ci_high เข้าสูตรเดียวกับค่ากลาง ไม่ได้โชว์ค่า RR ดิบ
-  // เพราะ RR 1.008 ถึง 1.044 เทียบกับตัวเลขข้าง ๆ ในตารางไม่ได้
+  // เพราะ RR 1.008 ถึง 1.413 เทียบกับตัวเลขข้าง ๆ ในตารางไม่ได้
   const bands = allRows.map((row) => ({
     group: row.group,
     low: excessPct(current, row.risk.ci_low),
@@ -487,12 +487,6 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
                     <span className="drisk-legend-name">
                       {slice.short}
                       {slice.risk.uncertain && <em>*</em>}
-                      {/* เลขอ้างอิงตามลำดับแถว ชี้ไปรายการท้ายแผง
-                          ลำดับแถวไม่เปลี่ยนตามค่าฝุ่น เพราะทุกโรคใช้ค่าฝุ่นตัวเดียวกัน
-                          ลำดับจึงขึ้นกับความเสี่ยงสัมพัทธ์อย่างเดียว เลขอ้างอิงจึงคงที่ */}
-                      {slice.risk.reference && (
-                        <sup className="drisk-ref-mark">{slices.indexOf(slice) + 1}</sup>
-                      )}
                     </span>
                     <span className="drisk-legend-pct">+{slice.pct.toFixed(2)}%</span>
 
@@ -538,17 +532,15 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
               </dl>
               <p className="drisk-pick-note">
                 {picked.risk.outcome_th} · {picked.risk.source_th} · {picked.risk.evidence_th}
-                {/* เดิมเขียนว่าช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ซึ่งไม่จริงกับโรคไหนเลย
-                    เหตุผลจริงของดอกจันคืองานทบทวนรวมให้ผลขัดกับงานรายเมือง */}
                 {picked.risk.uncertain &&
-                  " · งานทบทวนรวมไม่พบนัยสำคัญ หลักฐานยังขัดกันเอง"}
+                  " · ช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ผลยังไม่ชัดเจนทางสถิติ"}
               </p>
             </div>
           )}
 
           {/* เดิมเขียนว่าดอกจันคือช่วงความเชื่อมั่นคร่อมเลขหนึ่ง ซึ่งไม่จริง
               ตรวจทั้งเจ็ดโรคแล้วไม่มีโรคไหนคร่อมเลยสักโรค รวมทั้งภูมิแพ้ที่ติดดอกจันอยู่
-              ช่วงของมันคือ 1.008 ถึง 1.044 ซึ่งอยู่เหนือหนึ่งทั้งช่วง
+              ช่วงของมันคือ 1.008 ถึง 1.413 ซึ่งอยู่เหนือหนึ่งทั้งช่วง
               เหตุผลจริงคืองานทบทวนรวมไม่พบนัยสำคัญ หลักฐานจึงขัดกันเอง
 
               คำว่าส่วนแบ่งเปลี่ยนด้วย เพราะทำให้คนคิดว่ามีก้อนหนึ่งอยู่แล้วแบ่งกัน
@@ -559,32 +551,6 @@ export function DiseaseRisk({ summary, ring = false, only = "" }: Props) {
             คอลัมน์เพิ่มขึ้นคือค่าจริงของโรคนั้น ส่วนคอลัมน์สัดส่วนคือความแรงเมื่อเทียบกันเองในวงกลม ·
             ช่วงที่เป็นไปได้คือขอบล่างกับขอบบนที่งานวิจัยให้ไว้ ห่างกันมากแปลว่ายังสรุปไม่ได้แน่
           </p>
-
-          {/* แหล่งอ้างอิงครบทุกโรคในที่เดียว เรียงตามลำดับแถวในตาราง
-              อยู่ท้ายแผงแทนที่จะซ่อนไว้ในกล่องของแต่ละโรค
-              เพราะคำถามว่าตัวเลขเอามาจากไหน ต้องตอบได้ทั้งเจ็ดโรคโดยไม่ต้องกดไล่ทีละโรค
-              และคัดลอกไปทำบรรณานุกรมได้ทั้งชุด */}
-          {slices.some((slice) => slice.risk.reference) && (
-            <div className="drisk-refs">
-              <p className="drisk-refs-head">แหล่งอ้างอิงค่าความเสี่ยง</p>
-              <ol>
-                {slices.map((slice) =>
-                  slice.risk.reference ? (
-                    <li key={slice.group} value={slices.indexOf(slice) + 1}>
-                      <span className="drisk-refs-disease">{slice.short}</span>{" "}
-                      {slice.risk.reference.text}.{" "}
-                      <a href={slice.risk.reference.url} target="_blank" rel="noreferrer">
-                        {slice.risk.reference.url.replace("https://doi.org/", "doi:")}
-                      </a>
-                      {slice.risk.reference.note_th && (
-                        <span className="drisk-refs-note"> — {slice.risk.reference.note_th}</span>
-                      )}
-                    </li>
-                  ) : null
-                )}
-              </ol>
-            </div>
-          )}
 
           {/* แถบวิธีป้องกัน เปลี่ยนทั้งข้อความและสีตามค่าฝุ่นที่วัดได้
 

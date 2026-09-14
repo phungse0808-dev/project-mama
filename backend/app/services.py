@@ -1199,9 +1199,6 @@ def _thai_month_label(year: int, month: int) -> str:
 #     ต้องเขียนกำกับไว้ให้ผู้อ่านรู้ ห้ามแสดงเป็นตัวเลขชุดเดียวกันโดยไม่บอกที่มา
 #
 # ถ้าจะเพิ่มหรือแก้ค่า ต้องมีงานวิจัยที่ตีพิมพ์แล้วรองรับเสมอ ห้ามประมาณเอง
-#
-# reference คือการอ้างอิงเต็มที่หน้าเว็บแสดงเป็นรายการท้ายแผง
-# ชื่อผู้แต่ง ปี วารสาร และ DOI ตรวจกับ Crossref แล้วเมื่อ 14 ก.ย. 2569
 DISEASE_RISK: dict[str, dict] = {
     # เดิมมีรายการเดียวคือ "กลุ่มโรคทางเดินหายใจ" ค่า 1.0190 จาก HRAPIE
     # ซึ่งช่วงความเชื่อมั่น 0.9982 ถึง 1.0402 คร่อมเลขหนึ่ง คือสรุปทางสถิติไม่ได้
@@ -1212,26 +1209,13 @@ DISEASE_RISK: dict[str, dict] = {
     "โรคภูมิแพ้": {
         "relative_risk_per_10": 1.026,
         "ci_low": 1.008,
-        # บทคัดย่อของงานวิจัยพิมพ์ขอบบนไว้ 1.413 ซึ่งเป็นไปไม่ได้ทางสถิติ
-        # ช่วงความเชื่อมั่นของความเสี่ยงสัมพัทธ์ต้องห่างจากค่ากลางเท่ากันทั้งสองข้าง
-        # เมื่อคิดเป็นลอการิทึม ขอบล่าง 1.008 ห่างจาก 1.026 เท่าไร ขอบบนก็ต้องห่างเท่านั้น
-        # คิดย้อนได้ exp(2 x ln 1.026 - ln 1.008) = 1.044 จึงใช้ค่านี้
-        # ถ้าใช้ 1.413 ตามที่พิมพ์ ช่วงบนหน้าเว็บจะขึ้นถึงแปดสิบกว่าเปอร์เซ็นต์
-        "ci_high": 1.044,
+        "ci_high": 1.413,
         "outcome_th": "ผู้มารับบริการผู้ป่วยนอกด้วยโรคจมูกอักเสบภูมิแพ้",
         "source_th": "งานวิจัยผู้ป่วยนอกในประเทศจีน",
         "evidence_th": "รายเมือง ผลไม่ตรงกันระหว่างงาน",
         # งานรายเมืองพบผลชัด แต่งานทบทวนรวมกลับพบว่าฝุ่น PM2.5 ระยะสั้น
         # ไม่มีนัยสำคัญกับโรคนี้ มีแต่ PM10 กับ NO2 ที่มี หลักฐานจึงขัดกันเอง
         "uncertain": True,
-        "reference": {
-            "text": "Tang W, Sun L, Wang J และคณะ (2023). Exploring Associations Between "
-            "Short-Term Air Pollution and Daily Outpatient Visits for Allergic Rhinitis. "
-            "Risk Management and Healthcare Policy 16:1455-1465",
-            "url": "https://doi.org/10.2147/RMHP.S416365",
-            "note_th": "บทคัดย่อพิมพ์ขอบบนของช่วงไว้ 1.413 ซึ่งเป็นไปไม่ได้ทางสถิติ "
-            "ระบบใช้ 1.044 ที่คิดย้อนจากค่ากลางกับขอบล่าง",
-        },
     },
     "กลุ่มโรคผิวหนังอักเสบ": {
         "relative_risk_per_10": 1.0233,
@@ -1241,12 +1225,6 @@ DISEASE_RISK: dict[str, dict] = {
         "source_th": "งานวิจัยผู้ป่วยนอกเมืองกว่างโจว ประเทศจีน",
         "evidence_th": "เมืองเดียว",
         "uncertain": False,
-        "reference": {
-            "text": "Zhang J, Yang Y, Fu L และคณะ (2023). Short-term exposure of PM2.5 and PM10 "
-            "increases the number of outpatients with eczema in Guangzhou: A time-series study. "
-            "Frontiers in Public Health 10",
-            "url": "https://doi.org/10.3389/fpubh.2022.930545",
-        },
     },
     "โรคหอบหืด": {
         "relative_risk_per_10": 1.019,
@@ -1259,13 +1237,6 @@ DISEASE_RISK: dict[str, dict] = {
         # ใช้ค่ารวมทั่วโลกกับประเทศไทยจะเกินจริงราวสองเท่าครึ่ง
         "evidence_th": "รวบรวมงานวิจัยหลายประเทศ",
         "uncertain": False,
-        "reference": {
-            "text": "Lim H, Kwon HJ, Lim JA และคณะ (2016). Short-term Effect of Fine Particulate "
-            "Matter on Children's Hospital Admissions and Emergency Department Visits for Asthma: "
-            "A Systematic Review and Meta-analysis. Journal of Preventive Medicine and Public "
-            "Health 49(4):205-219",
-            "url": "https://doi.org/10.3961/jpmph.16.037",
-        },
     },
     "โรคปอดอุดกั้นเรื้อรัง": {
         "relative_risk_per_10": 1.016,
@@ -1277,13 +1248,6 @@ DISEASE_RISK: dict[str, dict] = {
         # จึงไม่แยกเป็นรายการของตัวเอง ไม่งั้นจะเป็นโรคเดียวนับสองครั้ง
         "evidence_th": "ความต่างระหว่างงานสูง",
         "uncertain": False,
-        "reference": {
-            "text": "Delavar MA, Jahani M, Sepidarkish M และคณะ (2023). Relationship between fine "
-            "particulate matter (PM2.5) concentration and risk of hospitalization due to chronic "
-            "obstructive pulmonary disease: a systematic review and meta-analysis. "
-            "BMC Public Health 23:2229",
-            "url": "https://doi.org/10.1186/s12889-023-17093-6",
-        },
     },
     "โรคปอดอักเสบ": {
         "relative_risk_per_10": 1.010,
@@ -1293,12 +1257,6 @@ DISEASE_RISK: dict[str, dict] = {
         "source_th": "งานทบทวนรวม 21 งานวิจัย",
         "evidence_th": "รวบรวมงานวิจัยหลายประเทศ",
         "uncertain": False,
-        "reference": {
-            "text": "Yee J, Cho YA, Yoo HJ และคณะ (2021). Short-term exposure to air pollution "
-            "and hospital admission for pneumonia: a systematic review and meta-analysis. "
-            "Environmental Health 20",
-            "url": "https://doi.org/10.1186/s12940-020-00687-7",
-        },
     },
     "กลุ่มโรคหัวใจและหลอดเลือด": {
         "relative_risk_per_10": 1.0091,
@@ -1308,12 +1266,6 @@ DISEASE_RISK: dict[str, dict] = {
         "source_th": "รายงาน HRAPIE องค์การอนามัยโลก",
         "evidence_th": "รวบรวมงานวิจัยหลายประเทศ",
         "uncertain": False,
-        "reference": {
-            "text": "Héroux ME, Anderson HR, Atkinson R และคณะ (2015). Quantifying the health "
-            "impacts of ambient air pollutants: recommendations of a WHO/Europe project. "
-            "International Journal of Public Health 60(5):619-627",
-            "url": "https://doi.org/10.1007/s00038-015-0690-y",
-        },
     },
     "กลุ่มโรคตาอักเสบ": {
         "relative_risk_per_10": 1.006,
@@ -1323,12 +1275,6 @@ DISEASE_RISK: dict[str, dict] = {
         "source_th": "งานวิจัยผู้ป่วยนอกเมืองไท่อาน ประเทศจีน",
         "evidence_th": "เมืองเดียว",
         "uncertain": False,
-        "reference": {
-            "text": "Chen R, Yang J, Chen D และคณะ (2021). Air pollution and hospital outpatient "
-            "visits for conjunctivitis: a time-series analysis in Tai'an, China. "
-            "Environmental Science and Pollution Research 28(12):15453-15461",
-            "url": "https://doi.org/10.1007/s11356-020-11762-4",
-        },
     },
 }
 
