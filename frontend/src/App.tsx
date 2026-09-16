@@ -493,13 +493,34 @@ export default function App() {
             หน้าฝุ่นรวมทุกอย่างที่เกี่ยวกับฝุ่นไว้ครบ เรียงจากสถานการณ์ตอนนี้
             ไปหาสิ่งที่ควรทำ ผลกระทบที่ตามมา ปัจจัยแวดล้อม และปิดท้ายด้วย
             คุณภาพของข้อมูลเอง ตามลำดับที่ผู้ใช้อยากรู้ */}
-        {/* หน้าวัดคุณภาพอากาศ แบ่งเป็นกล่องเนื้อหาใหญ่ด้านซ้ายกับแถบหัวข้อสีดำด้านขวา
-            แสดงทีละหัวข้อ ไม่เรียงทุกแผงต่อกันยาวเหมือนเดิม
-            คนอ่านเห็นทุกหัวข้อที่มีได้ในแถบเดียวโดยไม่ต้องเลื่อนหา */}
-        {active === "air" && (
+        {/* หน้าแรกกับหน้าวัดคุณภาพอากาศ ใช้โครงเดียวกัน
+            กล่องเนื้อหาใหญ่ด้านซ้ายกับแถบหัวข้อสีดำด้านขวา แสดงทีละหัวข้อ
+
+            หน้าแรกคือหัวข้อภาพรวมในแบบย่อ ค่าฝุ่น อากาศ ลม และคำแนะนำป้องกัน
+            หน้าวัดคุณภาพอากาศคือหัวข้อภาพรวมแบบละเอียด
+            กดหัวข้ออื่นในแถบขวาจากหน้าไหนก็ได้ จะพาไปหน้าวัดคุณภาพอากาศ */}
+        {(active === "home" || active === "air") && (
           <div className="air-layout">
             <div className="air-main">
-              {airTab === "overview" && (
+              {active === "home" && (
+                <HomePage
+                  summary={summary}
+                  onOpenAir={() => goTo("air", "overview")}
+                  province={user.province}
+                  provinces={provinces}
+                  area={dustProvince}
+                  stations={stations}
+                  station={dustStation}
+                  stationSummary={stationSummary}
+                  onScopeChange={(nextProvince, nextStation) => {
+                    setDustProvince(nextProvince);
+                    setDustStation(nextStation);
+                  }}
+                  riskGroup={user.risk_group}
+                />
+              )}
+
+              {active === "air" && airTab === "overview" && (
                 <>
                   {summary && (
                     <SummaryCards
@@ -519,7 +540,7 @@ export default function App() {
                 </>
               )}
 
-              {airTab === "map" && (
+              {active === "air" && airTab === "map" && (
                 <StationMap
                   stations={stations}
                   onSelect={showStation}
@@ -530,21 +551,21 @@ export default function App() {
                 />
               )}
 
-              {airTab === "ranking" && <ProvinceRanking ranking={ranking} />}
+              {active === "air" && airTab === "ranking" && <ProvinceRanking ranking={ranking} />}
 
-              {airTab === "alerts" && alertData && <AlertPanel alerts={alertData} />}
+              {active === "air" && airTab === "alerts" && alertData && <AlertPanel alerts={alertData} />}
 
-              {airTab === "forecast" && provinces.length > 0 && (
+              {active === "air" && airTab === "forecast" && provinces.length > 0 && (
                 <ForecastPanel provinces={provinces} defaultProvince={user.province} />
               )}
 
-              {airTab === "rain" && provinces.length > 0 && (
+              {active === "air" && airTab === "rain" && provinces.length > 0 && (
                 <RainPanel provinces={provinces} defaultProvince={user.province} />
               )}
 
               {/* คุณภาพของข้อมูลอยู่ท้ายหัวข้อย้อนหลัง เพราะเป็นเรื่องประวัติการเก็บข้อมูลเหมือนกัน
                   ไม่แยกเป็นปุ่มที่แปด ให้แถบด้านขวามีเจ็ดปุ่มตามแบบที่วาดไว้ */}
-              {airTab === "history" && (
+              {active === "air" && airTab === "history" && (
                 <>
                   {provinces.length > 0 && (
                     <WeatherPanel provinces={provinces} defaultProvince={user.province} />
@@ -558,8 +579,14 @@ export default function App() {
               {AIR_TABS.map((item) => (
                 <button
                   key={item.key}
-                  className={airTab === item.key ? "air-side-btn active" : "air-side-btn"}
-                  aria-current={airTab === item.key ? "page" : undefined}
+                  className={
+                    (active === "home" ? item.key === "overview" : airTab === item.key)
+                      ? "air-side-btn active"
+                      : "air-side-btn"
+                  }
+                  aria-current={
+                    (active === "home" ? item.key === "overview" : airTab === item.key) ? "page" : undefined
+                  }
                   onClick={() => goTo("air", item.key)}
                 >
                   {item.label}
@@ -616,23 +643,6 @@ export default function App() {
           </>
         )}
 
-        {active === "home" && (
-          <HomePage
-            summary={summary}
-            onOpenAir={() => goTo("air")}
-            province={user.province}
-            provinces={provinces}
-            area={dustProvince}
-            stations={stations}
-            station={dustStation}
-            stationSummary={stationSummary}
-            onScopeChange={(nextProvince, nextStation) => {
-              setDustProvince(nextProvince);
-              setDustStation(nextStation);
-            }}
-            riskGroup={user.risk_group}
-          />
-        )}
 
         <footer className="footer">
           <p>
