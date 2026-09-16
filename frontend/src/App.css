@@ -3448,3 +3448,101 @@ button {
   background: var(--accent);
   color: var(--on-accent);
 }
+
+/* ---------- หน้าวัดคุณภาพอากาศ: กล่องเนื้อหากับแถบหัวข้อด้านขวา ---------- */
+
+.air-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 16px;
+  align-items: start;
+}
+
+/* กล่องเนื้อหาพื้นเทาอ่อน ให้แผงสีขาวข้างในเด่นขึ้นมา */
+.air-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+/* แถบดำติดอยู่ตอนเลื่อนหน้า กดเปลี่ยนหัวข้อได้โดยไม่ต้องเลื่อนกลับขึ้นไป
+   top เว้นที่ให้แถบเมนูบนซึ่งติดอยู่เหมือนกัน */
+.air-side {
+  position: sticky;
+  top: 86px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: #0d1420;
+}
+
+:root[data-theme="dark"] .air-side {
+  background: #000000;
+  border: 1px solid var(--border);
+}
+
+.air-side-btn {
+  padding: 12px 14px;
+  border: none;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #131a24;
+  font-family: inherit;
+  font-size: 15.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.14s, transform 0.12s;
+}
+
+.air-side-btn:hover {
+  background: #e8f1fb;
+}
+
+.air-side-btn:active {
+  transform: scale(0.98);
+}
+
+.air-side-btn.active {
+  background: #0b6bcb;
+  color: #ffffff;
+}
+
+.air-side-btn:focus-visible {
+  outline: 3px solid #5ec8ff;
+  outline-offset: 2px;
+}
+
+/* จอแคบย้ายแถบขึ้นไปไว้บนเนื้อหา เป็นแถวเลื่อนซ้ายขวาได้
+   ถ้ายังอยู่ด้านขวา กล่องเนื้อหาจะเหลือแคบจนกราฟกับตารางอ่านไม่ได้ */
+@media (max-width: 900px) {
+  .air-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .air-side {
+    order: -1;
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 9px;
+  }
+
+  .air-side-btn {
+    flex: none;
+    padding: 9px 13px;
+    font-size: 14.5px;
+    white-space: nowrap;
+  }
+
+  .air-main {
+    padding: 10px;
+  }
+}

@@ -18,7 +18,8 @@ import { DataHealth } from "./components/DataHealth";
 import { DiseaseRisk } from "./components/DiseaseRisk";
 import { HomePage } from "./components/HomePage";
 import { NavBar } from "./components/NavBar";
-import type { SectionKey } from "./components/NavBar";
+import type { AirTab, SectionKey } from "./components/NavBar";
+import { AIR_TABS } from "./components/NavBar";
 import { ProvinceRanking } from "./components/ProvinceRanking";
 import { ForecastPanel } from "./components/ForecastPanel";
 import { RainPanel } from "./components/RainPanel";
@@ -119,6 +120,13 @@ export default function App() {
   const [searching, setSearching] = useState(false);
   // หน้าแรกที่เห็นหลังกรอกชื่อ คือหน้าหลักเดียวกับที่ปุ่มกลับพากลับมา
   const [active, setActive] = useState<SectionKey>("home");
+
+  // หัวข้อที่เปิดอยู่ในแถบด้านขวาของหน้าวัดคุณภาพอากาศ
+  //
+  // เดิมทุกแผงเรียงต่อกันยาวในหน้าเดียว ต้องเลื่อนหาเอง
+  // ตอนนี้แสดงทีละหัวข้อในกล่องใหญ่ด้านซ้าย เลือกหัวข้อจากแถบด้านขวา
+  // เก็บไว้ที่นี่ไม่ใช่ในหน้า เพราะปุ่มพยากรณ์กับแจ้งเตือนบนเมนูต้องสั่งเปิดหัวข้อได้ด้วย
+  const [airTab, setAirTab] = useState<AirTab>("overview");
 
 
   // ข้อมูลชุดที่ไม่ขึ้นกับพื้นที่ที่เลือก
@@ -372,8 +380,9 @@ export default function App() {
   // หน้าหลักที่ปุ่มกลับพากลับมา
   const HOME: SectionKey = "home";
 
-  const goTo = useCallback((key: SectionKey) => {
+  const goTo = useCallback((key: SectionKey, tab?: AirTab) => {
     setActive(key);
+    if (tab) setAirTab(tab);
     // เริ่มอ่านจากบนสุดเสมอเมื่อเปลี่ยนหน้า ไม่งั้นจะค้างอยู่ตำแหน่งเดิมของหน้าก่อน
     window.scrollTo({ top: 0 });
   }, []);
@@ -413,6 +422,8 @@ export default function App() {
       if (!found) return;
       setDustProvince(found.province);
       setDustStation(found.station_code);
+      // การ์ดฝุ่นของสถานีอยู่ในหัวข้อภาพรวม ต้องสลับไปที่นั่นก่อนถึงจะเห็น
+      setAirTab("overview");
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
     [stations]
@@ -452,6 +463,7 @@ export default function App() {
     <>
       <NavBar
         active={active}
+        airTab={airTab}
         onGoTo={goTo}
         onSearch={() => setSearching(true)}
         onHome={() => goTo(HOME)}
@@ -481,68 +493,80 @@ export default function App() {
             หน้าฝุ่นรวมทุกอย่างที่เกี่ยวกับฝุ่นไว้ครบ เรียงจากสถานการณ์ตอนนี้
             ไปหาสิ่งที่ควรทำ ผลกระทบที่ตามมา ปัจจัยแวดล้อม และปิดท้ายด้วย
             คุณภาพของข้อมูลเอง ตามลำดับที่ผู้ใช้อยากรู้ */}
+        {/* หน้าวัดคุณภาพอากาศ แบ่งเป็นกล่องเนื้อหาใหญ่ด้านซ้ายกับแถบหัวข้อสีดำด้านขวา
+            แสดงทีละหัวข้อ ไม่เรียงทุกแผงต่อกันยาวเหมือนเดิม
+            คนอ่านเห็นทุกหัวข้อที่มีได้ในแถบเดียวโดยไม่ต้องเลื่อนหา */}
         {active === "air" && (
-          <>
-            {summary && (
-              <SummaryCards
-                summary={summary}
-                weatherNow={weatherNow}
-                provinces={provinces}
-                weatherProvince={weatherTarget}
-                dustProvince={dustProvince}
-                onDustProvinceChange={setDustProvince}
-                stations={stations}
-                dustStation={dustStation}
-                onDustStationChange={setDustStation}
-                stationSummary={stationSummary}
-              />
-            )}
-            {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
+          <div className="air-layout">
+            <div className="air-main">
+              {airTab === "overview" && (
+                <>
+                  {summary && (
+                    <SummaryCards
+                      summary={summary}
+                      weatherNow={weatherNow}
+                      provinces={provinces}
+                      weatherProvince={weatherTarget}
+                      dustProvince={dustProvince}
+                      onDustProvinceChange={setDustProvince}
+                      stations={stations}
+                      dustStation={dustStation}
+                      onDustStationChange={setDustStation}
+                      stationSummary={stationSummary}
+                    />
+                  )}
+                  {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
+                </>
+              )}
 
-            <h2 className="section-heading">
-              สถานการณ์ตอนนี้
-              <span>ค่าฝุ่นล่าสุดและพื้นที่ที่ควรระวัง</span>
-            </h2>
+              {airTab === "map" && (
+                <StationMap
+                  stations={stations}
+                  onSelect={showStation}
+                  ranking={ranking}
+                  picked={pickedProvince}
+                  onPick={setPickedProvince}
+                  levels={summary?.levels ?? []}
+                />
+              )}
 
-            <div className="two-column">
-              <StationMap
-                stations={stations}
-                onSelect={showStation}
-                ranking={ranking}
-                picked={pickedProvince}
-                onPick={setPickedProvince}
-                levels={summary?.levels ?? []}
-              />
-              <ProvinceRanking ranking={ranking} />
+              {airTab === "ranking" && <ProvinceRanking ranking={ranking} />}
+
+              {airTab === "alerts" && alertData && <AlertPanel alerts={alertData} />}
+
+              {airTab === "forecast" && provinces.length > 0 && (
+                <ForecastPanel provinces={provinces} defaultProvince={user.province} />
+              )}
+
+              {airTab === "rain" && provinces.length > 0 && (
+                <RainPanel provinces={provinces} defaultProvince={user.province} />
+              )}
+
+              {/* คุณภาพของข้อมูลอยู่ท้ายหัวข้อย้อนหลัง เพราะเป็นเรื่องประวัติการเก็บข้อมูลเหมือนกัน
+                  ไม่แยกเป็นปุ่มที่แปด ให้แถบด้านขวามีเจ็ดปุ่มตามแบบที่วาดไว้ */}
+              {airTab === "history" && (
+                <>
+                  {provinces.length > 0 && (
+                    <WeatherPanel provinces={provinces} defaultProvince={user.province} />
+                  )}
+                  {health && <DataHealth health={health} />}
+                </>
+              )}
             </div>
 
-
-            <h2 className="section-heading">
-              ย้อนหลังและปัจจัยแวดล้อม
-              <span>สภาพอากาศ การพยากรณ์ และผลกระทบต่อสุขภาพ</span>
-            </h2>
-
-            {alertData && <AlertPanel alerts={alertData} />}
-
-            {provinces.length > 0 && (
-              <ForecastPanel provinces={provinces} defaultProvince={user.province} />
-            )}
-
-            {provinces.length > 0 && (
-              <RainPanel provinces={provinces} defaultProvince={user.province} />
-            )}
-
-            {provinces.length > 0 && (
-              <WeatherPanel provinces={provinces} defaultProvince={user.province} />
-            )}
-
-            <h2 className="section-heading">
-              คุณภาพของข้อมูลเอง
-              <span>ตรวจสอบย้อนกลับได้ว่าข้อมูลมาจากไหนและขาดช่วงใด</span>
-            </h2>
-
-            {health && <DataHealth health={health} />}
-          </>
+            <aside className="air-side" aria-label="หัวข้อในหน้าวัดคุณภาพอากาศ">
+              {AIR_TABS.map((item) => (
+                <button
+                  key={item.key}
+                  className={airTab === item.key ? "air-side-btn active" : "air-side-btn"}
+                  aria-current={airTab === item.key ? "page" : undefined}
+                  onClick={() => goTo("air", item.key)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </aside>
+          </div>
         )}
 
         {/* หน้าโรคจากฝุ่น แยกออกมาเพราะตอบคนละคำถามกับหน้าวัดคุณภาพอากาศ
