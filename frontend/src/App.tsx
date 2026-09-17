@@ -15,17 +15,18 @@ import type {
 import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
-import { DiseaseRisk } from "./components/DiseaseRisk";
+import { DiseaseAdvice } from "./components/DiseaseAdvice";
 import { NavBar } from "./components/NavBar";
 import type { AirTab, SectionKey } from "./components/NavBar";
 import { AIR_TABS } from "./components/NavBar";
 import { ProvinceRanking } from "./components/ProvinceRanking";
-import { ForecastPanel } from "./components/ForecastPanel";
+import { ForecastDemo } from "./components/ForecastDemo";
 import { RainPanel } from "./components/RainPanel";
 import { SignIn } from "./components/SignIn";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { StationMap } from "./components/StationMap";
 import { LevelBar, SummaryCards } from "./components/SummaryCards";
+import { TodayAdvice } from "./components/TodayAdvice";
 import { loadSettings, sendIfDue } from "./dailyDigest";
 import { recordAlerts } from "./noticeRecorder";
 import { WeatherPanel } from "./components/WeatherPanel";
@@ -95,18 +96,6 @@ export default function App() {
   // เพราะต้องล้างทิ้งเมื่อสลับหน้า ไม่งั้นกลับมาแล้วแผงยังค้างอยู่
   const [pickedProvince, setPickedProvince] = useState<string | null>(null);
 
-  // โรคที่เลือกดูในหน้าโรคจากฝุ่น ค่าว่างแปลว่าดูทุกโรค
-  //
-  // เก็บเป็นชื่อเต็มตามที่เซิร์ฟเวอร์ส่งมา ไม่ใช่ชื่อย่อที่ตัดคำนำหน้าออกแล้ว
-  // เพราะต้องเอาไปเทียบกับกุญแจในตารางค่าเสี่ยงและกลุ่มโรคของกรมควบคุมโรค
-  const [pickedDisease, setPickedDisease] = useState<string>("");
-
-  // รายชื่อโรคสำหรับช่องเลือก อ่านจากตารางค่าเสี่ยงที่เซิร์ฟเวอร์ส่งมา
-  //
-  // ไม่เขียนรายชื่อไว้ในหน้าเว็บ เพราะถ้าฝั่งหลังบ้านเพิ่มหรือตัดโรค
-  // ช่องเลือกจะไม่ตรงกับสิ่งที่แสดงจริง และไม่มีใครรู้ตัวจนกว่าจะมีคนสังเกต
-  const [diseaseNames, setDiseaseNames] = useState<string[]>([]);
-
   // จังหวัดที่ใช้ดึงสภาพอากาศ มาจากช่องเลือกเดียวกับค่าฝุ่น
   //
   // ทำไมต้องมีตัวสำรอง
@@ -120,35 +109,11 @@ export default function App() {
   // หน้าแรกที่เห็นหลังกรอกชื่อ คือหน้าหลักเดียวกับที่ปุ่มกลับพากลับมา
   const [active, setActive] = useState<SectionKey>("home");
 
-  // หัวข้อที่เปิดอยู่ในแถบด้านขวาของหน้าวัดคุณภาพอากาศ
+  // หัวข้อที่เปิดอยู่ในแถบดำของหน้าแรก
   //
-  // เดิมทุกแผงเรียงต่อกันยาวในหน้าเดียว ต้องเลื่อนหาเอง
-  // ตอนนี้แสดงทีละหัวข้อในกล่องใหญ่ด้านซ้าย เลือกหัวข้อจากแถบด้านขวา
-  // เก็บไว้ที่นี่ไม่ใช่ในหน้า เพราะปุ่มพยากรณ์กับแจ้งเตือนบนเมนูต้องสั่งเปิดหัวข้อได้ด้วย
-  const [airTab, setAirTab] = useState<AirTab>("overview");
+  // กดหัวข้อแล้วเปลี่ยนแค่กล่องเนื้อหาด้านซ้าย อยู่ในหน้าแรกต่อ ไม่พาไปหน้าวัดคุณภาพอากาศ
+  const [homeTab, setHomeTab] = useState<AirTab>("overview");
 
-
-  // ข้อมูลชุดที่ไม่ขึ้นกับพื้นที่ที่เลือก
-  //
-  // แยกออกจากการดึงค่าสรุปโดยตั้งใจ เพราะห้าเส้นทางนี้ให้คำตอบเดิมเสมอ
-  // ไม่ว่าผู้ใช้จะเลือกจังหวัดไหน ถ้ารวมไว้ด้วยกัน การกดเปลี่ยนจังหวัดหนึ่งครั้ง
-  // จะยิงคำขอที่รู้คำตอบอยู่แล้วเพิ่มอีกห้าครั้งโดยไม่ได้อะไรกลับมา
-  // ดึงครั้งเดียวตอนเข้าระบบ รายชื่อโรคไม่เปลี่ยนระหว่างใช้งาน
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const result = await api.disease();
-        if (!cancelled) setDiseaseNames(Object.keys(result.risk_by_group ?? {}));
-      } catch {
-        if (!cancelled) setDiseaseNames([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
 
   // ใส่โหมดที่เลือกไว้ที่ธาตุรากของหน้า แล้วจำไว้ในเครื่อง
   //
@@ -379,29 +344,13 @@ export default function App() {
   // หน้าหลักที่ปุ่มกลับพากลับมา
   const HOME: SectionKey = "home";
 
-  // ลำดับครั้งที่สั่งเปลี่ยนหน้า ใช้บอกให้เลื่อนหน้าใหม่ทุกครั้งที่กด
-  // แม้กดหัวข้อเดิมซ้ำ ซึ่งค่าหน้าและหัวข้อไม่เปลี่ยน React จึงไม่วาดใหม่ให้เอง
-  const [navCount, setNavCount] = useState(0);
-
-  const goTo = useCallback((key: SectionKey, tab?: AirTab) => {
+  const goTo = useCallback((key: SectionKey) => {
     setActive(key);
-    if (tab) setAirTab(tab);
-    setNavCount((count) => count + 1);
+    // กลับหน้าแรกจากที่ไหนก็ตาม เริ่มที่ภาพรวมเสมอ
+    if (key === "home") setHomeTab("overview");
+    // เริ่มอ่านจากบนสุดเสมอเมื่อเปลี่ยนหน้า ไม่งั้นจะค้างอยู่ตำแหน่งเดิมของหน้าก่อน
+    window.scrollTo({ top: 0 });
   }, []);
-
-  // เลื่อนหลังวาดหน้าใหม่เสร็จ เพราะส่วนที่จะเลื่อนไปหายังไม่มีอยู่ตอนที่กด
-  //
-  // หัวข้อภาพรวมกับหน้าอื่นเริ่มจากบนสุด ไม่งั้นจะค้างอยู่ตำแหน่งเดิมของหน้าก่อน
-  // หัวข้ออื่นในหน้าวัดคุณภาพอากาศเลื่อนลงไปหาส่วนของหัวข้อนั้น
-  useEffect(() => {
-    if (navCount === 0) return;
-    const target =
-      active === "air" && airTab !== "overview" ? document.getElementById(`air-${airTab}`) : null;
-    if (target) target.scrollIntoView({ block: "start" });
-    else window.scrollTo({ top: 0 });
-    // ตั้งใจฟังแค่ navCount เปลี่ยนหัวข้อด้วยทางอื่นไม่ต้องเลื่อนหน้า
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navCount]);
 
   // ตรวจว่าผู้ใช้ที่จำไว้ในเบราว์เซอร์ยังมีอยู่จริงในฐานข้อมูล
   //
@@ -439,7 +388,7 @@ export default function App() {
       setDustProvince(found.province);
       setDustStation(found.station_code);
       // การ์ดฝุ่นของสถานีอยู่ในหัวข้อภาพรวม ต้องสลับไปที่นั่นก่อนถึงจะเห็น
-      setAirTab("overview");
+      setHomeTab("overview");
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
     [stations]
@@ -479,7 +428,6 @@ export default function App() {
     <>
       <NavBar
         active={active}
-        airTab={airTab}
         onGoTo={goTo}
         onSearch={() => setSearching(true)}
         onHome={() => goTo(HOME)}
@@ -510,12 +458,12 @@ export default function App() {
             ไปหาสิ่งที่ควรทำ ผลกระทบที่ตามมา ปัจจัยแวดล้อม และปิดท้ายด้วย
             คุณภาพของข้อมูลเอง ตามลำดับที่ผู้ใช้อยากรู้ */}
         {/* หน้าแรก กล่องเนื้อหาด้านซ้ายกับแถบหัวข้อสีดำด้านขวา
-            กล่องซ้ายเป็นการ์ดค่าฝุ่นกับสภาพอากาศแบบย่อ
-            กดหัวข้อในแถบขวา จะพาไปหน้าวัดคุณภาพอากาศแล้วเลื่อนลงไปที่ส่วนนั้น */}
+            กดหัวข้อในแถบขวา กล่องซ้ายเปลี่ยนเป็นหัวข้อนั้น โดยยังอยู่ในหน้าแรก
+            ภาพรวมเป็นการ์ดค่าฝุ่นกับสภาพอากาศแบบย่อ */}
         {active === "home" && (
           <div className="air-layout">
             <div className="air-main">
-              {summary && (
+              {homeTab === "overview" && summary && (
                 <SummaryCards
                   summary={summary}
                   weatherNow={weatherNow}
@@ -529,15 +477,64 @@ export default function App() {
                   stationSummary={stationSummary}
                 />
               )}
+              {/* ใช้ค่าของสถานีเฉพาะตอนที่โหลดของสถานีที่เลือกไว้มาแล้ว ให้ตรงกับการ์ดฝุ่นข้างบน */}
+              {homeTab === "overview" && summary && (
+                <TodayAdvice
+                  summary={summary}
+                  stationSummary={dustStation ? stationSummary : null}
+                  weatherNow={weatherNow}
+                  weatherProvince={weatherTarget}
+                />
+              )}
+
+              {homeTab === "map" && (
+                <StationMap
+                  stations={stations}
+                  onSelect={showStation}
+                  ranking={ranking}
+                  picked={pickedProvince}
+                  onPick={setPickedProvince}
+                  levels={summary?.levels ?? []}
+                />
+              )}
+
+              {homeTab === "ranking" && (
+                <>
+                  {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
+                  <ProvinceRanking ranking={ranking} />
+                </>
+              )}
+
+              {homeTab === "alerts" && alertData && <AlertPanel alerts={alertData} />}
+
+              {homeTab === "forecast" && provinces.length > 0 && (
+                <ForecastDemo provinces={provinces} defaultProvince={weatherTarget} />
+              )}
+
+              {homeTab === "rain" && provinces.length > 0 && (
+                <RainPanel provinces={provinces} defaultProvince={user.province} />
+              )}
+
+              {homeTab === "history" && (
+                <>
+                  {provinces.length > 0 && (
+                    <WeatherPanel provinces={provinces} defaultProvince={user.province} />
+                  )}
+                  {health && <DataHealth health={health} />}
+                </>
+              )}
             </div>
 
-            <aside className="air-side" aria-label="หัวข้อในหน้าวัดคุณภาพอากาศ">
+            <aside className="air-side" aria-label="หัวข้อในหน้าแรก">
               {AIR_TABS.map((item) => (
                 <button
                   key={item.key}
-                  className={item.key === "overview" ? "air-side-btn active" : "air-side-btn"}
-                  aria-current={item.key === "overview" ? "page" : undefined}
-                  onClick={() => goTo("air", item.key)}
+                  className={homeTab === item.key ? "air-side-btn active" : "air-side-btn"}
+                  aria-current={homeTab === item.key ? "page" : undefined}
+                  onClick={() => {
+                    setHomeTab(item.key);
+                    window.scrollTo({ top: 0 });
+                  }}
                 >
                   {item.label}
                 </button>
@@ -547,10 +544,7 @@ export default function App() {
         )}
 
         {/* หน้าวัดคุณภาพอากาศ หน้ายาวแบบเดิม ทุกส่วนเรียงต่อกันลงมา
-            ผู้ใช้เลื่อนดูต่อเนื่องได้ ไม่ต้องกดทีละหัวข้อ
-
-            แต่ละส่วนมี id ตามหัวข้อในแถบดำของหน้าแรก
-            กดหัวข้อจากหน้าแรกหรือปุ่มพยากรณ์ แจ้งเตือนบนเมนู จะเลื่อนมาที่ส่วนนั้นพอดี */}
+            ผู้ใช้เลื่อนดูต่อเนื่องได้ ไม่ต้องกดทีละหัวข้อ */}
         {active === "air" && (
           <>
             {summary && (
@@ -576,19 +570,15 @@ export default function App() {
             </h2>
 
             <div className="two-column">
-              <div id="air-map" className="air-anchor">
-                <StationMap
-                  stations={stations}
-                  onSelect={showStation}
-                  ranking={ranking}
-                  picked={pickedProvince}
-                  onPick={setPickedProvince}
-                  levels={summary?.levels ?? []}
-                />
-              </div>
-              <div id="air-ranking" className="air-anchor">
-                <ProvinceRanking ranking={ranking} />
-              </div>
+              <StationMap
+                stations={stations}
+                onSelect={showStation}
+                ranking={ranking}
+                picked={pickedProvince}
+                onPick={setPickedProvince}
+                levels={summary?.levels ?? []}
+              />
+              <ProvinceRanking ranking={ranking} />
             </div>
 
             <h2 className="section-heading">
@@ -596,23 +586,12 @@ export default function App() {
               <span>สภาพอากาศ การพยากรณ์ และผลกระทบต่อสุขภาพ</span>
             </h2>
 
-            {alertData && (
-              <div id="air-alerts" className="air-anchor">
-                <AlertPanel alerts={alertData} />
-              </div>
-            )}
+            {alertData && <AlertPanel alerts={alertData} />}
 
             {provinces.length > 0 && (
               <>
-                <div id="air-forecast" className="air-anchor">
-                  <ForecastPanel provinces={provinces} defaultProvince={user.province} />
-                </div>
-                <div id="air-rain" className="air-anchor">
-                  <RainPanel provinces={provinces} defaultProvince={user.province} />
-                </div>
-                <div id="air-history" className="air-anchor">
-                  <WeatherPanel provinces={provinces} defaultProvince={user.province} />
-                </div>
+                <RainPanel provinces={provinces} defaultProvince={user.province} />
+                <WeatherPanel provinces={provinces} defaultProvince={user.province} />
               </>
             )}
 
@@ -625,51 +604,10 @@ export default function App() {
           </>
         )}
 
-        {/* หน้าโรคจากฝุ่น แยกออกมาเพราะตอบคนละคำถามกับหน้าวัดคุณภาพอากาศ
-            ส่วนบนคือความเสี่ยงที่คำนวณจากค่าฝุ่นตอนนี้
-            ส่วนล่างคือจำนวนผู้ป่วยจริงที่กรมควบคุมโรคเผยแพร่
-            สองส่วนนี้มาคนละแหล่งและคนละช่วงเวลา จึงต้องแยกให้เห็นชัดว่าอะไรเป็นอะไร */}
+        {/* หน้าโรคจากฝุ่น คำแนะนำสำหรับผู้มีโรคประจำตัว การ์ดละหนึ่งโรค
+            ใช้ช่องพื้นที่ตัวเดียวกับหน้าอื่น เลือกจังหวัดไว้ที่หน้าไหน มาหน้านี้ก็ยังเป็นจังหวัดเดิม */}
         {active === "disease" && (
-          <>
-            {/* ช่องเลือกอยู่บนสุดของหน้า มีผลกับทั้งสองส่วนพร้อมกัน
-                ไม่แยกช่องของใครของมัน เพราะคนอ่านคาดว่าเลือกครั้งเดียวแล้วทั้งหน้าเปลี่ยนตาม
-
-                ใช้ช่องพื้นที่ตัวเดียวกับหน้าอื่น จึงจำค่าข้ามหน้าได้
-                เลือกเชียงใหม่ในหน้าวัดคุณภาพอากาศแล้วมาหน้านี้ ยังเป็นเชียงใหม่อยู่ */}
-            <div className="dfilter">
-              <label>
-                พื้นที่
-                <select
-                  value={dustProvince}
-                  onChange={(event) => setDustProvince(event.target.value)}
-                >
-                  <option value="">ทั้งประเทศ</option>
-                  {provinces.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                โรค
-                <select
-                  value={pickedDisease}
-                  onChange={(event) => setPickedDisease(event.target.value)}
-                >
-                  <option value="">ทุกโรค</option>
-                  {diseaseNames.map((item) => (
-                    <option key={item} value={item}>
-                      {item.replace(/^(กลุ่มโรค|โรค)/, "")}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <DiseaseRisk summary={summary} ring only={pickedDisease} />
-          </>
+          <DiseaseAdvice provinces={provinces} area={dustProvince} onAreaChange={setDustProvince} />
         )}
 
 

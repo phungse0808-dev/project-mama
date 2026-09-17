@@ -693,7 +693,6 @@ button {
 /* ป้ายกำกับของการ์ดทุกใบ ใช้ฟอนต์เดียวกับตัวเลขและเว้นระยะกว้าง
    ให้ทั้งหน้าอ่านเหมือนหน้าจอเครื่องมือ ไม่ใช่เว็บทั่วไป */
 .card-label,
-.forecast-caption,
 .rain-stat-label,
 .health-label,
 
@@ -712,14 +711,12 @@ button {
 
    ไม่ใช้กับข้อความไทย เพราะฟอนต์แบบนี้ไม่มีอักขระไทยและจะอ่านยาก */
 .card-value,
-.forecast-number,
 .rain-figure strong,
 .rain-stat-value,
 .health-value,
 .ranking-value,
 .alert-count,
 .level-segment,
-.forecast-range,
 .field-pct {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -730,7 +727,6 @@ button {
    บนพื้นขาวแสงขาวมองไม่เห็นอยู่แล้ว และถ้าเปลี่ยนเป็นเงาดำจะกลายเป็นตัวเลขเบลอ
    ความเด่นจึงมาจากขนาดกับน้ำหนักตัวอักษรอย่างเดียว */
 .card-hero .card-value,
-.forecast-number,
 
 /* ---------- หัวข้อแบบเครื่องมือวัด ---------- */
 
@@ -757,7 +753,6 @@ button {
    ใช้ดำโปร่งไม่ใช่สีทึบ ขอบจึงเข้มตามสีที่อยู่ข้างใต้เองโดยไม่เปลี่ยนเนื้อสี */
 .ranking-bar,
 .level-segment,
-.forecast-bar,
 .field-fill {
   box-shadow: inset 0 0 0 1px var(--level-edge);
 }
@@ -2079,124 +2074,6 @@ button {
   color: var(--text-soft);
 }
 
-/* ---------- พยากรณ์ฝุ่นล่วงหน้า ---------- */
-
-/* แสดงเป็นแถวรายวันแทนกราฟ เพราะสิ่งที่ต้องตัดสินใจคือวันไหนควรระวัง
-   และควรเลี่ยงออกนอกบ้านช่วงไหน ซึ่งอ่านจากตัวเลขตรงกว่าหาจุดสูงสุดบนกราฟ */
-.forecast-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.forecast-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 12px 13px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  transition: box-shadow 0.15s;
-}
-
-.forecast-row:hover {
-  box-shadow: var(--shadow);
-}
-
-/* วันนี้พื้นหลังต่างจากวันอื่น เพราะเป็นวันที่ผู้ใช้ต้องตัดสินใจก่อน */
-.forecast-row.today {
-  background: var(--surface-2);
-}
-
-.forecast-bar {
-  width: 5px;
-  align-self: stretch;
-  min-height: 42px;
-  border-radius: 3px;
-  flex: none;
-}
-
-.forecast-when {
-  min-width: 78px;
-}
-
-.forecast-day {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.forecast-date,
-.forecast-caption {
-  margin: 3px 0 0;
-  font-size: 14px;
-  color: var(--text-soft);
-}
-
-/* ป้ายบอกว่าตัวเลขวันนั้นมาจากของจริงหรือการคาดการณ์
-   สองอย่างนี้เชื่อถือได้ไม่เท่ากัน จึงต้องแยกให้เห็นตั้งแต่กวาดสายตา */
-.forecast-tag {
-  margin: 5px 0 0;
-  font-size: 13.5px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 999px;
-  display: inline-block;
-  background: var(--border);
-  color: var(--text-soft);
-}
-
-.forecast-tag.real {
-  background: var(--tint-ok);
-  color: var(--ink-ok);
-}
-
-.forecast-value {
-  min-width: 104px;
-}
-
-.forecast-number {
-  margin: 0;
-  font-size: 29.5px;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.forecast-number small {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--text-soft);
-  margin-left: 5px;
-}
-
-.forecast-detail {
-  flex: 1;
-  min-width: 130px;
-}
-
-.forecast-range {
-  margin: 0;
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ป้ายระดับใช้สีของระดับนั้นทั้งพื้นและตัวอักษร โดยพื้นเป็นสีเดียวกันแบบจาง
-   ทำให้อ่านออกทุกระดับโดยไม่ต้องกำหนดคู่สีแยกทีละระดับ */
-.forecast-level {
-  /* ขาวทึบรองไว้ใต้สีจางที่ส่งมาจากหน้าเว็บ
-     สีจางจึงผสมกับขาวเสมอ ไม่ใช่ผสมกับพื้นของแถวซึ่งเปลี่ยนไปมาได้
-     แถววันนี้พื้นเป็นเทา ถ้าไม่รองไว้ป้ายจะเข้มลงจนตัวหนังสือตกเกณฑ์ */
-  background-color: var(--surface);
-  font-size: 14px;
-  font-weight: 600;
-  padding: 5px 9px;
-  border-radius: 999px;
-  white-space: nowrap;
-  margin-left: auto;
-}
-
 /* ---------- โอกาสฝนตก ---------- */
 
 .rain-summary {
@@ -2305,130 +2182,6 @@ button {
   }
 }
 
-/* ---------- โรคที่มากับฝุ่น ---------- */
-
-/* บรรทัดตัวตั้ง วางค่าฝุ่นที่วัดได้ไว้เหนือผลลัพธ์
-   ผู้อ่านจะได้เห็นทั้งตัวตั้งและผลในสายตาเดียว */
-.drisk-source-value {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 15px;
-  padding-bottom: 13px;
-  border-bottom: 1px solid var(--border);
-}
-
-.drisk-scope {
-  font-size: 15px;
-  color: var(--text-soft);
-}
-
-.drisk-pm {
-  font-family: var(--font-mono);
-  font-size: 25.5px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.drisk-level-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  align-self: center;
-  box-shadow: 0 0 8px currentColor;
-}
-
-.drisk-level {
-  font-size: 16px;
-  color: var(--text-soft);
-}
-
-/* ดันไปชิดขวาเมื่อมีที่พอ พอจอแคบจะตกลงมาเป็นบรรทัดใหม่เอง */
-.drisk-standing {
-  margin-left: auto;
-  font-size: 14px;
-  color: var(--text-dim);
-}
-
-.drisk-section {
-  margin: 16px 0 11px;
-  font-family: var(--font-mono);
-  font-size: 13.5px;
-  color: var(--text-dim);
-}
-
-/* กล่องตัวเลขสี่ใบ ยุบจำนวนคอลัมน์ตามความกว้างเอง
-   ไม่บังคับสี่คอลัมน์ เพราะบนมือถือจะเหลือช่องละ 80 พิกเซลจนเลขตัดบรรทัด */
-.drisk-tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(129px, 1fr));
-  gap: 9px;
-}
-
-/* ขีดสีด้านบนบอกว่ากล่องนี้คู่กับเส้นไหนบนกราฟ
-   เส้นประแปลว่าผลของกลุ่มนั้นยังไม่ชัดเจนทางสถิติ
-   ใช้สัญลักษณ์เดียวกับเส้นบนกราฟ ผู้อ่านจึงโยงกันได้เอง */
-.drisk-tile {
-  border-top: 2px solid;
-  border-radius: 0 0 10px 10px;
-  background: var(--surface-2);
-  padding: 12px 13px;
-}
-
-.drisk-tile-value {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 29px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-}
-
-/* เครื่องหมายเปอร์เซ็นต์ท้ายตัวเลข ใช้สีตัวอักษรปกติ ไม่รับสีของโรค
-   ตัวเลขข้างหน้าเป็นตัวใหญ่ 32.5 จึงเข้าเกณฑ์ตัวหนังสือใหญ่ที่ต้องการแค่ 3:1
-   แต่เครื่องหมายนี้เล็กกว่าที่ 20.5 จึงต้องได้ 4.5:1 ซึ่งสีของโรคทำไม่ถึง
-   หลังเปลี่ยนไปใช้ชุดสีที่อ่อนลง วัดได้ 3.16 ถึง 3.67 ตกทั้งเจ็ดสี
-
-   สีของโรคยังอยู่ที่ตัวเลขกับขอบบนของกล่อง ซึ่งพอบอกได้ว่าเป็นโรคไหนแล้ว
-   เครื่องหมายหน่วยไม่ต้องแบกหน้าที่นั้นด้วย */
-.drisk-tile-unit {
-  font-size: 18px;
-  color: var(--text-soft);
-}
-
-.drisk-tile-name {
-  margin: 5px 0 0;
-  font-size: 15px;
-  color: var(--text-soft);
-}
-
-@media (max-width: 549px) {
-  /* จอแคบ ข้อความเทียบเกณฑ์ยาวเกินกว่าจะอยู่ท้ายบรรทัดเดียวกับตัวเลข
-     ให้ตกลงมาเป็นบรรทัดของตัวเองแล้วชิดซ้ายตามปกติ */
-  .drisk-standing {
-    margin-left: 0;
-    flex-basis: 100%;
-  }
-
-  /* สองใบต่อแถว แต่ต้องเป็น minmax(0, 1fr) ไม่ใช่ 1fr เปล่า ๆ
-     เพราะ 1fr กว้างต่ำสุดเท่าเนื้อหา ชื่อโรคที่ตัดคำไม่ได้จึงดันคอลัมน์จนล้นกรอบ */
-  .drisk-tiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* จอมือถือเหลือใบเดียวต่อแถว สองใบทำให้กล่องเหลือใบละร้อยเจ็ด
-     ซึ่งแคบกว่าตัวเลขที่อยู่ข้างใน ไม่ว่าจะย่อตัวเลขลงแค่ไหนก็ยังอึดอัด */
-  @media (max-width: 366px) {
-    .drisk-tiles {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
-
-  .drisk-tile-value {
-    font-size: 24.5px;
-  }
-}
-
 /* กล่องสรุปประจำวันท้ายแผงระฆัง
    แยกจากรายการแจ้งเตือนด้วยเส้นกับพื้นสีจาง ให้เห็นว่าเป็นคนละเรื่อง
    อันบนคือของที่เกิดไปแล้ว อันนี้คือการตั้งว่าจะให้แจ้งอะไรต่อไป */
@@ -2532,285 +2285,6 @@ button {
   }
 }
 
-/* ---------- วงกลมสัดส่วนผลของฝุ่น เฉพาะหน้าโรค ---------- */
-
-.drisk-ring-row {
-  display: flex;
-  align-items: center;
-  /* จัดกลางไว้ เผื่อตอนจอแคบที่วงกับตารางตกลงมาเรียงบนล่าง
-     ถ้าชิดซ้าย วงจะเยื้องไปข้างเดียวแล้วดูเหมือนวางผิดตำแหน่ง */
-  justify-content: center;
-  gap: 25px;
-  flex-wrap: wrap;
-}
-
-/* วงโตขึ้นจาก 190 เป็น 260
-   ของเดิมวงกว้างราวหนึ่งในห้าของตารางข้าง ๆ เล็กจนไม่ได้ทำหน้าที่กราฟ
-   คนอ่านไปอ่านตัวเลขในตารางแทน แล้ววงกลายเป็นของประดับ
-
-   viewBox ยังเป็น 180 เท่าเดิม ขนาดตัวหนังสือข้างในจึงถูกขยายตามไปด้วย
-   ต้องลดตัวเลขใน CSS ลงให้ขนาดที่เห็นจริงเท่าเดิม ไม่งั้นล้นออกนอกรูวง */
-.drisk-ring {
-  width: 260px;
-  height: 260px;
-  flex: none;
-}
-
-.drisk-ring-value {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 22.5px;
-  font-weight: 700;
-  letter-spacing: -1.1px;
-  fill: var(--text);
-}
-
-.drisk-ring-unit {
-  font-size: 10px;
-  fill: var(--text-soft);
-}
-
-/* กรอบของตารางข้างวง ตารางมีห้าคอลัมน์ ไม่พอดีจอมือถือ
-   ให้เลื่อนแนวนอนในกรอบนี้ ไม่ดันทั้งหน้าให้เลื่อน
-
-   ห่อ 280 ด้วย min(...) ให้ยุบตามพื้นที่จริงได้เมื่อจอแคบกว่านั้น
-   บนจอ 375 พื้นที่ในแผงเหลือ 277 ถ้าใส่ 280 ดิบ ๆ จะล้นออกไปสามพิกเซล
-
-   คุมความกว้างไว้ไม่เกิน 600 ถ้ายืดเต็มแถว ชื่อโรคกับตัวเลขจะห่างกันจนต้องกวาดตาข้ามจอ */
-.drisk-legend-wrap {
-  flex: 1;
-  min-width: min(280px, 100%);
-  max-width: 600px;
-  overflow-x: auto;
-}
-
-.drisk-legend {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  min-width: 500px;
-}
-
-.drisk-legend li {
-  display: grid;
-  /* คอลัมน์ตอนนี้กว้างกว่าอีกสามคอลัมน์ เพราะหัวต้องใส่ค่าฝุ่นจริงต่อท้าย เช่น ตอนนี้ 17.6
-     ที่ 64 เท่ากันหมด หัวคอลัมน์นี้ยาวเกินช่องไป 14 พิกเซลจนไปชิดหัวคอลัมน์ข้าง ๆ */
-  grid-template-columns: 12px minmax(0, 1fr) 86px repeat(3, 70px);
-  align-items: center;
-  gap: 9px;
-  /* เว้นด้านข้างไว้ให้แถบไฮไลต์ของแถวที่เลือกใช้
-     เดิมแถบดึงขอบออกด้วย margin ติดลบ ซึ่งบนจอแคบที่ตารางกว้างเท่ากรอบพอดี
-     จะล้นออกไปแปดพิกเซล เว้นไว้ตั้งแต่ต้นแล้วทุกแถวยังเรียงตรงกันเหมือนเดิม */
-  padding: 7px;
-  font-size: 15.5px;
-}
-
-.drisk-legend li + li {
-  border-top: 1px solid var(--border);
-}
-
-.drisk-legend-head {
-  padding-bottom: 8px;
-  font-size: 13.5px;
-  color: var(--text-soft);
-}
-
-.drisk-legend-head span:nth-child(n + 3) {
-  text-align: right;
-  white-space: nowrap;
-}
-
-/* คอลัมน์ตอนนี้มีพื้นจาง ๆ ให้เห็นว่าเป็นค่าจริง อีกสามคอลัมน์เป็นค่าสมมติ */
-.drisk-legend-now {
-  margin: -7px 0;
-  padding: 7px 4px;
-  background: var(--surface-2);
-}
-
-.drisk-legend-head .drisk-legend-now {
-  margin: 0;
-  padding: 0 4px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.drisk-legend-val {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 15px;
-  color: var(--text);
-}
-
-.drisk-legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  box-shadow: inset 0 0 0 1px var(--level-edge);
-}
-
-.drisk-legend-name em {
-  font-style: normal;
-  color: var(--text-dim);
-}
-
-.drisk-legend-pct {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 17px;
-  font-weight: 700;
-}
-
-.drisk-ring-note {
-  margin: 18px 0 0;
-  font-size: 15px;
-  line-height: 1.8;
-  color: var(--text-soft);
-}
-
-/* จอมือถือ ขนาดที่ตั้งไว้สำหรับจอคอมใหญ่เกินกว่าจะใส่ลงได้
-   ชื่อโรคยาวสุดคือ ปอดอุดกั้นเรื้อรัง ซึ่งที่ขนาด 26 ต้องการราวสองร้อยสี่สิบ
-   ขณะที่ทั้งตารางกว้างได้แค่สองร้อยสามสิบ
-
-   ลดเฉพาะจอแคบ ไม่แตะขนาดบนจอคอมซึ่งเป็นที่ที่ใช้จริงตอนนำเสนอ
-   และวางค่าจริงไว้ใต้ชื่อโรคแทนการวางข้างกัน ชื่อจึงได้ความกว้างเต็มแถว */
-@media (max-width: 366px) {
-  
-
-  /* วงเล็กลงบนมือถือ 260 บวกความกว้างต่ำสุดของตารางแล้วเกินจอ
-     ย่อเหลือ 210 ซึ่งยังใหญ่พอให้เห็นสัดส่วนชิ้น และเหลือที่ให้ตารางพอ */
-  .drisk-ring {
-    width: 210px;
-    height: 210px;
-  }
-
-}
-
-/* ---------- ช่องเลือกของหน้าโรค ---------- */
-
-/* อยู่บนสุดของหน้า มีผลกับทั้งแผงความเสี่ยงและแผงผู้ป่วยจริง
-   ไม่แยกช่องของใครของมัน เพราะคนอ่านคาดว่าเลือกครั้งเดียวแล้วทั้งหน้าเปลี่ยนตาม */
-.dfilter {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-}
-
-.dfilter label {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 14px;
-  color: var(--text-soft);
-}
-
-.dfilter select {
-  font-family: inherit;
-  font-size: 15.5px;
-  height: 38px;
-  min-width: 190px;
-  padding: 0 9px;
-  border: 1px solid var(--border-strong);
-  border-radius: 9px;
-  background: var(--surface);
-  color: var(--text);
-  cursor: pointer;
-}
-
-.dfilter select:hover {
-  border-color: var(--accent);
-}
-
-.dfilter select:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(11, 107, 203, 0.16);
-}
-
-/* ---------- เลือกโรคเดียว ---------- */
-
-/* แถวที่เลือกไว้ในตาราง
-   ใช้ที่ว่างด้านข้างที่ทุกแถวมีอยู่แล้ว ไม่ได้ดึงขอบออกเพิ่ม
-   คอลัมน์จึงไม่ขยับ และแถบไม่ล้นออกนอกกรอบตอนจอแคบ */
-.drisk-legend li.on {
-  background: var(--accent-soft);
-  border-radius: 8px;
-  border-top-color: transparent;
-}
-
-.drisk-legend li.on + li {
-  border-top-color: transparent;
-}
-
-/* แถวที่ไม่ได้เลือก จางลงแต่ยังอ่านออก
-   ไม่ซ่อนทิ้ง เพราะค่าของโรคที่เลือกไม่มีความหมายถ้าไม่รู้ว่าโรคอื่นเท่าไร
-   วัดแล้วสีนี้บนพื้นขาวได้ 4.6:1 ยังผ่านเกณฑ์ตัวอักษร */
-.drisk-legend li.off .drisk-legend-name,
-.drisk-legend li.off .drisk-legend-pct,
-.drisk-legend li.off .drisk-legend-val {
-  color: var(--text-dim);
-}
-
-.drisk-legend li.off .drisk-legend-pct {
-  font-weight: 400;
-}
-
-/* กล่องที่มาของตัวเลข ต่อท้ายตาราง ไม่ได้ไปแทนที่ตาราง */
-.drisk-pick {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
-
-.drisk-pick-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 10px;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-/* สามช่องเรียงกันแทนรายการแนวตั้ง
-   แผงจึงสูงขึ้นราวเก้าสิบพิกเซล ไม่ใช่เท่าตัว
-   และค่าทั้งสามอ่านเทียบกันได้ในสายตาเดียว */
-.drisk-pick-facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(168px, 100%), 1fr));
-  gap: 9px;
-  margin: 0;
-}
-
-.drisk-pick-facts div {
-  background: var(--surface-2);
-  border-radius: 9px;
-  padding: 8px 11px;
-}
-
-.drisk-pick-facts dt {
-  font-size: 13px;
-  color: var(--text-soft);
-  margin-bottom: 3px;
-}
-
-.drisk-pick-facts dd {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.drisk-pick-note {
-  margin: 11px 0 0;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--text-dim);
-}
-
 /* ชื่อโรคในคำอธิบายสีของกราฟเส้น ใช้สีตัวอักษรปกติ ไม่ใช่สีของเส้น
    Recharts ทาสีของเส้นให้ข้อความเองโดยไม่ถาม
    ซึ่งสีของเส้นออกแบบมาให้เป็นเส้น ไม่ได้ออกแบบมาเป็นตัวหนังสือ
@@ -2821,135 +2295,6 @@ button {
 .recharts-legend-item-text {
   color: var(--text) !important;
   fill: var(--text) !important;
-}
-
-/* ---------- คำเตือนกับแถบวิธีป้องกันในหน้าโรค ---------- */
-
-/* กล่องคำเตือน วางก่อนตัวเลข ไม่ใช่ท้ายแผง
-   ใช้ขอบซ้ายสีเดียวไม่ตีกรอบรอบ เพราะเป็นข้อความที่ต้องอ่าน ไม่ใช่กล่องแยกเรื่อง
-   ขอบด้านเดียวจึงไม่มนมุม ตามที่ใช้กับแถบอื่นในเว็บ */
-.drisk-warn {
-  margin: 14px 0 0;
-  padding: 9px 12px;
-  border-radius: 0;
-  background: var(--accent-soft);
-  box-shadow: inset 3px 0 0 var(--accent);
-}
-
-.drisk-warn p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.65;
-  color: var(--text);
-}
-
-.drisk-warn p + p {
-  margin-top: 5px;
-  color: var(--text-soft);
-}
-
-.drisk-advice {
-  margin: 18px 0 0;
-  padding: 12px 14px;
-  border-radius: 0;
-  background: var(--surface-2);
-}
-
-/* ตัวหนังสือกล่องนี้เท่ากับกล่องคำแนะนำในหน้าหลักทุกชุด
-   สองกล่องทำหน้าที่เดียวกันคือบอกว่าใครต้องระวังอะไร
-   ถ้าขนาดต่างกัน คนอ่านจะรู้สึกว่าอันหนึ่งสำคัญกว่า ทั้งที่สำคัญเท่ากัน */
-.drisk-advice-head {
-  margin: 0 0 3px;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.drisk-advice-sub {
-  margin: 0 0 12px;
-  font-size: 14.5px;
-  color: var(--text-dim);
-}
-
-/* ข้อปฏิบัติทั่วไปของระดับนี้ อยู่บนสุดของแถบ ใช้กับทุกคน
-   คั่นจากบรรทัดของแต่ละกลุ่มด้วยเส้นใต้ เพราะเป็นคนละชั้นของคำแนะนำ
-   ข้างบนคือสิ่งที่ทุกคนทำเหมือนกัน ข้างล่างคือส่วนที่ต่างกันตามโรค */
-.drisk-advice-basic {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(186px, 100%), 1fr));
-  gap: 7px 16px;
-  margin: 0 0 13px;
-  padding-bottom: 13px;
-  border-bottom: 1px solid var(--border-strong);
-}
-
-.drisk-advice-basic span {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  font-size: 17.5px;
-  line-height: 1.5;
-  color: var(--text);
-}
-
-.drisk-advice-basic span svg {
-  flex: none;
-  margin-top: 2px;
-}
-
-.drisk-advice-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.drisk-advice-list li {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  gap: 11px;
-  align-items: start;
-  padding-bottom: 10px;
-}
-
-.drisk-advice-list li + li {
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-}
-
-.drisk-advice-list li:last-child {
-  padding-bottom: 0;
-}
-
-.drisk-advice-group {
-  margin: 0 0 3px;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-/* ป้ายชื่อโรคที่บรรทัดนี้ครอบคลุม
-   พื้นขาวทึบบนพื้นเทาของแถบ ป้ายจึงลอยขึ้นมาแยกจากข้อความรอบข้าง */
-.drisk-advice-chips {
-  margin: 0 0 5px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 5px;
-}
-
-.drisk-advice-chips span {
-  font-size: 13.5px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text-soft);
-}
-
-.drisk-advice-text {
-  margin: 0;
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--text);
 }
 
 /* ตัวเลขบนแกนของกราฟทุกอันในเว็บ
@@ -3070,19 +2415,6 @@ button {
   .level-list-province {
     display: none;
   }
-}
-
-/* ป้ายระดับฝุ่นในรูกลางของวงกลมหน้าโรค
-   หน่วยเป็นหน่วยของ viewBox ซึ่งถูกขยายตามขนาดวงจริง 260 จากกรอบ 180 */
-.drisk-ring-level text {
-  font-size: 9.5px;
-  font-weight: 700;
-  fill: var(--text);
-}
-
-.drisk-ring-level circle {
-  stroke: var(--level-edge);
-  stroke-width: 0.6;
 }
 
 /* ป้ายบอกว่าคำบอกสภาพอากาศมาจากเครื่องวัดฝนจริง ไม่ใช่แบบจำลอง */
@@ -3217,9 +2549,576 @@ button {
   margin: 8px 0 0;
 }
 
-/* ส่วนในหน้าวัดคุณภาพอากาศที่เลื่อนมาหาได้จากแถบหัวข้อ
-   เว้นที่ด้านบนให้แถบเมนูที่ติดอยู่ ไม่งั้นหัวของแผงจะถูกเมนูบัง */
-.air-anchor {
-  min-width: 0;
-  scroll-margin-top: 90px;
+/* ---------- หน้าพยากรณ์เดโม ---------- */
+
+.fdemo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ป้ายเดโมใช้สีเตือน ให้เห็นก่อนอ่านตัวเลข */
+.fdemo-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--ink-warn);
+  background: var(--tint-warn);
+  color: var(--ink-warn);
+  font-size: 15px;
+}
+
+.fdemo-banner strong {
+  font-size: 17px;
+}
+
+.fdemo-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fdemo-title {
+  margin: 0;
+  font-size: 22px;
+}
+
+/* กล่องพื้นเทากับการ์ดสูงสี่ใบ ตามแบบที่วาดไว้ */
+.fdemo-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 200px));
+  gap: 18px;
+  padding: 26px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.fdemo-day {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 10px;
+  text-align: center;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.fdemo-day p {
+  margin: 0;
+}
+
+/* ป้ายบนกับป้ายล่างของการ์ด ตามแบบที่วาดไว้ */
+.fdemo-day-pill {
+  padding: 7px 6px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  text-align: center;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.fdemo-day-pill.time {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.fdemo-day-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.fdemo-day.forecast {
+  border: 2px solid var(--accent);
+}
+
+/* การ์ดพยากรณ์มะรืน ใช้เส้นประ บอกว่าคิดต่อจากค่าพยากรณ์อีกทอด คลาดได้มากกว่า */
+.fdemo-day.further {
+  border: 2px dashed var(--accent);
+}
+
+.fdemo-day-value {
+  font-family: var(--font-mono);
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.fdemo-level {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fdemo-change {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.fdemo-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--level-edge);
+}
+
+.fdemo-box {
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.fdemo-box-title {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+.fdemo-tag {
+  display: inline-block;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+.fdemo-tag.guess {
+  background: var(--tint-warn);
+  color: var(--ink-warn);
+}
+
+.fdemo-sub-title {
+  margin: 16px 0 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 15.5px;
+}
+
+/* ขั้นคำนวณแบบขั้นบันได หนึ่งขั้นหนึ่งแถว ไอคอน ชื่อ ผลของขั้น ค่าหลังขั้น */
+.fdemo-flow {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fdemo-flow li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 64px 56px;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.fdemo-flow li:first-child {
+  border-top: none;
+}
+
+.fdemo-flow-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+.fdemo-flow-text p {
+  margin: 0;
+}
+
+.fdemo-flow-title {
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.fdemo-flow-detail {
+  font-size: 13.5px;
+  color: var(--text-soft);
+}
+
+/* วิธีคำนวณของขั้น ใช้ตัวเลขจริง คิดตามได้ทันที */
+.fdemo-flow-calc {
+  display: inline-block;
+  margin-top: 4px !important;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.fdemo-flow-effect {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-align: right;
+  color: var(--text-soft);
+}
+
+.fdemo-flow-value {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.fdemo-flow-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--ink-accent-on-tint);
+  font-weight: 700;
+}
+
+.fdemo-flow-total strong {
+  font-family: var(--font-mono);
+  font-size: 20px;
+}
+
+/* จุดสีบอกที่มาของแต่ละขั้น ต้องอ่านคู่กับคำอธิบายสีท้ายกล่อง */
+.fdemo-ev {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin: 0 6px 0 7px;
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+
+.fdemo-ev.ok {
+  background: var(--ink-ok);
+}
+
+.fdemo-ev.half {
+  background: var(--accent);
+}
+
+.fdemo-ev.guess {
+  background: var(--ink-warn);
+}
+
+.fdemo-ref {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+.fdemo-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.fdemo-legend .fdemo-ev {
+  margin-left: 0;
+}
+
+.fdemo-more {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.fdemo-more summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.fdemo-more p {
+  margin: 4px 0;
+}
+
+.fdemo-more-head {
+  margin-top: 12px !important;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fdemo-formula {
+  margin: 4px 0;
+  padding-left: 22px;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+}
+
+.fdemo-refs {
+  margin: 4px 0;
+  padding-left: 26px;
+}
+
+.fdemo-refs li {
+  margin: 3px 0;
+}
+
+.fdemo-refs a {
+  color: var(--accent);
+  word-break: break-all;
+}
+
+@media (max-width: 900px) {
+  .fdemo-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .fdemo-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fdemo-panel {
+    padding: 12px;
+  }
+
+  .fdemo-day {
+    min-height: 0;
+  }
+
+  .fdemo-flow li {
+    grid-template-columns: 26px minmax(0, 1fr) 48px 44px;
+    gap: 6px;
+  }
+}
+
+/* ---------- คำแนะนำวันนี้ในหน้าแรก ---------- */
+
+.advice {
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.advice-title {
+  margin: 0 0 10px;
+  font-size: 19px;
+}
+
+.advice-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.advice-col {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.advice-col-head {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.advice-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--level-edge);
+}
+
+.advice-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.advice-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 6px 0;
+  font-size: 16.5px;
+  font-weight: 600;
+}
+
+.advice-list li > svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.advice-why {
+  display: block;
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--text-soft);
+}
+
+@media (max-width: 620px) {
+  .advice-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- หน้าโรคจากฝุ่น คำแนะนำรายโรค ---------- */
+
+.dadv {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dadv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dadv-title {
+  margin: 0;
+  font-size: 22px;
+}
+
+.dadv-scope {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dadv-level {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dadv-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 6px;
+  border-radius: 50%;
+  border: 1px solid var(--level-edge);
+}
+
+/* กล่องพื้นเทากับการ์ดสูงแถวละสี่ใบ ตามแบบที่วาดไว้ */
+.dadv-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  padding: 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.dadv-card {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.dadv-card p,
+.dadv-card h3 {
+  margin: 0;
+}
+
+.dadv-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--ink-accent-on-tint);
+}
+
+.dadv-name {
+  font-size: 17px;
+}
+
+.dadv-label {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.dadv-advice {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 15.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.dadv-advice li {
+  padding: 2px 0;
+}
+
+/* อาการที่ต้องพบแพทย์ วางชิดล่างของการ์ดทุกใบ ให้แนวเดียวกัน */
+.dadv-warning {
+  margin-top: auto !important;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--tint-bad);
+  color: var(--ink-bad);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.dadv-source {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-soft);
+}
+
+.dadv-source a {
+  color: var(--accent);
+}
+
+@media (max-width: 1000px) {
+  .dadv-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .dadv-panel {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
+
+  .dadv-card {
+    min-height: 0;
+  }
 }

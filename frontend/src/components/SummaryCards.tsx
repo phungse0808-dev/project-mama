@@ -34,15 +34,18 @@ type CardProps = Props & {
   detailed?: boolean;
 };
 
-/** เอาเฉพาะชั่วโมงกับนาที จากค่าเวลาเช่น 2026-08-19T08:30 ซึ่งเป็นเวลาไทยอยู่แล้ว
+/** วันที่ เดือน ปี พ.ศ. กับเวลา เช่น 17 ก.ย. 2569 10:00 จากค่า 2026-09-17T10:00
  *
- * การ์ดเล็กบอกแค่เวลาตามแบบจำลอง ไม่บอกวันที่
- * เพราะทั้งค่าฝุ่นและอากาศเป็นข้อมูลของชั่วโมงล่าสุด วันเดียวกับวันนี้อยู่แล้ว
+ * ใช้ในการ์ดเล็กของหน้าแรก อ่านตัวเลขจากข้อความตรง ๆ ไม่ผ่าน Date
+ * เพราะค่าที่ส่งมาเป็นเวลาไทยอยู่แล้ว ถ้าให้ Date แปลงอาจเลื่อนตามเขตเวลาของเครื่องที่เปิด
  */
-function clockOnly(value: string | null | undefined): string {
+function thaiDateClock(value: string | null | undefined): string {
   if (!value) return "-";
-  const time = value.split("T")[1];
-  return time ? time.slice(0, 5) : value;
+  const [date, time] = value.split("T");
+  const [year, month, day] = date.split("-").map(Number);
+  if (!year || !month || !day) return value;
+  const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+  return `${day} ${months[month - 1]} ${year + 543}${time ? ` ${time.slice(0, 5)}` : ""}`;
 }
 
 /** ตัดเอาเฉพาะเวลาจากค่าที่ต้นทางส่งมาเป็น 2026-08-19T08:30 ซึ่งเป็นเวลาไทยอยู่แล้ว */
@@ -316,14 +319,15 @@ export function SummaryCards({
                   {level ? level.label_th : "ไม่มีข้อมูลระดับ"}
                   {picked ? "" : ` · ${summary.stations_reporting} สถานี`}
                 </p>
-                {/* บอกรัศมีเฉพาะตอนเจาะดูสถานีเดียว
-                    ดูทั้งจังหวัดหรือทั้งประเทศเป็นค่าเฉลี่ยหลายจุด ไม่ได้แทนวงรอบสถานีใดสถานีหนึ่ง */}
-                {picked && (
-                  <p className="dust-distance">
-                    <span aria-hidden="true">📍</span>
-                    รัศมีวัด {STATION_RADIUS_KM} กม. รอบสถานี
-                  </p>
-                )}
+                {/* บอกรัศมีวัดทุกขอบเขต ไม่ใช่เฉพาะตอนเลือกสถานีเดียว
+                    เลือกสถานีเดียวบอกรัศมีของสถานีนั้น
+                    ดูทั้งจังหวัดหรือทั้งประเทศเป็นค่าเฉลี่ยหลายสถานี จึงบอกว่าแต่ละสถานีวัดรัศมีเท่าไร */}
+                <p className="dust-distance">
+                  <span aria-hidden="true">📍</span>
+                  {picked
+                    ? `รัศมีวัด ${STATION_RADIUS_KM} กม. รอบสถานี`
+                    : `แต่ละสถานีวัดรัศมี ${STATION_RADIUS_KM} กม.`}
+                </p>
               </>
             )}
           </article>
@@ -443,7 +447,7 @@ export function SummaryCards({
               <article className="card card-mini">
                 <p className="card-label">ข้อมูล ณ เวลา</p>
                 <p className="card-value card-value-sm">
-                  {clockOnly(picked ? picked.measured_at : summary.measured_at)}
+                  {thaiDateClock(picked ? picked.measured_at : summary.measured_at)}
                 </p>
               </article>
             </>
@@ -607,7 +611,7 @@ export function SummaryCards({
 
               <article className="card card-mini">
                 <p className="card-label">อากาศ ณ เวลา</p>
-                <p className="card-value card-value-sm">{clockOnly(now.observed_at)}</p>
+                <p className="card-value card-value-sm">{thaiDateClock(now.observed_at)}</p>
               </article>
             </div>
           )

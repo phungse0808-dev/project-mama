@@ -4,6 +4,7 @@ import "./NavBar.css";
 
 // "home" ไม่มีปุ่มในเมนู เพราะเข้าถึงได้จากการเข้าระบบและปุ่มกลับอยู่แล้ว
 // ใส่ปุ่มซ้ำอีกจะรกโดยไม่ได้เพิ่มทางเข้าใหม่
+// พยากรณ์ (เดโม) ไม่มีปุ่มบนเมนู เปิดได้จากแถบดำในหน้าแรกเท่านั้น
 export type SectionKey = "home" | "air" | "disease";
 
 /** หัวข้อในแถบด้านขวาของหน้าวัดคุณภาพอากาศ */
@@ -14,7 +15,8 @@ export const AIR_TABS: { key: AirTab; label: string }[] = [
   { key: "map", label: "แผนที่" },
   { key: "ranking", label: "อันดับจังหวัด" },
   { key: "alerts", label: "แจ้งเตือนพื้นที่เสี่ยง" },
-  { key: "forecast", label: "พยากรณ์ 3 วัน" },
+  // พยากรณ์เดโม มีเฉพาะในหน้าแรก หน้าวัดคุณภาพอากาศไม่มีส่วนนี้
+  { key: "forecast", label: "พยากรณ์ (เดโม)" },
   { key: "rain", label: "โอกาสฝนตก" },
   { key: "history", label: "อากาศย้อนหลัง" },
 ];
@@ -29,32 +31,15 @@ export const AIR_TABS: { key: AirTab; label: string }[] = [
 // แต่ยังไม่เคยได้แสดงเลย ซึ่งใหญ่เกินกว่าจะยัดไว้ท้ายหน้าอื่น
 //
 // หน้าหลักไม่มีปุ่มในเมนู เพราะเข้าถึงได้จากการเข้าระบบและปุ่มกลับอยู่แล้ว
-//
-// ปุ่มพยากรณ์กับแจ้งเตือนเป็นทางลัดไปหัวข้อในหน้าวัดคุณภาพอากาศ
-// สองเรื่องนี้คนเปิดดูบ่อย จึงให้กดได้จากเมนูบนทันทีโดยไม่ต้องเข้าหน้าก่อน
-export const SECTIONS: { key: SectionKey; label: string; tab?: AirTab }[] = [
+export const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: "home", label: "หน้าแรก" },
   { key: "air", label: "วัดคุณภาพอากาศ" },
   { key: "disease", label: "โรคจากฝุ่น" },
-  { key: "air", label: "พยากรณ์", tab: "forecast" },
-  { key: "air", label: "แจ้งเตือน", tab: "alerts" },
 ];
-
-/** ปุ่มในเมนูตรงกับหน้าที่อยู่ตอนนี้หรือไม่
- *
- * ปุ่มวัดคุณภาพอากาศไม่เน้นตอนเปิดหัวข้อที่มีปุ่มทางลัดของตัวเอง
- * ไม่งั้นจะมีปุ่มเน้นสองปุ่มพร้อมกัน แล้วคนอ่านไม่รู้ว่าอยู่ตรงไหน */
-function isCurrent(item: (typeof SECTIONS)[number], active: SectionKey, airTab: AirTab): boolean {
-  if (item.key !== active) return false;
-  if (active !== "air") return true;
-  const shortcut = SECTIONS.some((other) => other.tab === airTab);
-  return item.tab ? item.tab === airTab : !shortcut;
-}
 
 type Props = {
   active: SectionKey;
-  airTab: AirTab;
-  onGoTo: (key: SectionKey, tab?: AirTab) => void;
+  onGoTo: (key: SectionKey) => void;
   onSearch: () => void;
   onHome: () => void;
   onSignOut: () => void;
@@ -68,7 +53,6 @@ type Props = {
 
 export function NavBar({
   active,
-  airTab,
   onGoTo,
   onSearch,
   onHome,
@@ -100,10 +84,9 @@ export function NavBar({
           {SECTIONS.map((item) => (
             <button
               key={item.label}
-              className={isCurrent(item, active, airTab) ? "navbar-item active" : "navbar-item"}
-              // ปุ่มวัดคุณภาพอากาศพากลับไปภาพรวมเสมอ ไม่ค้างหัวข้อที่เปิดครั้งก่อน
-              onClick={() => onGoTo(item.key, item.key === "air" ? (item.tab ?? "overview") : undefined)}
-              aria-current={isCurrent(item, active, airTab) ? "page" : undefined}
+              className={active === item.key ? "navbar-item active" : "navbar-item"}
+              onClick={() => onGoTo(item.key)}
+              aria-current={active === item.key ? "page" : undefined}
             >
               {item.label}
             </button>

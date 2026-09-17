@@ -363,6 +363,88 @@ export type Wind = {
   hourly?: WindHour[];
 };
 
+/** ค่าเฉลี่ย PM2.5 ช่วง 24 ชั่วโมงหนึ่งช่วงในหน้าพยากรณ์เดโม */
+export type ForecastDemoWindow = {
+  /** ชั่วโมงแรกของช่วง เวลาไทย เช่น 2026-09-16T13:00 */
+  start: string;
+  end: string;
+  pm25: number | null;
+  readings: number;
+  /** จำนวนสถานีที่ส่งค่าในช่วงนี้ */
+  stations: number;
+  level: AqiLevel | null;
+};
+
+/** ค่าพยากรณ์ของวันข้างหน้าหนึ่งวันในหน้าพยากรณ์เดโม */
+export type ForecastDemoAhead = {
+  /** ช่วง 24 ชม. ที่พยากรณ์ ต่อจากช่วงก่อนหน้าพอดี เวลาไทย */
+  start: string;
+  end: string;
+  pm25: number;
+  /** ส่วนต่างจากช่วงก่อนหน้า */
+  change: number;
+  level: AqiLevel | null;
+  rain_chance_pct: number | null;
+  wind_max_kmh: number | null;
+  humidity_mean_pct: number | null;
+  temp_max_c: number | null;
+};
+
+/** ขั้นหนึ่งของสูตรพยากรณ์เดโม แบบอ่านง่าย */
+export type ForecastDemoStep = {
+  icon: "base" | "trend" | "rain" | "wind" | "humidity" | "heat";
+  title: string;
+  detail: string;
+  /** ผลของขั้น เช่น +0.3 หรือ −20% ว่างสำหรับขั้นแรก */
+  effect: string;
+  /** วิธีคำนวณด้วยตัวเลขจริง เช่น 10.6 × (1 − 0.20 × 99/100) = 10.6 × 0.802 = 8.5 */
+  calc: string;
+  /** ค่าฝุ่นหลังผ่านขั้นนี้ */
+  value: number;
+  /** research มีงานวิจัยรองรับ · direction งานวิจัยรองรับแค่ทิศทาง · assumption ผู้จัดทำกำหนด */
+  evidence: "research" | "direction" | "assumption";
+  /** เลขเอกสารอ้างอิงใน references */
+  refs: number[];
+};
+
+/** พยากรณ์ค่าฝุ่นแบบเดโม ดูสูตรและที่มาใน backend/app/forecast_demo.py */
+export type ForecastDemo = {
+  province: string;
+  available: boolean;
+  reason?: string;
+  latest?: ForecastDemoWindow;
+  previous?: ForecastDemoWindow;
+  pm25_source: string;
+  weather_source: string;
+  formula: string[];
+  references: { id: number; text: string; url: string }[];
+  tomorrow?: ForecastDemoAhead;
+  /** คิดต่อจากพรุ่งนี้ ความคลาดเคลื่อนสะสม change เทียบกับพรุ่งนี้ */
+  day_after?: ForecastDemoAhead;
+  steps?: ForecastDemoStep[];
+  day_after_steps?: ForecastDemoStep[];
+};
+
+/** คำแนะนำสำหรับผู้มีโรคประจำตัว ดูถ้อยคำและที่มาใน backend/app/disease_advice.py */
+export type DiseaseAdvice = {
+  province: string | null;
+  pm25: number | null;
+  level: AqiLevel | null;
+  level_key: string | null;
+  source_th: string;
+  source_url: string;
+  disclaimer_th: string;
+  diseases: {
+    name: string;
+    icon: string;
+    /** คำแนะนำเป็นข้อสั้น ๆ รายการว่างเมื่อยังไม่มีค่าฝุ่นล่าสุดของพื้นที่ */
+    advice: string[];
+    warning_th: string;
+    /** true เมื่อใช้คำแนะนำของประชาชนทั่วไป เพราะไม่มีคำแนะนำเฉพาะโรค */
+    general: boolean;
+  }[];
+};
+
 export type WeatherNow = {
   available: boolean;
   reason?: string;
@@ -450,12 +532,18 @@ export const api = {
     ),
   weatherNow: (province: string) =>
     get<WeatherNow>("/api/weather-now/" + encodeURIComponent(province)),
+  forecastDemo: (province: string) =>
+    get<ForecastDemo>("/api/forecast-demo/" + encodeURIComponent(province)),
   wind: (province: string, hours = 24) =>
     get<Wind>(`/api/wind/${encodeURIComponent(province)}?hours=${hours}`),
   rainChance: (province: string) =>
     get<RainChance>("/api/rain-chance/" + encodeURIComponent(province)),
   alerts: () => get<Alerts>("/api/alerts"),
   disease: () => get<DiseaseSummary>("/api/disease"),
+  diseaseAdvice: (province?: string | null) =>
+    get<DiseaseAdvice>(
+      "/api/disease-advice" + (province ? `?province=${encodeURIComponent(province)}` : "")
+    ),
   pm25Hourly: (province: string | null, hours = 24) =>
     get<Pm25HourlyPoint[]>(
       `/api/pm25-hourly?hours=${hours}` +

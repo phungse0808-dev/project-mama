@@ -18,6 +18,8 @@ from sqlmodel import Session, col, select
 from app import collector
 from app.config import CORS_ORIGINS
 from app.db import create_db_and_tables, get_session
+from app.disease_advice import disease_advice
+from app.forecast_demo import forecast_demo
 from app.health_advice import RISK_GROUPS
 from app.live import refresh_if_stale
 from app.models import Station
@@ -30,6 +32,7 @@ from app.services import (
     national_summary,
     personal_summary,
     pm25_forecast,
+    province_coordinates,
     province_ranking,
     rain_chance,
     sign_in,
@@ -245,6 +248,15 @@ def get_weather_now(province: str, session: Session = Depends(get_session)) -> d
     return weather_now(session, province)
 
 
+@app.get("/api/forecast-demo/{province}", tags=["ข้อมูลอากาศ"])
+def get_forecast_demo(province: str, session: Session = Depends(get_session)) -> dict:
+    """พยากรณ์ค่าฝุ่นพรุ่งนี้แบบเดโม จากค่าเมื่อวาน ค่าวันนี้ และสภาพอากาศพรุ่งนี้
+
+    เป็นเดโม ยังใช้งานจริงไม่ได้ สูตรกับที่มาของแต่ละขั้นอยู่ใน app/forecast_demo.py
+    """
+    return forecast_demo(session, province, province_coordinates(session).get(province))
+
+
 @app.get("/api/wind/{province}", tags=["ข้อมูลอากาศ"])
 def get_wind(
     province: str,
@@ -351,6 +363,25 @@ def get_health_advice(
 def get_alerts(session: Session = Depends(get_session)) -> dict:
     """พื้นที่ที่ค่าฝุ่นเกินมาตรฐานไทยหรือเกินค่าแนะนำขององค์การอนามัยโลก"""
     return alerts(session)
+
+
+@app.get("/api/disease-advice", tags=["สุขภาพ"])
+def get_disease_advice(
+    province: str | None = Query(None, description="เว้นว่างเพื่อดูภาพรวมทั้งประเทศ"),
+    session: Session = Depends(get_session),
+) -> dict:
+    """คำแนะนำสำหรับผู้มีโรคประจำตัว แยกตามโรค ตามระดับฝุ่นของพื้นที่ที่เลือก
+
+    ถ้อยคำและที่มาอยู่ใน app/disease_advice.py
+    """
+    summary = national_summary(session, province)
+    level = summary.get("level") or {}
+    return {
+        "province": summary.get("province"),
+        "pm25": summary.get("pm25_avg"),
+        "level": summary.get("level"),
+        **disease_advice(level.get("key")),
+    }
 
 
 @app.get("/api/disease", tags=["ผลกระทบสุขภาพ"])
