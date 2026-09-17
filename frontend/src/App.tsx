@@ -536,7 +536,6 @@ export default function App() {
                       stationSummary={stationSummary}
                     />
                   )}
-                  {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
                 </>
               )}
 
@@ -551,7 +550,14 @@ export default function App() {
                 />
               )}
 
-              {active === "air" && airTab === "ranking" && <ProvinceRanking ranking={ranking} />}
+              {/* สัดส่วนสถานีแยกตามระดับอยู่คู่กับอันดับจังหวัด เพราะเป็นภาพรวมของทั้งเครือข่ายเหมือนกัน
+                  ย้ายออกจากหัวข้อภาพรวม ให้ภาพรวมเหลือแค่ค่าฝุ่นกับสภาพอากาศ */}
+              {active === "air" && airTab === "ranking" && (
+                <>
+                  {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
+                  <ProvinceRanking ranking={ranking} />
+                </>
+              )}
 
               {active === "air" && airTab === "alerts" && alertData && <AlertPanel alerts={alertData} />}
 

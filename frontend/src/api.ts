@@ -367,6 +367,9 @@ export type WeatherNow = {
   available: boolean;
   reason?: string;
   province?: string;
+  /** พิกัดจุดกลางจังหวัดที่ใช้ดึงสภาพอากาศ */
+  latitude?: number;
+  longitude?: number;
   source?: string;
   observed_at?: string;
   minutes_behind?: number | null;

@@ -3,6 +3,16 @@ import type { StationReading, StationSummary, Summary, WeatherNow } from "../api
 import { formatThaiDateTime } from "../api";
 import { WeatherIcon } from "./WeatherIcon";
 
+/** ระยะทางบนผิวโลกระหว่างสองพิกัด หน่วยกิโลเมตร */
+function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const rad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLon = rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(a));
+}
+
 type Props = { summary: Summary };
 type CardProps = Props & {
   weatherNow: WeatherNow | null;
@@ -173,6 +183,39 @@ export function SummaryCards({
   const picked = canPickStation && dustStation ? stationSummary : null;
   const level = picked ? picked.level : summary.level;
 
+  // ระยะจากสถานีฝุ่นถึงจุดกลางจังหวัดที่ใช้ดึงสภาพอากาศ
+  //
+  // การ์ดฝุ่นมาจากเครื่องวัดที่สถานี ส่วนการ์ดอากาศมาจากจุดกลางจังหวัด
+  // สองจุดนี้อาจห่างกันหลายสิบกิโลเมตร ถ้าไม่บอก คนอ่านจะนึกว่าวัดที่เดียวกัน
+  //
+  // บอกเฉพาะตอนสองการ์ดเป็นจังหวัดเดียวกัน ดูทั้งประเทศไม่บอก
+  // เพราะตอนนั้นการ์ดอากาศเป็นจังหวัดในโปรไฟล์ ไม่เกี่ยวกับค่าฝุ่นที่เป็นค่าเฉลี่ยทั้งประเทศ
+  // เลือกสถานีเดียวบอกระยะของสถานีนั้น ดูทั้งจังหวัดบอกเป็นช่วงใกล้สุดถึงไกลสุด
+  let distanceText = "";
+  if (
+    dustProvince &&
+    now?.province === dustProvince &&
+    now.latitude != null &&
+    now.longitude != null
+  ) {
+    const from = (item: StationReading) =>
+      distanceKm(item.latitude, item.longitude, now.latitude!, now.longitude!);
+    const pickedStation = picked
+      ? stations.find((item) => item.station_code === dustStation)
+      : undefined;
+    if (pickedStation) {
+      distanceText = `ห่างจุดวัดอากาศ ${from(pickedStation).toFixed(1)} กม.`;
+    } else {
+      const inProvince = stations.filter((item) => item.province === dustProvince).map(from);
+      if (inProvince.length > 0) {
+        // ใกล้สุดกับไกลสุดปัดแล้วได้เลขเดียวกัน บอกเลขเดียว ไม่เขียน 9.3–9.3
+        const near = Math.min(...inProvince).toFixed(1);
+        const far = Math.max(...inProvince).toFixed(1);
+        distanceText = `สถานีห่างจุดวัดอากาศ ${near === far ? near : `${near}–${far}`} กม.`;
+      }
+    }
+  }
+
   return (
     <section className="card-groups">
       <section className="card-group">
@@ -280,6 +323,7 @@ export function SummaryCards({
                 ? picked.area_th
                 : `ต่ำสุด ${summary.pm25_min ?? "-"} · สูงสุด ${summary.pm25_max ?? "-"}`}
             </p>
+            {distanceText && <p className="dust-distance">{distanceText}</p>}
           </article>
 
           {/* สองใบนี้เปลี่ยนเรื่องไปเลยเมื่อเจาะดูสถานีเดียว ไม่ใช่แค่กรองข้อมูล
