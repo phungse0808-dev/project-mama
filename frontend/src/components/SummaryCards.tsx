@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import type { StationReading, StationSummary, Summary, WeatherNow } from "../api";
-import { formatThaiDateTime } from "../api";
-import { WeatherIcon } from "./WeatherIcon";
 
 /** ระยะทางบนผิวโลกระหว่างสองพิกัด หน่วยกิโลเมตร */
 function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -31,41 +29,15 @@ type CardProps = Props & {
   stationSummary: StationSummary | null;
 };
 
-/** ตัดเอาเฉพาะเวลาจากค่าที่ต้นทางส่งมาเป็น 2026-08-19T08:30 ซึ่งเป็นเวลาไทยอยู่แล้ว */
-function formatClock(value: string | undefined): string {
+/** เอาเฉพาะชั่วโมงกับนาที จากค่าเวลาเช่น 2026-08-19T08:30 ซึ่งเป็นเวลาไทยอยู่แล้ว
+ *
+ * การ์ดเล็กบอกแค่เวลาตามแบบจำลอง ไม่บอกวันที่
+ * เพราะทั้งค่าฝุ่นและอากาศเป็นข้อมูลของชั่วโมงล่าสุด วันเดียวกับวันนี้อยู่แล้ว
+ */
+function formatClock(value: string | null | undefined): string {
   if (!value) return "-";
-  const [date, time] = value.split("T");
-  if (!time) return value;
-  const [, month, day] = date.split("-");
-  return `${day}/${month} ${time} น.`;
-}
-
-/** บอกอายุของข้อมูลเป็นภาษาคน แทนที่จะให้ผู้ใช้เอาเวลาไปลบกันเอง
- *
- * ต้นทางเผยแพร่ค่าเป็นรายชั่วโมงและออกช้ากว่าเวลาที่ระบุเสมอ
- * ตัวเลขจึงเก่ากว่าปัจจุบันอยู่หลายสิบนาทีเป็นเรื่องปกติ ไม่ใช่ความผิดพลาด
- * แต่ต้องบอกให้เห็น ไม่ใช่ปล่อยให้เข้าใจว่าเป็นค่า ณ วินาทีนี้
- */
-function describeAge(minutes: number | null): string {
-  if (minutes == null) return "ไม่มีข้อมูลเวลา";
-  if (minutes < 90) return `ข้อมูลเมื่อ ${minutes} นาทีที่แล้ว`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `ข้อมูลเมื่อ ${hours} ชั่วโมงที่แล้ว`;
-  return `ข้อมูลเมื่อ ${Math.floor(hours / 24)} วันที่แล้ว`;
-}
-
-/** ตำแหน่งของอุณหภูมิปัจจุบันบนแถบช่วง คิดเป็นร้อยละนับจากขอบซ้าย
- *
- * บีบให้อยู่ในช่วงศูนย์ถึงร้อยเสมอ เพราะค่าปัจจุบันหลุดนอกช่วงได้จริง
- * ค่าสูงสุดต่ำสุดเป็นค่าคาดการณ์ของทั้งวันซึ่งอัปเดตคนละรอบกับค่าปัจจุบัน
- * ถ้าไม่บีบไว้ จุดจะเลื่อนออกไปนอกแถบเมื่อสองค่านั้นไม่ตรงกัน
- *
- * ถ้าช่วงกว้างเป็นศูนย์ ซึ่งเกิดได้ตอนที่ต้นทางยังส่งค่ามาไม่ครบ
- * ให้วางไว้กลางแถบ แทนการหารด้วยศูนย์ซึ่งจะได้ค่าที่ใช้ไม่ได้
- */
-function rangePosition(current: number, low: number, high: number): number {
-  if (high <= low) return 50;
-  return Math.min(100, Math.max(0, ((current - low) / (high - low)) * 100));
+  const time = value.split("T")[1];
+  return time ? time.slice(0, 5) : value;
 }
 
 /** ความกว้างจริงของกล่อง หน่วยพิกเซล ตามขนาดหน้าจอขณะนั้น
@@ -317,223 +289,101 @@ export function SummaryCards({
               {picked ? picked.pm25 ?? "-" : summary.pm25_avg ?? "-"}
               <span className="card-unit">µg/m³</span>
             </p>
+            {/* ตามแบบจำลอง บรรทัดใต้ตัวเลขบอกแค่ระดับ ดูหลายสถานีบอกจำนวนสถานีต่อท้าย
+                รายละเอียดอื่นอยู่ในการ์ดเล็กข้างล่างแล้ว ไม่ต้องบอกซ้ำ */}
             <p className="card-note">
-              {level ? `คุณภาพอากาศ${level.label_th} · ` : ""}
-              {picked
-                ? picked.area_th
-                : `ต่ำสุด ${summary.pm25_min ?? "-"} · สูงสุด ${summary.pm25_max ?? "-"}`}
+              {level ? level.label_th : "ไม่มีข้อมูลระดับ"}
+              {picked ? "" : ` · ${summary.stations_reporting} สถานี`}
             </p>
-            {distanceText && <p className="dust-distance">{distanceText}</p>}
+            {distanceText && (
+              <p className="dust-distance">
+                <span aria-hidden="true">📍</span>
+                {distanceText}
+              </p>
+            )}
           </article>
 
-          {/* สองใบนี้เปลี่ยนเรื่องไปเลยเมื่อเจาะดูสถานีเดียว ไม่ใช่แค่กรองข้อมูล
-              เพราะของเดิมหมดความหมายทั้งคู่ จำนวนสถานีที่รายงานจะเป็น 1/1 ตลอด
-              และค่าสูงสุดขณะนี้จะเป็นเลขตัวเดียวกับการ์ดใหญ่เป๊ะ ๆ
-              ทั้งสองใบจึงกลายเป็นค่าของสถานีนั้นเองแทน คือช่วงตามเวลากับดัชนี AQI */}
+          {/* การ์ดเล็กสามใบบอกแค่หัวข้อกับตัวเลข ตามแบบจำลอง
+
+              เจาะดูสถานีเดียว สองใบแรกเปลี่ยนเป็นค่าของสถานีนั้น
+              เพราะจำนวนสถานีที่รายงานจะเป็น 1/1 ตลอด
+              และค่าสูงสุดขณะนี้จะเป็นเลขตัวเดียวกับการ์ดใหญ่ */}
           {picked ? (
-            <article className="card">
+            <article className="card card-mini">
               <p className="card-label">ต่ำสุด–สูงสุด {picked.hours_window} ชม.</p>
-              <p className="card-value card-value-md">
-                {picked.pm25_min ?? "-"}
-                <span className="card-unit">– {picked.pm25_max ?? "-"}</span>
-              </p>
-              {/* บอกจำนวนชั่วโมงที่มีค่าจริง ไม่ใช่ช่วงที่ขอไป
-                  เพราะหลายสถานีส่งไม่ครบทุกชั่วโมง บางแห่งใน 24 ชั่วโมงมีแค่สิบ
-                  ถ้าเขียนว่า 24 ชั่วโมงจะเป็นการบอกช่วงที่ไม่ตรงกับตัวเลข */}
-              <p className="card-note">
-                {picked.hours_with_data > 0
-                  ? `จาก ${picked.hours_with_data} ชั่วโมงที่มีข้อมูล`
-                  : "ยังไม่มีข้อมูลย้อนหลัง"}
+              <p className="card-value card-value-sm">
+                {picked.pm25_min ?? "-"}–{picked.pm25_max ?? "-"}
               </p>
             </article>
           ) : (
-            <article className="card">
+            <article className="card card-mini">
               <p className="card-label">สถานีที่รายงาน</p>
-              <p className="card-value card-value-md">
-                {summary.stations_reporting}
-                <span className="card-unit">/ {summary.stations_total}</span>
-              </p>
-              <p className="card-note">
-                {summary.stations_stale > 0
-                  ? `ข้อมูลค้าง ${summary.stations_stale} สถานี`
-                  : "ทุกสถานีเป็นปัจจุบัน"}
+              <p className="card-value card-value-sm">
+                {summary.stations_reporting} / {summary.stations_total}
               </p>
             </article>
           )}
 
           {picked ? (
-            <article className="card">
-              <p className="card-label">ดัชนีคุณภาพอากาศ</p>
-              <p className="card-value card-value-md">{picked.aqi ?? "-"}</p>
-              <p className="card-note">AQI ตามเกณฑ์กรมควบคุมมลพิษ</p>
+            <article className="card card-mini">
+              <p className="card-label">ดัชนี</p>
+              <p className="card-value card-value-sm">{picked.aqi ?? "-"}</p>
             </article>
           ) : (
-            <article className="card">
+            <article className="card card-mini">
               <p className="card-label">สูงสุดขณะนี้</p>
-              <p className="card-value card-value-md">{worst ? worst.pm25 : "-"}</p>
-              {/* ดูทั้งประเทศอยากรู้ว่าจังหวัดไหน ดูจังหวัดเดียวอยากรู้ว่าสถานีไหน
-                  เพราะรู้อยู่แล้วว่าเป็นจังหวัดที่เลือกไว้ การบอกซ้ำจึงไม่ได้ข้อมูลใหม่ */}
-              <p className="card-note">
-                {worst
-                  ? summary.province
-                    ? worst.name_th
-                    : `จ.${worst.province}`
-                  : "ไม่มีข้อมูล"}
-              </p>
+              <p className="card-value card-value-sm">{worst ? worst.pm25 : "-"}</p>
             </article>
           )}
 
-          <article className="card">
+          {/* เวลาของสถานีที่เจาะดู ไม่ใช่เวลาล่าสุดของทั้งจังหวัด
+              เพราะแต่ละสถานีส่งข้อมูลไม่พร้อมกัน */}
+          <article className="card card-mini">
             <p className="card-label">ข้อมูล ณ เวลา</p>
-            {/* เวลาของสถานีที่เจาะดู ไม่ใช่เวลาล่าสุดของทั้งจังหวัด
-                เพราะแต่ละสถานีส่งข้อมูลไม่พร้อมกัน ถ้าใช้เวลาของจังหวัด
-                จะบอกว่าข้อมูลใหม่กว่าที่สถานีนั้นส่งมาจริง */}
             <p className="card-value card-value-sm">
-              {formatThaiDateTime(picked ? picked.measured_at : summary.measured_at)}
+              {formatClock(picked ? picked.measured_at : summary.measured_at)}
             </p>
-            <p className="card-note">
-          {/* จุดกะพริบบอกว่าระบบยังดึงข้อมูลอยู่ ไม่ใช่หน้าที่ค้างไว้เฉย ๆ */}
-          <span className="live-dot" aria-hidden="true" />
-          {describeAge(picked ? picked.minutes_behind : summary.minutes_behind)}
-        </p>
           </article>
         </div>
 
       </section>
 
-      {/* สภาพอากาศ ณ ขณะนี้ ของจังหวัดที่เลือก
-          ใช้คนละแหล่งกับข้อมูลอากาศย้อนหลังที่ระบบเก็บเอง
-          เพราะ NASA POWER เผยแพร่เฉพาะข้อมูลที่ผ่านมาแล้วและตามหลังหลายวัน
-          บอกสภาพอากาศตอนนี้ไม่ได้ */}
+      {/* สภาพอากาศ ณ ขณะนี้ ของจังหวัดที่เลือก ดึงสดจาก Open-Meteo
+          เพราะ NASA POWER เผยแพร่เฉพาะข้อมูลที่ผ่านมาแล้วและตามหลังหลายวัน */}
       <section className="card-group">
         <header className="card-group-head">
           <h2 className="card-group-title">สภาพอากาศ</h2>
-          {/* กลุ่มนี้ไม่มีช่องเลือกของตัวเอง ใช้ช่องเดียวกับกลุ่มฝุ่นข้างบน
-              แต่ต้องบอกชื่อจังหวัดไว้ เพราะเมื่อเลือกทั้งประเทศ
-              ค่าฝุ่นเป็นของทั้งประเทศ ส่วนอากาศเป็นของจังหวัดเดียว
-              ถ้าไม่บอกจะเข้าใจว่าอุณหภูมินี้เป็นค่าเฉลี่ยทั้งประเทศ */}
+          {/* ต้องบอกชื่อจังหวัดไว้ เพราะเมื่อเลือกทั้งประเทศ
+              ค่าฝุ่นเป็นของทั้งประเทศ ส่วนอากาศเป็นของจังหวัดเดียว */}
           <span className="card-group-scope">{weatherProvince}</span>
         </header>
 
         {now ? (
           <div className="cards cards-weather">
-            {/* ใบนี้กินเต็มความกว้าง เพราะมีทั้งไอคอน อุณหภูมิ คำอธิบาย
-                และช่วงต่ำสุดถึงสูงสุด ถ้าอยู่ครึ่งเดียวจะเบียดจนตัดบรรทัด */}
+            {/* บอกว่าเป็นค่าที่จุดกลางจังหวัด คู่กับป้ายระยะในการ์ดฝุ่น
+                คนอ่านจะได้รู้ว่าสองการ์ดวัดกันคนละจุด */}
             <article className="card card-wide">
-              <p className="card-label">อากาศตอนนี้</p>
-
-              <div className="weather-now-main">
-                <WeatherIcon code={now.weather_code} />
-                <div>
-                  <p className="card-value card-value-md">
-                    {now.temperature ?? "-"}
-                    <span className="card-unit">°C</span>
-                  </p>
-                  {/* คำอธิบายสภาพอากาศคือคำตอบว่าตอนนี้เป็นอย่างไร
-                      จึงให้เด่นพอกับตัวเลข ไม่ใช่ตัวเล็กปนกับข้อมูลอื่นเหมือนเดิม */}
-                  <p className="weather-now-condition">
-                    {now.condition}
-                    {/* ป้ายบอกว่าคำนี้มาจากเครื่องวัด ไม่ใช่แบบจำลอง
-                        คนอ่านจะได้รู้ว่าทำไมคำบอกไม่ตรงกับไอคอนของแหล่งอื่น */}
-                    {now.condition_measured && <span className="weather-measured-pill">วัดได้จริง</span>}
-                  </p>
-                </div>
-
-                {/* ลมอยู่คู่กับอุณหภูมิ คั่นด้วยเส้นตั้ง
-                    เดิมลมซ่อนอยู่ในบรรทัดเล็กใต้โอกาสฝนตก เป็นตัวประกอบของการ์ดฝน
-                    ทั้งที่เป็นคนละเรื่องกัน ฝนบอกว่าจะเปียกไหม ลมบอกว่าอากาศถ่ายเทไหม
-
-                    ซ่อนทั้งก้อนเมื่อไม่มีค่าลม ดีกว่าโชว์ขีดกลางข้างเข็มทิศที่ไม่ชี้ไปไหน */}
-                {now.wind_speed != null && (
-                  <div className="weather-now-wind">
-                    <span className="weather-now-divider" />
-                    {/* เข็มชี้ทางที่ลมพัดไป ส่วนองศาที่ต้นทางส่งมาคือทิศที่ลมพัดมาจาก
-                        สองอย่างนี้ตรงข้ามกันเสมอ จึงหมุนเพิ่มอีกร้อยแปดสิบองศา */}
-                    <svg className="weather-wind-dial" viewBox="0 0 40 40" aria-hidden="true">
-                      <circle cx="20" cy="20" r="17" />
-                      {now.wind_direction != null && (
-                        <g transform={`rotate(${now.wind_direction + 180} 20 20)`}>
-                          <line x1="20" y1="28" x2="20" y2="14" />
-                          <path d="M20 10 L24 18 L20 16 L16 18 Z" />
-                        </g>
-                      )}
-                    </svg>
-                    <div>
-                      <p className="card-value card-value-sm">
-                        {now.wind_speed}
-                        <span className="card-unit">km/h</span>
-                      </p>
-                      <p className="weather-now-condition">
-                        {now.wind_level?.label_th ?? "ลม"}
-                        {now.wind_direction_th ? ` · ${now.wind_direction_th}` : ""}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ช่วงอุณหภูมิของวัน แสดงเป็นแถบแทนบรรทัดตัวหนังสือ
-
-                  ตัวเลขคู่เดิมบอกได้แค่ขอบเขต แต่ไม่ได้บอกว่าตอนนี้อยู่ตรงไหนของวัน
-                  จุดบนแถบตอบคำถามนั้นได้ทันทีโดยไม่กินพื้นที่เพิ่ม
-                  เช่น จุดค่อนไปทางซ้ายแปลว่ายังไม่ถึงจุดร้อนสุด อีกสักพักจะร้อนขึ้นอีก
-
-                  ซ่อนทั้งแถบเมื่อขาดค่าใดค่าหนึ่ง เพราะแถบที่ไม่รู้ขอบเขตไม่ได้สื่ออะไร
-                  และการเว้นว่างดีกว่าแสดงขีดกลางซึ่งทำให้เข้าใจว่าเป็นค่าจริง */}
-              {now.temp_min != null && now.temp_max != null && (
-                <div className="weather-now-range">
-                  <div className="weather-range-end">
-                    <p className="weather-range-label">ต่ำสุดวันนี้</p>
-                    <p className="weather-range-value low">{now.temp_min}°</p>
-                  </div>
-
-                  <div className="weather-range-track">
-                    <div className="weather-range-bar" aria-hidden="true">
-                      {now.temperature != null && (
-                        <span
-                          className="weather-range-dot"
-                          style={{
-                            left: `${rangePosition(now.temperature, now.temp_min, now.temp_max)}%`,
-                          }}
-                        />
-                      )}
-                    </div>
-                    <p className="weather-range-caption">
-                      {now.temperature != null ? `ตอนนี้ ${now.temperature}° · ` : ""}
-                      ต่างกัน {(now.temp_max - now.temp_min).toFixed(1)}°
-                    </p>
-                  </div>
-
-                  <div className="weather-range-end right">
-                    <p className="weather-range-label">สูงสุด</p>
-                    <p className="weather-range-value high">{now.temp_max}°</p>
-                  </div>
-                </div>
-              )}
-
-            </article>
-
-            <article className="card">
-              <p className="card-label">โอกาสฝนตกวันนี้</p>
-              <p className="card-value card-value-md">
-                {now.rain_chance_pct ?? "-"}
-                <span className="card-unit">%</span>
+              <p className="card-label">อากาศตอนนี้ · จุดกลางจังหวัด</p>
+              <p className="card-value">
+                {now.temperature ?? "-"}
+                <span className="card-unit">°C</span>
               </p>
-              {/* เอาลมออกจากบรรทัดนี้แล้ว เพราะย้ายไปอยู่คู่กับอุณหภูมิในการ์ดใหญ่
-                  ถ้าปล่อยไว้ทั้งสองที่จะเป็นตัวเลขเดียวกันโผล่สองรอบในกลุ่มเดียวกัน
-                  เหลือความชื้นซึ่งเกี่ยวกับโอกาสฝนโดยตรง จึงอยู่ถูกที่แล้ว */}
-              <p className="card-note">ความชื้น {now.humidity ?? "-"}%</p>
+              <p className="weather-now-condition">
+                {now.condition}
+                {now.wind_speed != null ? ` · ลม ${now.wind_speed} km/h` : ""}
+                {/* ป้ายบอกว่าคำบอกสภาพอากาศมาจากเครื่องวัดฝน ไม่ใช่แบบจำลอง */}
+                {now.condition_measured && <span className="weather-measured-pill">วัดได้จริง</span>}
+              </p>
             </article>
 
-            <article className="card">
+            <article className="card card-mini">
+              <p className="card-label">โอกาสฝนตกวันนี้</p>
+              <p className="card-value card-value-sm">{now.rain_chance_pct ?? "-"}%</p>
+            </article>
+
+            <article className="card card-mini">
               <p className="card-label">อากาศ ณ เวลา</p>
               <p className="card-value card-value-sm">{formatClock(now.observed_at)}</p>
-              <p className="card-note">
-                {now.minutes_behind != null
-                  ? `ข้อมูลเมื่อ ${now.minutes_behind} นาทีที่แล้ว · `
-                  : ""}
-                จาก Open-Meteo
-              </p>
             </article>
           </div>
         ) : (
