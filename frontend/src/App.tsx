@@ -379,12 +379,29 @@ export default function App() {
   // หน้าหลักที่ปุ่มกลับพากลับมา
   const HOME: SectionKey = "home";
 
+  // ลำดับครั้งที่สั่งเปลี่ยนหน้า ใช้บอกให้เลื่อนหน้าใหม่ทุกครั้งที่กด
+  // แม้กดหัวข้อเดิมซ้ำ ซึ่งค่าหน้าและหัวข้อไม่เปลี่ยน React จึงไม่วาดใหม่ให้เอง
+  const [navCount, setNavCount] = useState(0);
+
   const goTo = useCallback((key: SectionKey, tab?: AirTab) => {
     setActive(key);
     if (tab) setAirTab(tab);
-    // เริ่มอ่านจากบนสุดเสมอเมื่อเปลี่ยนหน้า ไม่งั้นจะค้างอยู่ตำแหน่งเดิมของหน้าก่อน
-    window.scrollTo({ top: 0 });
+    setNavCount((count) => count + 1);
   }, []);
+
+  // เลื่อนหลังวาดหน้าใหม่เสร็จ เพราะส่วนที่จะเลื่อนไปหายังไม่มีอยู่ตอนที่กด
+  //
+  // หัวข้อภาพรวมกับหน้าอื่นเริ่มจากบนสุด ไม่งั้นจะค้างอยู่ตำแหน่งเดิมของหน้าก่อน
+  // หัวข้ออื่นในหน้าวัดคุณภาพอากาศเลื่อนลงไปหาส่วนของหัวข้อนั้น
+  useEffect(() => {
+    if (navCount === 0) return;
+    const target =
+      active === "air" && airTab !== "overview" ? document.getElementById(`air-${airTab}`) : null;
+    if (target) target.scrollIntoView({ block: "start" });
+    else window.scrollTo({ top: 0 });
+    // ตั้งใจฟังแค่ navCount เปลี่ยนหัวข้อด้วยทางอื่นไม่ต้องเลื่อนหน้า
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navCount]);
 
   // ตรวจว่าผู้ใช้ที่จำไว้ในเบราว์เซอร์ยังมีอยู่จริงในฐานข้อมูล
   //
@@ -492,34 +509,74 @@ export default function App() {
             หน้าฝุ่นรวมทุกอย่างที่เกี่ยวกับฝุ่นไว้ครบ เรียงจากสถานการณ์ตอนนี้
             ไปหาสิ่งที่ควรทำ ผลกระทบที่ตามมา ปัจจัยแวดล้อม และปิดท้ายด้วย
             คุณภาพของข้อมูลเอง ตามลำดับที่ผู้ใช้อยากรู้ */}
-        {/* หน้าแรกกับหน้าวัดคุณภาพอากาศ ใช้โครงเดียวกัน
-            กล่องเนื้อหาใหญ่ด้านซ้ายกับแถบหัวข้อสีดำด้านขวา แสดงทีละหัวข้อ
-
-            หน้าแรกคือหัวข้อภาพรวม ค่าฝุ่นกับสภาพอากาศตอนนี้
-            กดหัวข้ออื่นในแถบขวา จะพาไปหน้าวัดคุณภาพอากาศ */}
-        {(active === "home" || active === "air") && (
+        {/* หน้าแรก กล่องเนื้อหาด้านซ้ายกับแถบหัวข้อสีดำด้านขวา
+            กล่องซ้ายเป็นการ์ดค่าฝุ่นกับสภาพอากาศแบบย่อ
+            กดหัวข้อในแถบขวา จะพาไปหน้าวัดคุณภาพอากาศแล้วเลื่อนลงไปที่ส่วนนั้น */}
+        {active === "home" && (
           <div className="air-layout">
             <div className="air-main">
-              {(active === "home" || (active === "air" && airTab === "overview")) && (
-                <>
-                  {summary && (
-                    <SummaryCards
-                      summary={summary}
-                      weatherNow={weatherNow}
-                      provinces={provinces}
-                      weatherProvince={weatherTarget}
-                      dustProvince={dustProvince}
-                      onDustProvinceChange={setDustProvince}
-                      stations={stations}
-                      dustStation={dustStation}
-                      onDustStationChange={setDustStation}
-                      stationSummary={stationSummary}
-                    />
-                  )}
-                </>
+              {summary && (
+                <SummaryCards
+                  summary={summary}
+                  weatherNow={weatherNow}
+                  provinces={provinces}
+                  weatherProvince={weatherTarget}
+                  dustProvince={dustProvince}
+                  onDustProvinceChange={setDustProvince}
+                  stations={stations}
+                  dustStation={dustStation}
+                  onDustStationChange={setDustStation}
+                  stationSummary={stationSummary}
+                />
               )}
+            </div>
 
-              {active === "air" && airTab === "map" && (
+            <aside className="air-side" aria-label="หัวข้อในหน้าวัดคุณภาพอากาศ">
+              {AIR_TABS.map((item) => (
+                <button
+                  key={item.key}
+                  className={item.key === "overview" ? "air-side-btn active" : "air-side-btn"}
+                  aria-current={item.key === "overview" ? "page" : undefined}
+                  onClick={() => goTo("air", item.key)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </aside>
+          </div>
+        )}
+
+        {/* หน้าวัดคุณภาพอากาศ หน้ายาวแบบเดิม ทุกส่วนเรียงต่อกันลงมา
+            ผู้ใช้เลื่อนดูต่อเนื่องได้ ไม่ต้องกดทีละหัวข้อ
+
+            แต่ละส่วนมี id ตามหัวข้อในแถบดำของหน้าแรก
+            กดหัวข้อจากหน้าแรกหรือปุ่มพยากรณ์ แจ้งเตือนบนเมนู จะเลื่อนมาที่ส่วนนั้นพอดี */}
+        {active === "air" && (
+          <>
+            {summary && (
+              <SummaryCards
+                summary={summary}
+                weatherNow={weatherNow}
+                provinces={provinces}
+                weatherProvince={weatherTarget}
+                dustProvince={dustProvince}
+                onDustProvinceChange={setDustProvince}
+                stations={stations}
+                dustStation={dustStation}
+                onDustStationChange={setDustStation}
+                stationSummary={stationSummary}
+                detailed
+              />
+            )}
+            {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
+
+            <h2 className="section-heading">
+              สถานการณ์ตอนนี้
+              <span>ค่าฝุ่นล่าสุดและพื้นที่ที่ควรระวัง</span>
+            </h2>
+
+            <div className="two-column">
+              <div id="air-map" className="air-anchor">
                 <StationMap
                   stations={stations}
                   onSelect={showStation}
@@ -528,58 +585,44 @@ export default function App() {
                   onPick={setPickedProvince}
                   levels={summary?.levels ?? []}
                 />
-              )}
-
-              {/* สัดส่วนสถานีแยกตามระดับอยู่คู่กับอันดับจังหวัด เพราะเป็นภาพรวมของทั้งเครือข่ายเหมือนกัน
-                  ย้ายออกจากหัวข้อภาพรวม ให้ภาพรวมเหลือแค่ค่าฝุ่นกับสภาพอากาศ */}
-              {active === "air" && airTab === "ranking" && (
-                <>
-                  {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
-                  <ProvinceRanking ranking={ranking} />
-                </>
-              )}
-
-              {active === "air" && airTab === "alerts" && alertData && <AlertPanel alerts={alertData} />}
-
-              {active === "air" && airTab === "forecast" && provinces.length > 0 && (
-                <ForecastPanel provinces={provinces} defaultProvince={user.province} />
-              )}
-
-              {active === "air" && airTab === "rain" && provinces.length > 0 && (
-                <RainPanel provinces={provinces} defaultProvince={user.province} />
-              )}
-
-              {/* คุณภาพของข้อมูลอยู่ท้ายหัวข้อย้อนหลัง เพราะเป็นเรื่องประวัติการเก็บข้อมูลเหมือนกัน
-                  ไม่แยกเป็นปุ่มที่แปด ให้แถบด้านขวามีเจ็ดปุ่มตามแบบที่วาดไว้ */}
-              {active === "air" && airTab === "history" && (
-                <>
-                  {provinces.length > 0 && (
-                    <WeatherPanel provinces={provinces} defaultProvince={user.province} />
-                  )}
-                  {health && <DataHealth health={health} />}
-                </>
-              )}
+              </div>
+              <div id="air-ranking" className="air-anchor">
+                <ProvinceRanking ranking={ranking} />
+              </div>
             </div>
 
-            <aside className="air-side" aria-label="หัวข้อในหน้าวัดคุณภาพอากาศ">
-              {AIR_TABS.map((item) => (
-                <button
-                  key={item.key}
-                  className={
-                    (active === "home" ? item.key === "overview" : airTab === item.key)
-                      ? "air-side-btn active"
-                      : "air-side-btn"
-                  }
-                  aria-current={
-                    (active === "home" ? item.key === "overview" : airTab === item.key) ? "page" : undefined
-                  }
-                  onClick={() => goTo("air", item.key)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </aside>
-          </div>
+            <h2 className="section-heading">
+              ย้อนหลังและปัจจัยแวดล้อม
+              <span>สภาพอากาศ การพยากรณ์ และผลกระทบต่อสุขภาพ</span>
+            </h2>
+
+            {alertData && (
+              <div id="air-alerts" className="air-anchor">
+                <AlertPanel alerts={alertData} />
+              </div>
+            )}
+
+            {provinces.length > 0 && (
+              <>
+                <div id="air-forecast" className="air-anchor">
+                  <ForecastPanel provinces={provinces} defaultProvince={user.province} />
+                </div>
+                <div id="air-rain" className="air-anchor">
+                  <RainPanel provinces={provinces} defaultProvince={user.province} />
+                </div>
+                <div id="air-history" className="air-anchor">
+                  <WeatherPanel provinces={provinces} defaultProvince={user.province} />
+                </div>
+              </>
+            )}
+
+            <h2 className="section-heading">
+              คุณภาพของข้อมูลเอง
+              <span>ตรวจสอบย้อนกลับได้ว่าข้อมูลมาจากไหนและขาดช่วงใด</span>
+            </h2>
+
+            {health && <DataHealth health={health} />}
+          </>
         )}
 
         {/* หน้าโรคจากฝุ่น แยกออกมาเพราะตอบคนละคำถามกับหน้าวัดคุณภาพอากาศ
