@@ -250,15 +250,7 @@ def weather_now(session: Session, province: str) -> dict:
             "reason": "เรียกข้อมูลสภาพอากาศปัจจุบันไม่สำเร็จ อาจเป็นเพราะไม่มีอินเทอร์เน็ต",
         }
 
-    # ส่งพิกัดจุดที่ดึงอากาศไปด้วย ให้หน้าเว็บบอกได้ว่าสถานีฝุ่นอยู่ห่างจุดนี้เท่าไร
-    # คนอ่านจะได้รู้ว่าการ์ดฝุ่นกับการ์ดอากาศวัดกันคนละจุด ไม่ใช่ที่เดียวกัน
-    result = {
-        "available": True,
-        "province": province,
-        "latitude": coords[0],
-        "longitude": coords[1],
-        **data,
-    }
+    result = {"available": True, "province": province, **data}
 
     # ฝนที่วัดได้จริงจากเครื่องวัดรอบจุดกลางจังหวัด ชั่วโมงล่าสุด
     #

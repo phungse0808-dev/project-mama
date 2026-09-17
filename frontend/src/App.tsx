@@ -16,7 +16,6 @@ import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
 import { DiseaseRisk } from "./components/DiseaseRisk";
-import { HomePage } from "./components/HomePage";
 import { NavBar } from "./components/NavBar";
 import type { AirTab, SectionKey } from "./components/NavBar";
 import { AIR_TABS } from "./components/NavBar";
@@ -496,31 +495,12 @@ export default function App() {
         {/* หน้าแรกกับหน้าวัดคุณภาพอากาศ ใช้โครงเดียวกัน
             กล่องเนื้อหาใหญ่ด้านซ้ายกับแถบหัวข้อสีดำด้านขวา แสดงทีละหัวข้อ
 
-            หน้าแรกคือหัวข้อภาพรวมในแบบย่อ ค่าฝุ่น อากาศ ลม และคำแนะนำป้องกัน
-            หน้าวัดคุณภาพอากาศคือหัวข้อภาพรวมแบบละเอียด
-            กดหัวข้ออื่นในแถบขวาจากหน้าไหนก็ได้ จะพาไปหน้าวัดคุณภาพอากาศ */}
+            หน้าแรกคือหัวข้อภาพรวม ค่าฝุ่นกับสภาพอากาศตอนนี้
+            กดหัวข้ออื่นในแถบขวา จะพาไปหน้าวัดคุณภาพอากาศ */}
         {(active === "home" || active === "air") && (
           <div className="air-layout">
             <div className="air-main">
-              {active === "home" && (
-                <HomePage
-                  summary={summary}
-                  onOpenAir={() => goTo("air", "overview")}
-                  province={user.province}
-                  provinces={provinces}
-                  area={dustProvince}
-                  stations={stations}
-                  station={dustStation}
-                  stationSummary={stationSummary}
-                  onScopeChange={(nextProvince, nextStation) => {
-                    setDustProvince(nextProvince);
-                    setDustStation(nextStation);
-                  }}
-                  riskGroup={user.risk_group}
-                />
-              )}
-
-              {active === "air" && airTab === "overview" && (
+              {(active === "home" || (active === "air" && airTab === "overview")) && (
                 <>
                   {summary && (
                     <SummaryCards
