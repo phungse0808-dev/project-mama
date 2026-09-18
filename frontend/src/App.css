@@ -3302,3 +3302,22 @@ button {
   border-radius: 50%;
   background: var(--accent);
 }
+
+/* หัวแผนที่ ชื่อกับปุ่มเปิดปิดจุดสถานีอยู่บรรทัดเดียวกัน */
+.map-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.map-dots-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14.5px;
+  color: var(--text-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}

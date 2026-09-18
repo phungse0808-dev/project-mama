@@ -24,6 +24,17 @@ type Props = {
  */
 const NO_DATA_COLOR = "#d9dee6";
 
+/** ค่ามาตรฐาน PM2.5 เฉลี่ย 24 ชั่วโมงของไทย จังหวัดที่เกินค่านี้ตีขอบประสีแดง
+ *
+ * เดิมต้องเทียบสีเอาเองว่าจังหวัดไหนเกิน ซึ่งสีส้มกับสีเหลืองแยกยากบนแผนที่เล็ก
+ * ใช้ขอบประรอบรูปจังหวัด ไม่ใช่วงกลมครอบ เพราะจังหวัดที่เกินมักติดกันหลายจังหวัด
+ * วงกลมจะซ้อนกันจนอ่านไม่ออกว่าวงไหนของจังหวัดไหน
+ */
+const THAI_STANDARD_PM25 = 37.5;
+
+/** สีขอบของจังหวัดที่เกินมาตรฐาน แดงเข้มพอให้เห็นบนพื้นส้มและพื้นแดง */
+const OVER_COLOR = "#a3002c";
+
 /**
  * ชั้นระบายสีรายจังหวัดบนแผนที่
  *
@@ -74,10 +85,18 @@ export function ProvinceLayer({ ranking, selected, onSelect }: Props) {
     return code ? PROVINCE_BY_CODE[code] : undefined;
   };
 
+  const isOver = (feature?: Feature<Geometry, unknown>) => {
+    const row = rowOf(feature);
+    return row ? row.pm25_avg > THAI_STANDARD_PM25 : false;
+  };
+
   const styleOf = (feature?: Feature<Geometry, unknown>): PathOptions => {
     const row = rowOf(feature);
     const isPicked = nameOf(feature) === selected;
+    const over = isOver(feature);
     return {
+      // จังหวัดที่เกินมาตรฐานใช้ขอบประสีแดง เห็นได้โดยไม่ต้องเทียบสีกับคำอธิบาย
+      ...(over && !isPicked ? { color: OVER_COLOR, weight: 2.4, dashArray: "5 4" } : {}),
       // จังหวัดที่กดเลือกใช้ขอบเข้มหนา ที่เหลือใช้ขอบดำโปร่งบาง ๆ
       // ซึ่งยังทำให้จังหวัดที่สีเดียวกันแยกออกจากกันได้
       //
@@ -99,9 +118,12 @@ export function ProvinceLayer({ ranking, selected, onSelect }: Props) {
     const name = code ? PROVINCE_BY_CODE[code] : undefined;
     const row = rowOf(feature);
 
+    const over = row ? row.pm25_avg > THAI_STANDARD_PM25 : false;
+
     layer.bindTooltip(
       row
-        ? `${name} ${row.pm25_avg} µg/m³ · ระดับ${row.level.label_th} · ${row.station_count} สถานี`
+        ? `${name} ${row.pm25_avg} µg/m³ · ระดับ${row.level.label_th} · ${row.station_count} สถานี` +
+            (over ? ` · เกินมาตรฐานไทย ${THAI_STANDARD_PM25}` : "")
         : `${name ?? "ไม่ทราบจังหวัด"} · ไม่มีสถานีตรวจวัด`,
       { sticky: true },
     );
@@ -120,8 +142,8 @@ export function ProvinceLayer({ ranking, selected, onSelect }: Props) {
       },
       mouseout: () => {
         (layer as Layer & { setStyle: (s: PathOptions) => void }).setStyle({
-          weight: picked ? 2.4 : 0.8,
-          color: picked ? "#131a24" : "rgba(0, 0, 0, 0.35)",
+          weight: picked || over ? 2.4 : 0.8,
+          color: picked ? "#131a24" : over ? OVER_COLOR : "rgba(0, 0, 0, 0.35)",
         });
       },
       click: () => {
