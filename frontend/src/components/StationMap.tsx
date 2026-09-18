@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import { CircleMarker, MapContainer, Tooltip, useMap } from "react-leaflet";
+import { useEffect } from "react";
+import { MapContainer, useMap } from "react-leaflet";
 import type { ProvinceRank, StationReading, Summary } from "../api";
-import { formatThaiDateTime } from "../api";
 import { ProvinceLayer } from "./ProvinceLayer";
 import { ProvinceDetail } from "./ProvinceDetail";
 
@@ -148,13 +147,7 @@ function FitOnResize({ trigger }: { trigger: unknown }) {
  *     การกดเข้าไปดูรายละเอียดจะเห็นสถานีทุกแห่งพร้อมค่าของแต่ละแห่ง
  *     ซึ่งเป็นที่ที่ความต่างนั้นถูกเปิดเผย
  */
-/** สีของจุดสถานีที่ข้อมูลค้าง ใช้เทา ไม่ใช่สีระดับ เพราะค่านั้นไม่ใช่ค่าล่าสุดแล้ว */
-const STALE_DOT = "#9aa6b5";
-
 export function StationMap({ stations, onSelect, ranking, picked, onPick, levels }: Props) {
-  // เปิดปิดจุดสถานีได้ เพราะกรุงเทพฯ กับปริมณฑลมีสถานีหนาแน่นจนจุดทับกัน
-  // บางคนอยากดูภาพรวมสีรายจังหวัดอย่างเดียว
-  const [showDots, setShowDots] = useState(true);
   // สถานีของจังหวัดที่กดเลือก เรียงจากค่าสูงไปต่ำ
   // เรียงแบบนี้เพราะจุดที่แย่ที่สุดคือสิ่งที่ควรเห็นก่อน ไม่ใช่ตามชื่อ
   const pickedStations = picked
@@ -179,24 +172,12 @@ export function StationMap({ stations, onSelect, ranking, picked, onPick, levels
 
   return (
     <section className="panel">
-      <div className="map-head">
-        <h2 className="panel-title">
-          แผนที่คุณภาพอากาศ
-          <span className="panel-hint">
-            {ranking.length} จังหวัดที่มีข้อมูล · กดที่จังหวัดเพื่อดูรายละเอียด ·
-            ขอบประแดงคือจังหวัดที่เกินมาตรฐานไทย 37.5
-          </span>
-        </h2>
-
-        <label className="map-dots-toggle">
-          <input
-            type="checkbox"
-            checked={showDots}
-            onChange={(event) => setShowDots(event.target.checked)}
-          />
-          แสดงจุดสถานี
-        </label>
-      </div>
+      <h2 className="panel-title">
+        แผนที่คุณภาพอากาศ
+        <span className="panel-hint">
+          {ranking.length} จังหวัดที่มีข้อมูล · กดที่จังหวัดเพื่อดูรายละเอียด
+        </span>
+      </h2>
 
       {/* zoomSnap ยอมให้ซูมเป็นทศนิยมทีละหนึ่งในสิบ
           ค่าตั้งต้นของไลบรารีคือขยับทีละหนึ่งระดับเต็ม ซึ่งหยาบเกินไป
@@ -215,34 +196,6 @@ export function StationMap({ stations, onSelect, ranking, picked, onPick, levels
         >
           <FitOnResize trigger={picked} />
           <ProvinceLayer ranking={ranking} selected={picked} onSelect={onPick} />
-
-          {/* จุดสถานีตามพิกัดจริง บอกว่าค่าของจังหวัดมาจากกี่จุดและอยู่ตรงไหน
-              ต่างจากสีรายจังหวัดที่ระบายทั้งจังหวัดจากสถานีไม่กี่แห่ง */}
-          {showDots &&
-            stations.map((station) => (
-              <CircleMarker
-                key={station.station_code}
-                center={[station.latitude, station.longitude]}
-                radius={station.is_stale ? 4 : 5}
-                pathOptions={{
-                  color: "rgba(255, 255, 255, 0.9)",
-                  weight: 1.2,
-                  fillColor: station.is_stale ? STALE_DOT : station.level.color,
-                  fillOpacity: 1,
-                }}
-                eventHandlers={{ click: () => onSelect(station.station_code) }}
-              >
-                <Tooltip direction="top" offset={[0, -6]}>
-                  <strong>{station.name_th}</strong>
-                  <br />
-                  {station.is_stale
-                    ? "ข้อมูลค้าง ไม่ใช่ค่าล่าสุด"
-                    : `${station.pm25 ?? "-"} µg/m³ · ระดับ${station.level.label_th}`}
-                  <br />
-                  {formatThaiDateTime(station.measured_at)}
-                </Tooltip>
-              </CircleMarker>
-            ))}
         </MapContainer>
 
         {/* คำอธิบายสีวางในที่ว่างด้านขวา ซึ่งเกิดจากประเทศไทยรูปทรงสูงและแคบ
