@@ -3122,3 +3122,80 @@ button {
     min-height: 0;
   }
 }
+
+/* ---------- ป้องกันตัวอย่างไรในแต่ละระดับ ---------- */
+
+.plevel-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plevel-list > li {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.plevel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.plevel-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.plevel-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--level-edge);
+}
+
+.plevel-range {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.plevel-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plevel-items li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.plevel-items li > svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+@media (max-width: 1000px) {
+  .plevel-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .plevel-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

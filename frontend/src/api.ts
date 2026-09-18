@@ -425,6 +425,17 @@ export type ForecastDemo = {
   day_after_steps?: ForecastDemoStep[];
 };
 
+/** วิธีป้องกันตัวของระดับคุณภาพอากาศหนึ่งระดับ พร้อมช่วงค่า */
+export type ProtectionLevel = {
+  key: string;
+  label_th: string;
+  color: string;
+  pm25_from: number;
+  /** null คือระดับสูงสุดที่ไม่มีขอบบน */
+  pm25_to: number | null;
+  items: { icon: string; text_th: string }[];
+};
+
 /** คำแนะนำสำหรับผู้มีโรคประจำตัว ดูถ้อยคำและที่มาใน backend/app/disease_advice.py */
 export type DiseaseAdvice = {
   province: string | null;
@@ -523,6 +534,7 @@ export const api = {
     send<AppUser>(`/api/users/${id}`, "PATCH", { province, risk_group: riskGroup }),
   personalSummary: (id: number) => get<PersonalSummary>(`/api/users/${id}/summary`),
   riskGroups: () => get<RiskGroup[]>("/api/risk-groups"),
+  protectionLevels: () => get<ProtectionLevel[]>("/api/protection-levels"),
   provinces: () => get<string[]>("/api/provinces"),
   pm25Forecast: (province: string, station?: string | null) =>
     get<Pm25Forecast>(

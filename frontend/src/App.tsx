@@ -19,6 +19,7 @@ import { DiseaseAdvice } from "./components/DiseaseAdvice";
 import { NavBar } from "./components/NavBar";
 import type { AirTab, SectionKey } from "./components/NavBar";
 import { AIR_TABS } from "./components/NavBar";
+import { ProtectionLevels } from "./components/ProtectionLevels";
 import { ProvinceRanking } from "./components/ProvinceRanking";
 import { ForecastDemo } from "./components/ForecastDemo";
 import { RainPanel } from "./components/RainPanel";
@@ -475,6 +476,7 @@ export default function App() {
                   dustStation={dustStation}
                   onDustStationChange={setDustStation}
                   stationSummary={stationSummary}
+                  detailedWeather
                 />
               )}
               {/* ใช้ค่าของสถานีเฉพาะตอนที่โหลดของสถานีที่เลือกไว้มาแล้ว ให้ตรงกับการ์ดฝุ่นข้างบน */}
@@ -563,6 +565,9 @@ export default function App() {
               />
             )}
             {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
+
+            {/* กางวิธีป้องกันตัวครบทุกระดับ ต่อจากแถบสัดส่วนที่บอกว่าตอนนี้อยู่ระดับไหน */}
+            <ProtectionLevels />
 
             <h2 className="section-heading">
               สถานการณ์ตอนนี้

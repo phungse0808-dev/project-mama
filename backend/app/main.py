@@ -20,7 +20,8 @@ from app.config import CORS_ORIGINS
 from app.db import create_db_and_tables, get_session
 from app.disease_advice import disease_advice
 from app.forecast_demo import forecast_demo
-from app.health_advice import RISK_GROUPS
+from app.aqi import LEVELS, level_ceiling_pm25
+from app.health_advice import RISK_GROUPS, protection_for
 from app.live import refresh_if_stale
 from app.models import Station
 from app.services import (
@@ -363,6 +364,33 @@ def get_health_advice(
 def get_alerts(session: Session = Depends(get_session)) -> dict:
     """พื้นที่ที่ค่าฝุ่นเกินมาตรฐานไทยหรือเกินค่าแนะนำขององค์การอนามัยโลก"""
     return alerts(session)
+
+
+@app.get("/api/protection-levels", tags=["สุขภาพ"])
+def get_protection_levels() -> list[dict]:
+    """วิธีป้องกันตัวของทุกระดับคุณภาพอากาศ พร้อมช่วงค่าและสีของระดับ
+
+    หน้าเว็บกางทุกระดับให้เห็นพร้อมกัน คนอ่านจะได้รู้ล่วงหน้าว่าถ้าฝุ่นขึ้นระดับถัดไปต้องทำอะไร
+    ช่วงค่าอ่านจาก app.aqi ที่เดียวกับที่ใช้ตัดสินระดับจริง ไม่พิมพ์ซ้ำไว้ในหน้าเว็บ
+    """
+    levels = []
+    lower = 0.0
+    for level in LEVELS:
+        ceiling = level_ceiling_pm25(level.key)
+        levels.append(
+            {
+                "key": level.key,
+                "label_th": level.label_th,
+                "color": level.color,
+                "pm25_from": lower,
+                "pm25_to": ceiling,
+                "items": protection_for(level.key),
+            }
+        )
+        if ceiling is None:
+            break
+        lower = ceiling
+    return levels
 
 
 @app.get("/api/disease-advice", tags=["สุขภาพ"])

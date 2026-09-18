@@ -32,6 +32,8 @@ type CardProps = Props & {
    * แบบย่อบอกแค่หัวข้อกับตัวเลขและรัศมีวัดของสถานี
    * แบบละเอียดมีอายุข้อมูล จำนวนสถานีค้าง เข็มทิศลม แถบอุณหภูมิ และความชื้น */
   detailed?: boolean;
+  /** ใช้การ์ดสภาพอากาศแบบละเอียด แม้ฝั่งฝุ่นเป็นแบบย่อ ใช้ในหน้าแรก */
+  detailedWeather?: boolean;
 };
 
 /** วันที่ เดือน ปี พ.ศ. กับเวลา เช่น 17 ก.ย. 2569 10:00 จากค่า 2026-09-17T10:00
@@ -165,6 +167,7 @@ export function SummaryCards({
   onDustStationChange,
   stationSummary,
   detailed = false,
+  detailedWeather = false,
 }: CardProps) {
   const worst = summary.worst_station;
   const now = weatherNow?.available ? weatherNow : null;
@@ -467,7 +470,7 @@ export function SummaryCards({
         </header>
 
         {now ? (
-          detailed ? (
+          detailed || detailedWeather ? (
             <div className="cards cards-weather">
               {/* ใบนี้กินเต็มความกว้าง เพราะมีทั้งไอคอน อุณหภูมิ คำอธิบาย
                   และช่วงต่ำสุดถึงสูงสุด ถ้าอยู่ครึ่งเดียวจะเบียดจนตัดบรรทัด */}
