@@ -486,6 +486,7 @@ export default function App() {
                   stationSummary={dustStation ? stationSummary : null}
                   weatherNow={weatherNow}
                   weatherProvince={weatherTarget}
+                  area={dustProvince}
                 />
               )}
 

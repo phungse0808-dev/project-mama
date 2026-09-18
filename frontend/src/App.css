@@ -3026,36 +3026,120 @@ button {
   border: 1px solid var(--level-edge);
 }
 
-/* กล่องพื้นเทากับการ์ดสูงแถวละสี่ใบ ตามแบบที่วาดไว้ */
+/* กล่องพื้นเทา ปุ่มโรคด้านบน กล่องคำแนะนำด้านล่าง ตามแบบที่วาดไว้ */
 .dadv-panel {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  padding: 22px;
+  padding: 14px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--surface-2);
 }
 
-.dadv-card {
-  min-height: 300px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px 14px;
+.dadv-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.dadv-tab {
+  padding: 14px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+}
+
+.dadv-tab:hover {
+  background: var(--border);
+}
+
+.dadv-tab.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+/* จุดกำกับปุ่มของโรคประจำตัว หาเจอเร็วโดยไม่ต้องอ่านทุกปุ่ม */
+.dadv-tab-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: 1px;
+}
+
+.dadv-tab.on .dadv-tab-dot {
+  background: var(--on-accent);
+}
+
+/* ปุ่มรวมโรคประจำตัว เน้นกรอบให้ต่างจากปุ่มโรคเดี่ยว */
+.dadv-tab.mine {
+  border: 2px solid var(--accent);
+}
+
+/* โรคแต่ละโรคในกล่องใหญ่ คั่นด้วยเส้นเมื่อแสดงหลายโรคพร้อมกัน */
+.dadv-one + .dadv-one {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.dadv-big {
+  padding: 18px 20px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
+  min-height: 230px;
 }
 
-.dadv-card p,
-.dadv-card h3 {
+.dadv-big p,
+.dadv-big h3 {
   margin: 0;
 }
 
+.dadv-big-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.dadv-big-head > div {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ปุ่มตั้งโรคประจำตัว อยู่ในกล่องของโรคนั้นเลย ไม่ต้องมีแถบเลือกแยกอีกชุด */
+.dadv-mine-btn {
+  padding: 7px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-soft);
+  font-family: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.dadv-mine-btn.on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--ink-accent-on-tint);
+  font-weight: 700;
+}
+
 .dadv-icon {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3065,34 +3149,33 @@ button {
 }
 
 .dadv-name {
-  font-size: 17px;
+  font-size: 20px;
 }
 
 .dadv-label {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--text-soft);
 }
 
 .dadv-advice {
-  margin: 0;
-  padding-left: 18px;
-  font-size: 15.5px;
+  margin: 12px 0 0;
+  padding-left: 22px;
+  font-size: 16.5px;
   font-weight: 600;
   line-height: 1.5;
 }
 
 .dadv-advice li {
-  padding: 2px 0;
+  padding: 3px 0;
 }
 
-/* อาการที่ต้องพบแพทย์ วางชิดล่างของการ์ดทุกใบ ให้แนวเดียวกัน */
 .dadv-warning {
-  margin-top: auto !important;
-  padding: 8px 10px;
+  margin-top: 14px !important;
+  padding: 10px 12px;
   border-radius: 8px;
   background: var(--tint-bad);
   color: var(--ink-bad);
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -3106,19 +3189,17 @@ button {
   color: var(--accent);
 }
 
-@media (max-width: 1000px) {
-  .dadv-panel {
+@media (max-width: 640px) {
+  .dadv-tabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
 
-@media (max-width: 560px) {
   .dadv-panel {
-    grid-template-columns: minmax(0, 1fr);
-    padding: 12px;
+    padding: 10px;
   }
 
-  .dadv-card {
+  .dadv-big {
+    padding: 14px;
     min-height: 0;
   }
 }
@@ -3198,4 +3279,26 @@ button {
   .plevel-list {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* ช่องโรคของคุณในกล่องคำแนะนำวันนี้ */
+.advice-mine + .advice-mine {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.advice-mine-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.advice-bullet {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--accent);
 }

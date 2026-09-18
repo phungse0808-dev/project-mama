@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { DiseaseAdvice as DiseaseAdviceData } from "../api";
 import { api } from "../api";
+import { useMyDiseases } from "../myDiseases";
 
 type Props = {
   provinces: string[];
@@ -67,9 +68,19 @@ function DiseaseIcon({ name }: { name: string }) {
  * ใช้แทนตัวเลขความเสี่ยงเป็นเปอร์เซ็นต์ของหน้าเดิม เพราะตัวเลขดูแม่นเกินจริง
  * คำแนะนำเปลี่ยนตามระดับฝุ่นของพื้นที่ที่เลือก ถ้อยคำและที่มาอยู่ใน backend/app/disease_advice.py
  */
+/** ค่าของ picked ที่หมายถึงปุ่มรวมโรคประจำตัว ไม่ใช่ชื่อโรคจริง */
+const MINE = "__mine__";
+
 export function DiseaseAdvice({ provinces, area, onAreaChange }: Props) {
+  const [mine, toggleMine] = useMyDiseases();
   const [data, setData] = useState<DiseaseAdviceData | null>(null);
   const [failed, setFailed] = useState(false);
+
+  // โรคที่กดเลือกอยู่ ค่าว่างแปลว่ายังไม่ได้กด ให้ตกไปใช้ปุ่มโรคของฉันหรือโรคแรก
+  //
+  // ไม่ตั้งค่าเริ่มต้นเป็นชื่อโรคตรง ๆ เพราะรายชื่อโรคมาจากเซิร์ฟเวอร์
+  // ถ้าฝั่งหลังบ้านเพิ่มหรือตัดโรค ชื่อที่เขียนไว้ตายตัวจะไม่ตรงกับของจริง
+  const [picked, setPicked] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -86,6 +97,16 @@ export function DiseaseAdvice({ provinces, area, onAreaChange }: Props) {
       cancelled = true;
     };
   }, [area]);
+
+  const diseases = data?.diseases ?? [];
+  const myList = diseases.filter((item) => mine.includes(item.name));
+
+  // ปุ่มโรคของฉันรวมทุกโรคที่ตั้งไว้ไว้ในหน้าเดียว ตั้งหลายโรคจะได้ไม่ต้องกดดูทีละโรค
+  // ขึ้นเฉพาะคนที่ตั้งไว้อย่างน้อยหนึ่งโรค และเป็นปุ่มที่เปิดไว้ให้ตอนเข้าหน้า
+  const showMine = myList.length > 0;
+  const current = diseases.find((item) => item.name === picked);
+  const viewingMine = showMine && (picked === "" || picked === MINE);
+  const shown = viewingMine ? myList : current ? [current] : diseases.slice(0, 1);
 
   return (
     <section className="dadv">
@@ -116,29 +137,82 @@ export function DiseaseAdvice({ provinces, area, onAreaChange }: Props) {
       {failed && <p className="empty">เชื่อมต่อเซิร์ฟเวอร์ไม่ได้</p>}
       {!data && !failed && <p className="empty">กำลังโหลดคำแนะนำ...</p>}
 
-      {data && (
+      {data && shown.length > 0 && (
         <>
-          {/* การ์ดสูงแถวละสี่ใบตามแบบที่วาดไว้ ใบละหนึ่งโรค */}
+          {/* ปุ่มโรคด้านบน กล่องคำแนะนำด้านล่าง ตามแบบที่วาดไว้
+              เห็นทีละโรค จึงไม่มีข้อความซ้ำกันเจ็ดชุดเหมือนตอนวางเป็นการ์ดพร้อมกัน
+
+              โรคที่เปิดไว้ให้ตอนแรกคือโรคประจำตัวของผู้ใช้ ถ้าไม่ได้เลือกไว้ก็เป็นโรคแรก
+              ปุ่มของโรคประจำตัวมีจุดกำกับ จะได้หาเจอเร็วโดยไม่ต้องอ่านทุกปุ่ม */}
           <div className="dadv-panel">
-            {data.diseases.map((item) => (
-              <article className="dadv-card" key={item.name}>
-                <span className="dadv-icon">
-                  <DiseaseIcon name={item.icon} />
-                </span>
-                <h3 className="dadv-name">{item.name}</h3>
-                <p className="dadv-label">คำแนะนำตอนนี้{item.general ? " · ใช้คำแนะนำทั่วไป" : ""}</p>
-                {item.advice.length > 0 ? (
-                  <ul className="dadv-advice">
-                    {item.advice.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="dadv-label">ยังไม่มีค่าฝุ่นล่าสุดของพื้นที่นี้</p>
-                )}
-                <p className="dadv-warning">{item.warning_th}</p>
-              </article>
-            ))}
+            <div className="dadv-tabs">
+              {showMine && (
+                <button
+                  type="button"
+                  className={viewingMine ? "dadv-tab mine on" : "dadv-tab mine"}
+                  aria-current={viewingMine ? "true" : undefined}
+                  onClick={() => setPicked(MINE)}
+                >
+                  <span className="dadv-tab-dot" aria-hidden="true" />
+                  โรคของฉัน ({myList.length})
+                </button>
+              )}
+              {data.diseases.map((item) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  className={!viewingMine && item.name === current?.name ? "dadv-tab on" : "dadv-tab"}
+                  aria-current={!viewingMine && item.name === current?.name ? "true" : undefined}
+                  onClick={() => setPicked(item.name)}
+                >
+                  {mine.includes(item.name) && <span className="dadv-tab-dot" aria-hidden="true" />}
+                  {item.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="dadv-big">
+              {viewingMine && (
+                <p className="dadv-label">โรคประจำตัวของคุณ {myList.length} โรค</p>
+              )}
+
+              {shown.map((item) => (
+                <article className="dadv-one" key={item.name}>
+                  <div className="dadv-big-head">
+                    <span className="dadv-icon">
+                      <DiseaseIcon name={item.icon} />
+                    </span>
+                    <div>
+                      <h3 className="dadv-name">{item.name}</h3>
+                      <p className="dadv-label">
+                        คำแนะนำเมื่อค่าฝุ่นอยู่ระดับ{data.level?.label_th ?? "ที่วัดได้"}
+                        {item.general ? " · ใช้คำแนะนำทั่วไป" : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className={mine.includes(item.name) ? "dadv-mine-btn on" : "dadv-mine-btn"}
+                      aria-pressed={mine.includes(item.name)}
+                      onClick={() => toggleMine(item.name)}
+                    >
+                      {mine.includes(item.name) ? "โรคประจำตัวของคุณ" : "ตั้งเป็นโรคประจำตัว"}
+                    </button>
+                  </div>
+
+                  {item.advice.length > 0 ? (
+                    <ul className="dadv-advice">
+                      {item.advice.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="dadv-label">ยังไม่มีค่าฝุ่นล่าสุดของพื้นที่นี้</p>
+                  )}
+
+                  <p className="dadv-warning">{item.warning_th}</p>
+                </article>
+              ))}
+            </div>
           </div>
 
           <p className="dadv-source">

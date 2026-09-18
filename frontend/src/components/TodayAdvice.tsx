@@ -1,5 +1,9 @@
+import { useEffect, useState } from "react";
 import type { StationSummary, Summary, WeatherNow } from "../api";
 import { levelInk } from "../levelInk";
+import { useMyDiseases } from "../myDiseases";
+import { api } from "../api";
+import type { DiseaseAdvice } from "../api";
 import { ProtectIcon } from "./ProtectIcon";
 import { WeatherIcon } from "./WeatherIcon";
 
@@ -9,6 +13,8 @@ type Props = {
   stationSummary: StationSummary | null;
   weatherNow: WeatherNow | null;
   weatherProvince: string;
+  /** พื้นที่ที่เลือกอยู่ ใช้ดึงคำแนะนำรายโรคของพื้นที่เดียวกัน */
+  area: string;
 };
 
 /** โอกาสฝนตกวันนี้ตั้งแต่ค่านี้ แนะนำให้พกร่มแม้ตอนนี้ฝนยังไม่ตก */
@@ -50,7 +56,31 @@ type WeatherTip = { icon: number; text: string; why?: string };
  *     ไม่เข้าข้อไหนเลย → อากาศปกติ
  * เกณฑ์ 60% 35°C 20°C ตั้งเองให้อ่านง่าย ไม่ได้อ้างเกณฑ์ของกรมอุตุนิยมวิทยา
  */
-export function TodayAdvice({ summary, stationSummary, weatherNow, weatherProvince }: Props) {
+export function TodayAdvice({ summary, stationSummary, weatherNow, weatherProvince, area }: Props) {
+  const [mine] = useMyDiseases();
+  const [diseaseAdvice, setDiseaseAdvice] = useState<DiseaseAdvice | null>(null);
+
+  // ดึงคำแนะนำรายโรคเฉพาะตอนที่ผู้ใช้เลือกโรคไว้ ไม่งั้นไม่ต้องยิงคำขอเลย
+  useEffect(() => {
+    if (mine.length === 0) {
+      setDiseaseAdvice(null);
+      return;
+    }
+    let cancelled = false;
+    api
+      .diseaseAdvice(area || null)
+      .then((result) => {
+        if (!cancelled) setDiseaseAdvice(result);
+      })
+      .catch(() => {
+        if (!cancelled) setDiseaseAdvice(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mine, area]);
+
+  const myAdvice = (diseaseAdvice?.diseases ?? []).filter((item) => mine.includes(item.name));
   const level = stationSummary ? stationSummary.level : summary.level;
   const pm25 = stationSummary ? stationSummary.pm25 : summary.pm25_avg;
   const protection = stationSummary ? stationSummary.protection : summary.protection;
@@ -137,6 +167,26 @@ export function TodayAdvice({ summary, stationSummary, weatherNow, weatherProvin
             <p className="advice-why">ยังไม่มีข้อมูลสภาพอากาศ</p>
           )}
         </div>
+
+        {/* ช่องนี้ขึ้นเฉพาะคนที่เลือกโรคประจำตัวไว้ในหน้าโรคจากฝุ่น */}
+        {myAdvice.length > 0 && (
+          <div className="advice-col">
+            <p className="advice-col-head">โรคของคุณ</p>
+            {myAdvice.map((item) => (
+              <div className="advice-mine" key={item.name}>
+                <p className="advice-mine-name">{item.name}</p>
+                <ul className="advice-list">
+                  {item.advice.map((line) => (
+                    <li key={line}>
+                      <span className="advice-bullet" aria-hidden="true" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
