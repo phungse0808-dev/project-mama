@@ -425,17 +425,6 @@ export type ForecastDemo = {
   day_after_steps?: ForecastDemoStep[];
 };
 
-/** วิธีป้องกันตัวของระดับคุณภาพอากาศหนึ่งระดับ พร้อมช่วงค่า */
-export type ProtectionLevel = {
-  key: string;
-  label_th: string;
-  color: string;
-  pm25_from: number;
-  /** null คือระดับสูงสุดที่ไม่มีขอบบน */
-  pm25_to: number | null;
-  items: { icon: string; text_th: string }[];
-};
-
 /** คำแนะนำสำหรับผู้มีโรคประจำตัว ดูถ้อยคำและที่มาใน backend/app/disease_advice.py */
 export type DiseaseAdvice = {
   province: string | null;
@@ -454,6 +443,62 @@ export type DiseaseAdvice = {
     /** true เมื่อใช้คำแนะนำของประชาชนทั่วไป เพราะไม่มีคำแนะนำเฉพาะโรค */
     general: boolean;
   }[];
+};
+
+/** ผลวิเคราะห์ฝุ่นกับจำนวนผู้ป่วย ดูวิธีคำนวณใน backend/app/dust_cases.py
+ *
+ * ค่าสหสัมพันธ์เป็น null ได้เมื่อข้อมูลน้อยเกินไป หน้าเว็บต้องเผื่อกรณีนั้นไว้
+ */
+export type DustCases = {
+  available: boolean;
+  reason?: string;
+  provinces?: string[];
+  start?: string;
+  end?: string;
+  total_cases?: number;
+  main_group?: string;
+  buckets?: { label_th: string; range_th: string; days: number; cases_per_day: number }[];
+  correlations?: {
+    group: string;
+    all_days: number | null;
+    workday: number | null;
+    weekly: number | null;
+  }[];
+  /** ผู้ป่วยเฉลี่ยต่อวัน เทียบวันทำการกับวันหยุด ใช้อธิบายว่าทำไมต้องตัดวันหยุด */
+  workday_cases?: number;
+  holiday_cases?: number;
+  /** ค่าที่ได้ถ้าดูรายเดือนโดยไม่ตัดวันหยุด กับค่าหลังตัดแล้ว */
+  monthly_correlation?: number | null;
+  workday_correlation?: number | null;
+  over_standard_days?: number;
+  total_days?: number;
+  /** วิธีคำนวณค่าความสัมพันธ์ ส่งมาเพื่อกางให้ตรวจสอบได้ ไม่ใช่เชื่อตัวเลขอย่างเดียว */
+  method?: {
+    formula: string;
+    pairs: { label_th: string; detail_th: string; count: number }[];
+    reading_th: string;
+    example: {
+      province: string;
+      group: string;
+      points: { day: string; pm25: number; cases: number }[];
+      mean_pm25: number;
+      mean_cases: number;
+      top: number;
+      bottom: number;
+      r: number | null;
+    } | null;
+  };
+  source_th?: string;
+  source_detail_th?: string;
+  source_url?: string;
+  source_note_th?: string;
+  /** วันที่ระบบนำเข้าข้อมูลผู้ป่วยครั้งล่าสุด */
+  imported_at?: string | null;
+  pm25_source_th?: string;
+  pm25_source_url?: string;
+  pm25_note_th?: string;
+  /** false เมื่อค่าฝุ่นมาจากแบบจำลอง ไม่ใช่สถานีตรวจวัด */
+  pm25_measured?: boolean;
 };
 
 export type WeatherNow = {
@@ -534,7 +579,6 @@ export const api = {
     send<AppUser>(`/api/users/${id}`, "PATCH", { province, risk_group: riskGroup }),
   personalSummary: (id: number) => get<PersonalSummary>(`/api/users/${id}/summary`),
   riskGroups: () => get<RiskGroup[]>("/api/risk-groups"),
-  protectionLevels: () => get<ProtectionLevel[]>("/api/protection-levels"),
   provinces: () => get<string[]>("/api/provinces"),
   pm25Forecast: (province: string, station?: string | null) =>
     get<Pm25Forecast>(
@@ -552,6 +596,7 @@ export const api = {
     get<RainChance>("/api/rain-chance/" + encodeURIComponent(province)),
   alerts: () => get<Alerts>("/api/alerts"),
   disease: () => get<DiseaseSummary>("/api/disease"),
+  dustCases: () => get<DustCases>("/api/dust-cases"),
   diseaseAdvice: (province?: string | null) =>
     get<DiseaseAdvice>(
       "/api/disease-advice" + (province ? `?province=${encodeURIComponent(province)}` : "")
