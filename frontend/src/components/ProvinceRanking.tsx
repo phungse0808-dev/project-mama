@@ -5,9 +5,19 @@ type Props = {
   limit?: number;
 };
 
-/** ตารางอันดับจังหวัดตามค่าฝุ่นเฉลี่ย */
+/** ค่าฝุ่นเฉลี่ยต้องเกินเท่านี้จึงจะขึ้นอันดับ
+ *
+ * เดิมเอา 15 อันดับแรกเสมอ ซึ่งวันที่อากาศดีทั้งประเทศก็ยังมีตารางยาวเต็มหน้า
+ * ทำให้ดูเหมือนมีจังหวัดที่น่าห่วงตลอดเวลา ทั้งที่บางวันค่าสูงสุดยังไม่ถึงสิบ
+ * เกณฑ์นี้ผู้จัดทำกำหนดเอง ไม่ได้อ้างมาตรฐานใด ตั้งไว้ต่ำกว่าเกณฑ์ของ
+ * องค์การอนามัยโลกที่ 15 เพื่อให้ยังเห็นจังหวัดที่เริ่มมีแนวโน้มสูงขึ้น
+ */
+const MIN_PM25 = 10;
+
+/** ตารางอันดับจังหวัดตามค่าฝุ่นเฉลี่ย เฉพาะจังหวัดที่เกินเกณฑ์ */
 export function ProvinceRanking({ ranking, limit = 15 }: Props) {
-  const shown = ranking.slice(0, limit);
+  const passed = ranking.filter((item) => item.pm25_avg > MIN_PM25);
+  const shown = passed.slice(0, limit);
   const highest = shown[0]?.pm25_avg ?? 1;
 
   return (
@@ -18,9 +28,19 @@ export function ProvinceRanking({ ranking, limit = 15 }: Props) {
       <h2 className="panel-title">
         อันดับจังหวัดที่ค่าฝุ่นสูงที่สุด
         <span className="panel-hint">
-          ค่าเฉลี่ยของสถานีในจังหวัด · จาก {ranking.length} จังหวัด
+          ค่าเฉลี่ยของสถานีในจังหวัด · แสดงเฉพาะจังหวัดที่เกิน {MIN_PM25} µg/m³ ·{" "}
+          {passed.length} จาก {ranking.length} จังหวัดที่มีข้อมูล
         </span>
       </h2>
+      {/* วันที่ทุกจังหวัดต่ำกว่าเกณฑ์ ต้องบอกให้ชัดว่าอากาศดี
+          ไม่ใช่ปล่อยให้ตารางว่างจนดูเหมือนระบบพัง */}
+      {shown.length === 0 && (
+        <p className="ranking-none">
+          วันนี้ยังไม่มีจังหวัดใดที่ค่าฝุ่นเฉลี่ยเกิน {MIN_PM25} µg/m³
+          <small>คุณภาพอากาศอยู่ในเกณฑ์ดีทั้งประเทศ</small>
+        </p>
+      )}
+
       <ol className="ranking">
         {shown.map((item, index) => (
           <li key={item.province} className="ranking-row">

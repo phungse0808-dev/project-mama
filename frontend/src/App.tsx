@@ -16,10 +16,10 @@ import { api } from "./api";
 import { AlertPanel } from "./components/AlertPanel";
 import { DataHealth } from "./components/DataHealth";
 import { DiseaseAdvice } from "./components/DiseaseAdvice";
+import { DustCases } from "./components/DustCases";
 import { NavBar } from "./components/NavBar";
-import type { AirTab, SectionKey } from "./components/NavBar";
-import { AIR_TABS } from "./components/NavBar";
-import { ProtectionLevels } from "./components/ProtectionLevels";
+import type { AirTab } from "./components/NavBar";
+import { TAB_GROUPS } from "./components/NavBar";
 import { ProvinceRanking } from "./components/ProvinceRanking";
 import { ForecastDemo } from "./components/ForecastDemo";
 import { RainPanel } from "./components/RainPanel";
@@ -107,12 +107,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
-  // หน้าแรกที่เห็นหลังกรอกชื่อ คือหน้าหลักเดียวกับที่ปุ่มกลับพากลับมา
-  const [active, setActive] = useState<SectionKey>("home");
-
-  // หัวข้อที่เปิดอยู่ในแถบดำของหน้าแรก
-  //
-  // กดหัวข้อแล้วเปลี่ยนแค่กล่องเนื้อหาด้านซ้าย อยู่ในหน้าแรกต่อ ไม่พาไปหน้าวัดคุณภาพอากาศ
+  // หัวข้อที่เปิดอยู่ในแถบด้านขวา ทั้งเว็บมีที่กดที่เดียวคือแถบนี้
   const [homeTab, setHomeTab] = useState<AirTab>("overview");
 
 
@@ -342,14 +337,9 @@ export default function App() {
     setUser(null);
   }, []);
 
-  // หน้าหลักที่ปุ่มกลับพากลับมา
-  const HOME: SectionKey = "home";
-
-  const goTo = useCallback((key: SectionKey) => {
-    setActive(key);
-    // กลับหน้าแรกจากที่ไหนก็ตาม เริ่มที่ภาพรวมเสมอ
-    if (key === "home") setHomeTab("overview");
-    // เริ่มอ่านจากบนสุดเสมอเมื่อเปลี่ยนหน้า ไม่งั้นจะค้างอยู่ตำแหน่งเดิมของหน้าก่อน
+  /** เปลี่ยนหัวข้อที่กำลังดู และเริ่มอ่านจากบนสุดเสมอ */
+  const goTab = useCallback((key: AirTab) => {
+    setHomeTab(key);
     window.scrollTo({ top: 0 });
   }, []);
 
@@ -428,10 +418,8 @@ export default function App() {
   return (
     <>
       <NavBar
-        active={active}
-        onGoTo={goTo}
         onSearch={() => setSearching(true)}
-        onHome={() => goTo(HOME)}
+        onHome={() => goTab("overview")}
         onSignOut={handleSignOut}
         provinces={provinces}
         fallbackProvince={user.province ?? ""}
@@ -444,7 +432,7 @@ export default function App() {
           stations={stations}
           onSelect={(code) => {
             setSearching(false);
-            goTo("air");
+            goTab("map");
             showStation(code);
           }}
           onClose={() => setSearching(false)}
@@ -461,8 +449,7 @@ export default function App() {
         {/* หน้าแรก กล่องเนื้อหาด้านซ้ายกับแถบหัวข้อสีดำด้านขวา
             กดหัวข้อในแถบขวา กล่องซ้ายเปลี่ยนเป็นหัวข้อนั้น โดยยังอยู่ในหน้าแรก
             ภาพรวมเป็นการ์ดค่าฝุ่นกับสภาพอากาศแบบย่อ */}
-        {active === "home" && (
-          <div className="air-layout">
+        <div className="air-layout">
             <div className="air-main">
               {homeTab === "overview" && summary && (
                 <SummaryCards
@@ -518,104 +505,49 @@ export default function App() {
                 <RainPanel provinces={provinces} defaultProvince={user.province} />
               )}
 
-              {homeTab === "history" && (
-                <>
-                  {provinces.length > 0 && (
-                    <WeatherPanel provinces={provinces} defaultProvince={user.province} />
-                  )}
-                  {health && <DataHealth health={health} />}
-                </>
+              {homeTab === "history" && provinces.length > 0 && (
+                <WeatherPanel provinces={provinces} defaultProvince={user.province} />
               )}
+
+
+              {homeTab === "data" && health && <DataHealth health={health} />}
+
+              {homeTab === "disease" && (
+                <DiseaseAdvice
+                  provinces={provinces}
+                  area={dustProvince}
+                  onAreaChange={setDustProvince}
+                />
+              )}
+
+              {/* ผลการวิเคราะห์ของระบบเอง ว่าฝุ่นกับจำนวนผู้ป่วยจริงสัมพันธ์กันหรือไม่ */}
+              {homeTab === "impact" && <DustCases />}
             </div>
 
-            <aside className="air-side" aria-label="หัวข้อในหน้าแรก">
-              {AIR_TABS.map((item) => (
-                <button
-                  key={item.key}
-                  className={homeTab === item.key ? "air-side-btn active" : "air-side-btn"}
-                  aria-current={homeTab === item.key ? "page" : undefined}
-                  onClick={() => {
-                    setHomeTab(item.key);
-                    window.scrollTo({ top: 0 });
-                  }}
+            <aside className="air-side" aria-label="หัวข้อทั้งหมด">
+              {TAB_GROUPS.map((group) => (
+                <div
+                  className={group.demo ? "air-side-group demo" : "air-side-group"}
+                  key={group.title}
                 >
-                  {item.label}
-                </button>
+                  <p className="air-side-head">
+                    {group.title}
+                    {group.note && <span>{group.note}</span>}
+                  </p>
+                  {group.items.map((item) => (
+                    <button
+                      key={item.key}
+                      className={homeTab === item.key ? "air-side-btn active" : "air-side-btn"}
+                      aria-current={homeTab === item.key ? "page" : undefined}
+                      onClick={() => goTab(item.key)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
               ))}
             </aside>
           </div>
-        )}
-
-        {/* หน้าวัดคุณภาพอากาศ หน้ายาวแบบเดิม ทุกส่วนเรียงต่อกันลงมา
-            ผู้ใช้เลื่อนดูต่อเนื่องได้ ไม่ต้องกดทีละหัวข้อ */}
-        {active === "air" && (
-          <>
-            {summary && (
-              <SummaryCards
-                summary={summary}
-                weatherNow={weatherNow}
-                provinces={provinces}
-                weatherProvince={weatherTarget}
-                dustProvince={dustProvince}
-                onDustProvinceChange={setDustProvince}
-                stations={stations}
-                dustStation={dustStation}
-                onDustStationChange={setDustStation}
-                stationSummary={stationSummary}
-                detailed
-              />
-            )}
-            {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
-
-            {/* กางวิธีป้องกันตัวครบทุกระดับ ต่อจากแถบสัดส่วนที่บอกว่าตอนนี้อยู่ระดับไหน */}
-            <ProtectionLevels />
-
-            <h2 className="section-heading">
-              สถานการณ์ตอนนี้
-              <span>ค่าฝุ่นล่าสุดและพื้นที่ที่ควรระวัง</span>
-            </h2>
-
-            <div className="two-column">
-              <StationMap
-                stations={stations}
-                onSelect={showStation}
-                ranking={ranking}
-                picked={pickedProvince}
-                onPick={setPickedProvince}
-                levels={summary?.levels ?? []}
-              />
-              <ProvinceRanking ranking={ranking} />
-            </div>
-
-            <h2 className="section-heading">
-              ย้อนหลังและปัจจัยแวดล้อม
-              <span>สภาพอากาศ การพยากรณ์ และผลกระทบต่อสุขภาพ</span>
-            </h2>
-
-            {alertData && <AlertPanel alerts={alertData} />}
-
-            {provinces.length > 0 && (
-              <>
-                <RainPanel provinces={provinces} defaultProvince={user.province} />
-                <WeatherPanel provinces={provinces} defaultProvince={user.province} />
-              </>
-            )}
-
-            <h2 className="section-heading">
-              คุณภาพของข้อมูลเอง
-              <span>ตรวจสอบย้อนกลับได้ว่าข้อมูลมาจากไหนและขาดช่วงใด</span>
-            </h2>
-
-            {health && <DataHealth health={health} />}
-          </>
-        )}
-
-        {/* หน้าโรคจากฝุ่น คำแนะนำสำหรับผู้มีโรคประจำตัว การ์ดละหนึ่งโรค
-            ใช้ช่องพื้นที่ตัวเดียวกับหน้าอื่น เลือกจังหวัดไว้ที่หน้าไหน มาหน้านี้ก็ยังเป็นจังหวัดเดิม */}
-        {active === "disease" && (
-          <DiseaseAdvice provinces={provinces} area={dustProvince} onAreaChange={setDustProvince} />
-        )}
-
 
         <footer className="footer">
           <p>

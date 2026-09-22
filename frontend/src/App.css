@@ -2458,15 +2458,54 @@ button {
   top: 86px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+
+/* กล่องหัวข้อหนึ่งกลุ่ม พื้นดำคือส่วนที่ใช้งานได้จริง */
+.air-side-group {
+  display: flex;
+  flex-direction: column;
   gap: 9px;
-  padding: 12px;
+  padding: 10px 12px 12px;
   border-radius: var(--radius);
   background: #0d1420;
 }
 
-:root[data-theme="dark"] .air-side {
+/* กล่องส่วนสาธิต ใช้พื้นน้ำเงินแยกจากของจริง
+   บอกด้วยสีตั้งแต่ยังไม่กดเข้าไป แทนการเขียนคำว่าเดโมต่อท้ายทุกปุ่ม */
+.air-side-group.demo {
+  background: #12489e;
+}
+
+:root[data-theme="dark"] .air-side-group {
   background: #000000;
   border: 1px solid var(--border);
+}
+
+:root[data-theme="dark"] .air-side-group.demo {
+  background: #0a2a5e;
+  border-color: #1d4a8f;
+}
+
+.air-side-head {
+  margin: 0;
+  padding: 2px 2px 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #9aa4b2;
+}
+
+.air-side-group.demo .air-side-head {
+  color: #cfe0ff;
+}
+
+/* คำขยายท้ายหัวกลุ่ม เช่น ยังใช้จริงไม่ได้ ตัวเล็กกว่าและไม่หนา */
+.air-side-head span {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 400;
+  opacity: 0.85;
 }
 
 .air-side-btn {
@@ -2496,6 +2535,15 @@ button {
   color: #ffffff;
 }
 
+.air-side-group.demo .air-side-btn {
+  color: #12489e;
+}
+
+.air-side-group.demo .air-side-btn.active {
+  background: #08306b;
+  color: #ffffff;
+}
+
 .air-side-btn:focus-visible {
   outline: 3px solid #5ec8ff;
   outline-offset: 2px;
@@ -2511,9 +2559,23 @@ button {
   .air-side {
     order: -1;
     position: static;
+  }
+
+  .air-side-group {
     flex-direction: row;
+    align-items: center;
     overflow-x: auto;
     padding: 9px;
+  }
+
+  .air-side-head {
+    flex: none;
+    padding: 0 6px 0 2px;
+  }
+
+  .air-side-head span {
+    display: inline;
+    margin-left: 5px;
   }
 
   .air-side-btn {
@@ -3206,81 +3268,6 @@ button {
 
 /* ---------- ป้องกันตัวอย่างไรในแต่ละระดับ ---------- */
 
-.plevel-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.plevel-list > li {
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-}
-
-.plevel-head {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 8px;
-}
-
-.plevel-name {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.plevel-dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 7px;
-  border-radius: 50%;
-  border: 1px solid var(--level-edge);
-}
-
-.plevel-range {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-soft);
-}
-
-.plevel-items {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.plevel-items li {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 5px 0;
-  font-size: 14.5px;
-  line-height: 1.45;
-}
-
-.plevel-items li > svg {
-  flex: none;
-  margin-top: 2px;
-}
-
-@media (max-width: 1000px) {
-  .plevel-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .plevel-list {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 /* ช่องโรคของคุณในกล่องคำแนะนำวันนี้ */
 .advice-mine + .advice-mine {
   margin-top: 8px;
@@ -3301,4 +3288,302 @@ button {
   margin-top: 7px;
   border-radius: 50%;
   background: var(--accent);
+}
+
+/* ---------- แผงฝุ่นกับจำนวนผู้ป่วย ต่อท้ายหน้าโรคจากฝุ่น ---------- */
+.dcase {
+  margin-top: 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.dcase-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dcase-title {
+  margin: 0;
+  font-size: 19px;
+}
+
+.dcase-scope {
+  font-size: 13px;
+  color: var(--text-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 11px;
+  white-space: nowrap;
+}
+
+.dcase-lead {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+/* หัวข้อย่อย ชื่อกับคำขยายอยู่บรรทัดเดียวกัน คำขยายตัวเล็กกว่า */
+.dcase-sub {
+  margin: 18px 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dcase-sub span {
+  margin-left: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-soft);
+}
+
+/* แถวกราฟแท่ง ชื่อ แท่ง ตัวเลข ความกว้างชื่อคงที่ให้แท่งเริ่มตรงกันทุกแถว */
+.dcase-bar {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 42px;
+  gap: 10px;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 14px;
+}
+
+.dcase-bar-name {
+  color: var(--text-soft);
+}
+
+.dcase-track {
+  height: 15px;
+  border-radius: 5px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.dcase-fill {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: var(--accent);
+}
+
+/* แท่งของวันหยุด ใช้สีเทาเพราะไม่ใช่ค่าที่ต้องการเน้น เป็นแค่ตัวเทียบ */
+.dcase-fill.dim {
+  background: var(--text-dim);
+}
+
+.dcase-bar-value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.dcase-note {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+/* ตารางค่าความสัมพันธ์ เลื่อนแนวนอนได้บนจอแคบแทนที่จะบีบจนอ่านไม่ออก */
+.dcase-table-wrap {
+  overflow-x: auto;
+}
+
+.dcase-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 380px;
+}
+
+.dcase-table th,
+.dcase-table td {
+  padding: 7px 8px;
+  border-top: 1px solid var(--border);
+  text-align: left;
+  font-weight: 400;
+}
+
+.dcase-table th {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.dcase-table th:not(:first-child),
+.dcase-table .dcase-num {
+  text-align: right;
+}
+
+.dcase-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.dcase-table tbody tr:last-child td {
+  font-weight: 700;
+}
+
+.dcase-good,
+.dcase-warn {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dcase-good {
+  background: var(--tint-ok);
+  color: var(--ink-ok);
+}
+
+.dcase-warn {
+  background: var(--tint-warn);
+  color: var(--ink-warn);
+}
+
+.dcase-source {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+@media (max-width: 560px) {
+  .dcase {
+    padding: 14px;
+  }
+
+  .dcase-bar {
+    grid-template-columns: 86px minmax(0, 1fr) 36px;
+    font-size: 13.5px;
+  }
+}
+
+/* กล่องบอกที่มาและปีของข้อมูล ท้ายแผงฝุ่นกับผู้ป่วย
+   แยกสองแหล่งเป็นคนละแถว เพราะข้อมูลผู้ป่วยเป็นค่าจริง
+   ส่วนค่าฝุ่นย้อนหลังเป็นค่าจากแบบจำลอง เชื่อถือได้ไม่เท่ากัน */
+.dcase-src {
+  margin-top: 16px;
+}
+
+.dcase-src-row {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--border);
+}
+
+.dcase-src-tag {
+  height: fit-content;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.dcase-src-tag.ok {
+  background: var(--tint-ok);
+  color: var(--ink-ok);
+}
+
+.dcase-src-tag.warn {
+  background: var(--tint-warn);
+  color: var(--ink-warn);
+}
+
+.dcase-src-name {
+  margin: 0 0 3px;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.dcase-src-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.dcase-src-link {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+@media (max-width: 560px) {
+  .dcase-src-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dcase-src-tag {
+    width: fit-content;
+  }
+}
+
+/* วิธีคำนวณ พับเก็บไว้ท้ายแผงฝุ่นกับผู้ป่วย กางดูได้เมื่ออยากตรวจสอบ */
+.dcase-how {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.dcase-how > summary {
+  cursor: pointer;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.dcase-how[open] > summary {
+  margin-bottom: 8px;
+}
+
+.dcase-pairs {
+  margin: 10px 0 0;
+  padding-left: 22px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-soft);
+}
+
+.dcase-pairs strong {
+  color: var(--text);
+}
+
+/* บรรทัดสูตรกับผลลัพธ์ ใช้พื้นต่างจากข้อความปกติให้เห็นว่าเป็นการคำนวณ */
+.dcase-formula {
+  margin: 10px 0 0;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+/* ข้อความแทนตารางอันดับ เมื่อไม่มีจังหวัดใดถึงเกณฑ์ */
+.ranking-none {
+  margin: 10px 0 0;
+  padding: 22px 14px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-soft);
+  font-size: 15px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.ranking-none small {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--text-dim);
 }

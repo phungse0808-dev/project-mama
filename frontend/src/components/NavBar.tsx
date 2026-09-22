@@ -2,44 +2,66 @@ import { AppIcon } from "./AppIcon";
 import { NotificationBell } from "./NotificationBell";
 import "./NavBar.css";
 
-// "home" ไม่มีปุ่มในเมนู เพราะเข้าถึงได้จากการเข้าระบบและปุ่มกลับอยู่แล้ว
-// ใส่ปุ่มซ้ำอีกจะรกโดยไม่ได้เพิ่มทางเข้าใหม่
-// พยากรณ์ (เดโม) ไม่มีปุ่มบนเมนู เปิดได้จากแถบดำในหน้าแรกเท่านั้น
-export type SectionKey = "home" | "air" | "disease";
+/** หัวข้อทั้งหมดของเว็บ ทุกเรื่องอยู่ในแถบเดียวทางขวาของหน้า
+ *
+ * เดิมแยกเป็นปุ่มเมนูด้านบนสามหน้า แล้วมีแถบหัวข้ออีกชุดในหน้าแรก
+ * ของเดียวกันจึงมีสองที่ให้กด ต้องคอยทำให้สองที่เน้นตรงกัน พลาดเมื่อไรดูเหมือนเว็บพัง
+ * ตอนนี้เหลือที่กดที่เดียว แถบบนเหลือแค่โลโก้กับปุ่มเครื่องมือ
+ */
+export type AirTab =
+  | "overview"
+  | "map"
+  | "ranking"
+  | "alerts"
+  | "rain"
+  | "history"
+  | "disease"
+  | "data"
+  | "forecast"
+  | "impact";
 
-/** หัวข้อในแถบด้านขวาของหน้าวัดคุณภาพอากาศ */
-export type AirTab = "overview" | "map" | "ranking" | "alerts" | "forecast" | "rain" | "history";
-
-export const AIR_TABS: { key: AirTab; label: string }[] = [
-  { key: "overview", label: "ภาพรวมตอนนี้" },
-  { key: "map", label: "แผนที่" },
-  { key: "ranking", label: "อันดับจังหวัด" },
-  { key: "alerts", label: "แจ้งเตือนพื้นที่เสี่ยง" },
-  // พยากรณ์เดโม มีเฉพาะในหน้าแรก หน้าวัดคุณภาพอากาศไม่มีส่วนนี้
-  { key: "forecast", label: "พยากรณ์ (เดโม)" },
-  { key: "rain", label: "โอกาสฝนตก" },
-  { key: "history", label: "อากาศย้อนหลัง" },
-];
-
-// ปุ่มเมนูของหน้าเนื้อหา
-//
-// แยกเรื่องโรคออกมาเป็นหน้าของตัวเอง เพราะตอบคนละคำถามกับหน้าวัดคุณภาพอากาศ
-//     วัดคุณภาพอากาศ  ตอนนี้อากาศเป็นอย่างไร ที่ไหนแย่ แนวโน้มเป็นอย่างไร
-//     โรคจากฝุ่น       ค่าฝุ่นเท่านี้กระทบสุขภาพอย่างไร และคนป่วยจริงเท่าไร
-//
-// และเพราะหน้าโรคมีข้อมูลผู้ป่วยจริงจากกรมควบคุมโรคที่ระบบดึงมาแล้ว
-// แต่ยังไม่เคยได้แสดงเลย ซึ่งใหญ่เกินกว่าจะยัดไว้ท้ายหน้าอื่น
-//
-// หน้าหลักไม่มีปุ่มในเมนู เพราะเข้าถึงได้จากการเข้าระบบและปุ่มกลับอยู่แล้ว
-export const SECTIONS: { key: SectionKey; label: string }[] = [
-  { key: "home", label: "หน้าแรก" },
-  { key: "air", label: "วัดคุณภาพอากาศ" },
-  { key: "disease", label: "โรคจากฝุ่น" },
+/** กลุ่มของหัวข้อ demo เป็นจริงเมื่อทั้งกลุ่มเป็นส่วนสาธิต จะได้แยกกล่องคนละสี
+ *
+ * แยกด้วยสีแทนการเขียนคำว่าเดโมต่อท้ายทุกปุ่ม อ่านสะอาดกว่าและเห็นได้ในแวบเดียว
+ * ว่าส่วนไหนของระบบใช้งานได้จริงแล้ว ส่วนไหนยังเป็นการสาธิต
+ */
+export const TAB_GROUPS: {
+  title: string;
+  note?: string;
+  demo?: boolean;
+  items: { key: AirTab; label: string }[];
+}[] = [
+  {
+    title: "ฝุ่นและอากาศ",
+    items: [
+      { key: "overview", label: "ภาพรวมตอนนี้" },
+      { key: "map", label: "แผนที่" },
+      { key: "ranking", label: "อันดับจังหวัด" },
+      { key: "alerts", label: "แจ้งเตือนพื้นที่เสี่ยง" },
+      { key: "rain", label: "โอกาสฝนตก" },
+      { key: "history", label: "อากาศย้อนหลัง" },
+    ],
+  },
+  {
+    title: "สุขภาพ",
+    items: [{ key: "disease", label: "คำแนะนำตามโรค" }],
+  },
+  {
+    title: "ข้อมูลของระบบ",
+    items: [{ key: "data", label: "คุณภาพข้อมูล" }],
+  },
+  {
+    title: "ส่วนสาธิต",
+    note: "ยังใช้จริงไม่ได้",
+    demo: true,
+    items: [
+      { key: "forecast", label: "พยากรณ์ฝุ่น" },
+      { key: "impact", label: "ฝุ่นกับผู้ป่วย" },
+    ],
+  },
 ];
 
 type Props = {
-  active: SectionKey;
-  onGoTo: (key: SectionKey) => void;
   onSearch: () => void;
   onHome: () => void;
   onSignOut: () => void;
@@ -52,8 +74,6 @@ type Props = {
 };
 
 export function NavBar({
-  active,
-  onGoTo,
   onSearch,
   onHome,
   onSignOut,
@@ -74,24 +94,6 @@ export function NavBar({
           <AppIcon size={44} />
         </button>
 
-        {/* ปุ่มเลือกหน้าโชว์ตลอด ไม่ใช่เฉพาะตอนอยู่หน้าหลัก
-            เดิมซ่อนตอนเข้าหน้าเนื้อหา ซึ่งใช้ได้ตอนมีหน้าเดียวเพราะไม่มีที่ให้สลับไป
-            พอมีสองหน้าแล้ว การสลับต้องกดกลับหน้าหลักก่อนหนึ่งครั้งเสมอ
-            ทั้งที่ปุ่มของอีกหน้าควรอยู่ตรงนั้นให้กดได้เลย
-
-            หน้าที่อยู่ตอนนี้ทำเป็นปุ่มเน้น เพื่อบอกตำแหน่งโดยไม่ต้องอ่านเนื้อหา */}
-        <nav className="navbar-menu">
-          {SECTIONS.map((item) => (
-            <button
-              key={item.label}
-              className={active === item.key ? "navbar-item active" : "navbar-item"}
-              onClick={() => onGoTo(item.key)}
-              aria-current={active === item.key ? "page" : undefined}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
 
         <div className="navbar-right">
           {/* ระฆังอยู่ก่อนปุ่มอื่น เพราะเป็นสิ่งที่ต้องเหลือบดูว่ามีอะไรใหม่ไหม
@@ -125,19 +127,11 @@ export function NavBar({
             </svg>
             {theme === "dark" ? "สว่าง" : "มืด"}
           </button>
-          {/* ปุ่มขวาสุดเปลี่ยนตามหน้าที่อยู่
-              อยู่หน้าเนื้อหา ปุ่มพากลับหน้าหลัก
-              อยู่หน้าหลักแล้ว ไม่มีที่ให้กลับ ปุ่มจึงเป็นออกจากระบบ
-              เปลี่ยนชื่อไปด้วยเพื่อให้ตรงกับสิ่งที่กดแล้วจะเกิดขึ้นจริง */}
-          {active === "home" ? (
-            <button className="navbar-action" onClick={onSignOut}>
-              ออกจากระบบ
-            </button>
-          ) : (
-            <button className="navbar-action" onClick={onHome}>
-              กลับ
-            </button>
-          )}
+          {/* ทั้งเว็บเหลือหน้าเดียว ไม่มีที่ให้กลับ ปุ่มขวาสุดจึงเป็นออกจากระบบเสมอ
+              ส่วนปุ่มโลโก้ยังพากลับไปหัวข้อภาพรวมเหมือนเดิม */}
+          <button className="navbar-action" onClick={onSignOut}>
+            ออกจากระบบ
+          </button>
         </div>
       </div>
     </header>
