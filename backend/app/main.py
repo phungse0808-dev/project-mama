@@ -21,6 +21,7 @@ from app.db import create_db_and_tables, get_session
 from app.disease_advice import disease_advice
 from app.dust_cases import dust_cases
 from app.forecast_demo import forecast_demo
+from app.forecast_issue import latest_issue, scoreboard
 from app.health_advice import RISK_GROUPS
 from app.live import refresh_if_stale
 from app.models import Station
@@ -393,6 +394,19 @@ def get_disease_summary(session: Session = Depends(get_session)) -> dict:
     แต่ระบบนี้รวมยอดตั้งแต่ขั้นนำเข้าและไม่เก็บรายละเอียดบุคคลไว้เลย
     """
     return disease_summary(session)
+
+
+@app.get("/api/forecast-issue/{province}", tags=["พยากรณ์"])
+def get_forecast_issue(province: str, session: Session = Depends(get_session)) -> dict:
+    """ค่าพยากรณ์ที่ระบบออกไว้รอบล่าสุดของจังหวัดนี้ พร้อมผลเทียบของรอบก่อน
+
+    ต่างจาก /api/forecast-demo ตรงที่เส้นนี้อ่านค่าที่บันทึกไว้แล้ว ไม่ได้คำนวณใหม่
+    ตัวเลขจึงนิ่งทั้งวัน และเทียบกับค่าจริงได้เพราะรู้ว่าทายไว้เมื่อไรและทายเท่าไร
+    """
+    issue = latest_issue(session, province)
+    if issue is None:
+        return {"available": False, "reason": "ยังไม่มีค่าพยากรณ์ที่ออกไว้ของจังหวัดนี้"}
+    return {"available": True, **issue, "scoreboard": scoreboard(session)}
 
 
 @app.get("/api/dust-cases", tags=["ผลกระทบสุขภาพ"])

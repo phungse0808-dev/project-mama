@@ -264,6 +264,42 @@ class Pm25Monthly(SQLModel, table=True):
     imported_at: datetime = Field(default_factory=_now)
 
 
+class ForecastIssue(SQLModel, table=True):
+    """ค่าพยากรณ์ที่ระบบออกไว้ เก็บไว้เทียบกับค่าจริงในวันถัดไป
+
+    ทำไมต้องเก็บ
+        เดิมระบบคำนวณใหม่ทุกครั้งที่เปิดหน้าแล้วทิ้ง จึงไม่มีทางรู้ว่าเมื่อวานทายไว้เท่าไร
+        ความแม่นที่รายงานได้จึงมาจากการย้อนทดสอบด้วยสคริปต์เท่านั้น ไม่ใช่จากการใช้งานจริง
+        พอเก็บค่าที่ออกไว้ วันรุ่งขึ้นเทียบกับค่าจริงได้ทันที กลายเป็นการวัดจากของจริง
+
+    ออกวันละครั้งตอนบ่าย เหมือนที่หน่วยงานพยากรณ์ออกค่าเป็นรอบ
+    ตัวเลขบนหน้าเว็บจึงนิ่งทั้งวัน คนเปิดเช้ากับเปิดเย็นเห็นค่าเดียวกัน
+    """
+
+    __table_args__ = (
+        UniqueConstraint("province", "issued_on", "target", name="uq_forecast_issue"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    province: str = Field(index=True)
+    issued_on: date = Field(index=True)  # วันที่ออกค่า
+    issued_at: datetime = Field(default_factory=_now)
+    target: str = Field(index=True)  # tomorrow หรือ day_after
+
+    # ช่วงเวลาที่ค่านี้พยากรณ์ถึง เก็บไว้เพื่อคำนวณค่าจริงของช่วงเดียวกันตอนเทียบผล
+    window_start: datetime
+    window_end: datetime
+
+    pm25: float  # ค่าที่ทายไว้
+    # ค่าตั้งต้นที่ใช้ตอนทาย เก็บไว้ให้ตรวจย้อนกลับได้ว่าทายจากอะไร
+    previous_pm25: float
+    latest_pm25: float
+
+    # ค่าจริงของช่วงนั้น เติมทีหลังเมื่อเวลาผ่านไปจนมีข้อมูลครบ
+    actual_pm25: float | None = None
+    checked_at: datetime | None = None
+
+
 class CollectionLog(SQLModel, table=True):
     """บันทึกทุกครั้งที่ระบบดึงข้อมูล
 

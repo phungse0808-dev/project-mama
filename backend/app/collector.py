@@ -203,6 +203,18 @@ def collect_once() -> int:
             if winds:
                 logger.info("บันทึกลมรายชั่วโมงเพิ่ม %s จังหวัด", winds)
 
+        # ออกค่าพยากรณ์ประจำวันและเติมค่าจริงให้รอบที่ครบกำหนด
+        # ทำในรอบเดียวกับการเก็บข้อมูล เพราะต้องใช้ค่าฝุ่นล่าสุดที่เพิ่งเก็บมา
+        try:
+            from app.forecast_issue import run_daily
+
+            issued, filled = run_daily(session)
+        except Exception:
+            logger.warning("ออกค่าพยากรณ์ประจำวันไม่สำเร็จ จะลองใหม่รอบถัดไป", exc_info=True)
+        else:
+            if issued or filled:
+                logger.info("พยากรณ์ประจำวัน ออกใหม่ %s แถว เติมค่าจริง %s แถว", issued, filled)
+
         try:
             weather = record_weather(session)
         except Exception:
