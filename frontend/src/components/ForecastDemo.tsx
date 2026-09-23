@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
-import type {
-  AqiLevel,
-  ForecastDemo as ForecastDemoData,
-  ForecastDemoStep,
-} from "../api";
+import type { AqiLevel, ForecastDemo as ForecastDemoData } from "../api";
 import { api } from "../api";
-import { WeatherIcon } from "./WeatherIcon";
 
 type Props = {
   provinces: string[];
@@ -28,21 +23,6 @@ function dateRange(start: string, end: string): string {
 function timeRange(start: string, end: string): string {
   return `${start.slice(11, 16)} – ${end.slice(11, 16)}`;
 }
-
-/** สีของจุดบอกที่มาในแต่ละขั้น คำอธิบายสีอยู่ท้ายกล่อง */
-const EVIDENCE = {
-  research: { label: "มีงานวิจัยรองรับ", className: "ok" },
-  direction: { label: "งานวิจัยบอกทิศทาง ตัวเลขผู้จัดทำกำหนด", className: "half" },
-  assumption: { label: "ผู้จัดทำกำหนด", className: "guess" },
-} as const;
-
-/** ไอคอนของแต่ละขั้น ใช้ไอคอนสภาพอากาศที่มีอยู่แล้วสำหรับขั้นอากาศ */
-const STEP_WEATHER_CODE: Partial<Record<ForecastDemoStep["icon"], number>> = {
-  rain: 61,
-  wind: 3,
-  humidity: 45,
-  heat: 0,
-};
 
 type DayCardProps = {
   title: string;
@@ -84,48 +64,6 @@ function DayCard({ title, start, end, value, level, change, changeFrom, variant 
       </div>
       <p className="fdemo-day-pill time">{timeRange(start, end)}</p>
     </article>
-  );
-}
-
-/** ขั้นคำนวณแบบขั้นบันได ไล่ค่าตั้งแต่ค่าล่าสุดจนถึงค่าพยากรณ์ */
-function StepFlow({ steps, total, label }: { steps: ForecastDemoStep[]; total: number; label: string }) {
-  return (
-    <>
-      <ol className="fdemo-flow">
-        {steps.map((step) => (
-          <li key={step.icon}>
-            <span className="fdemo-flow-icon" aria-hidden="true">
-              {STEP_WEATHER_CODE[step.icon] != null ? (
-                <WeatherIcon code={STEP_WEATHER_CODE[step.icon]} size={20} />
-              ) : step.icon === "trend" ? (
-                "↗"
-              ) : (
-                "●"
-              )}
-            </span>
-            <div className="fdemo-flow-text">
-              <p className="fdemo-flow-title">
-                {step.title}
-                <span
-                  className={`fdemo-ev ${EVIDENCE[step.evidence].className}`}
-                  title={EVIDENCE[step.evidence].label}
-                  aria-label={EVIDENCE[step.evidence].label}
-                />
-                {step.refs.length > 0 && <sup className="fdemo-ref">[{step.refs.join("][")}]</sup>}
-              </p>
-              <p className="fdemo-flow-detail">{step.detail}</p>
-              {step.calc && <p className="fdemo-flow-calc">{step.calc}</p>}
-            </div>
-            <span className="fdemo-flow-effect">{step.effect}</span>
-            <span className="fdemo-flow-value">{step.value.toFixed(1)}</span>
-          </li>
-        ))}
-      </ol>
-      <div className="fdemo-flow-total">
-        <span>{label}</span>
-        <strong>{total.toFixed(1)} µg/m³</strong>
-      </div>
-    </>
   );
 }
 
@@ -233,24 +171,51 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
           </div>
 
           <div className="fdemo-box">
-            <h3 className="fdemo-box-title">คำนวณพรุ่งนี้ยังไง</h3>
-            <StepFlow steps={ready.steps} total={ready.tomorrow.pm25} label="พยากรณ์พรุ่งนี้" />
+            {/* เทียบว่าหน่วยงานที่พยากรณ์ฝุ่นจริงเขาใช้สูตรอะไร แล้วของระบบนี้ใช้อะไร
+                เดิมตรงนี้เป็นขั้นตอนคำนวณทีละขั้นของสูตรเรา ซึ่งบอกว่าเลขมาจากไหน
+                แต่ไม่ได้บอกว่าวิธีนี้อยู่ตรงไหนเมื่อเทียบกับงานพยากรณ์จริง
+                ซึ่งเป็นคำถามที่สำคัญกว่าสำหรับหน้าที่ติดป้ายว่าเป็นเดโม
+                สูตรเต็มและขั้นตอนยังอยู่ในกล่องดูที่มาและสูตรเต็มด้านล่าง */}
+            <h3 className="fdemo-box-title">หน่วยงานที่พยากรณ์ฝุ่น ใช้สูตรอะไร</h3>
 
-            {ready.day_after && ready.day_after_steps && (
-              <>
-                <h4 className="fdemo-sub-title">มะรืนนี้ คิดต่อจากพรุ่งนี้</h4>
-                <StepFlow steps={ready.day_after_steps} total={ready.day_after.pm25} label="พยากรณ์มะรืนนี้" />
-              </>
+            <ul className="fdemo-agencies">
+              {(ready.agencies ?? []).map((agency) => (
+                <li key={agency.url}>
+                  <strong>
+                    {agency.name_th}
+                    <span className={`fdemo-use ${agency.use}`}>
+                      {agency.use === "use"
+                        ? "ระบบนี้ใช้ข้อมูล"
+                        : agency.use === "ref"
+                          ? "อ้างอิงวิธีคิด"
+                          : "ไม่ได้ใช้"}
+                    </span>
+                  </strong>
+                  <span className="fdemo-agency-system">{agency.system_th}</span>
+                  <span>{agency.method_th}</span>
+                  <code className="fdemo-agency-formula">{agency.formula}</code>
+                  {agency.formula_note_th && (
+                    <span className="fdemo-agency-system">{agency.formula_note_th}</span>
+                  )}
+                  <span className="fdemo-agency-system">{agency.use_th}</span>
+                  <a href={agency.url} target="_blank" rel="noreferrer">
+                    {agency.url.replace(/^https?:\/\//, "").split("/")[0]}
+                  </a>
+                </li>
+              ))}
+            </ul>
+
+            {ready.our_method_th && (
+              <div className="fdemo-our-method">
+                <strong>สูตรของระบบนี้ (เดโม)</strong>
+                <code className="fdemo-agency-formula">{ready.our_formula}</code>
+                <p>{ready.our_method_th}</p>
+              </div>
             )}
 
-            <p className="fdemo-legend">
-              {Object.values(EVIDENCE).map((item) => (
-                <span key={item.className}>
-                  <span className={`fdemo-ev ${item.className}`} aria-hidden="true" />
-                  {item.label}
-                </span>
-              ))}
-            </p>
+            {ready.mass_balance_note_th && (
+              <p className="fdemo-legend-note">{ready.mass_balance_note_th}</p>
+            )}
 
             {/* รายละเอียดทั้งหมดซ่อนไว้ ถ้าอาจารย์หรือผู้อ่านอยากตรวจ กดเปิดดูได้ */}
             <details className="fdemo-more">
