@@ -176,6 +176,41 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
                 แต่ไม่ได้บอกว่าวิธีนี้อยู่ตรงไหนเมื่อเทียบกับงานพยากรณ์จริง
                 ซึ่งเป็นคำถามที่สำคัญกว่าสำหรับหน้าที่ติดป้ายว่าเป็นเดโม
                 สูตรเต็มและขั้นตอนยังอยู่ในกล่องดูที่มาและสูตรเต็มด้านล่าง */}
+            {/* ความแม่นที่วัดได้ วางไว้ก่อนเรื่องหน่วยงาน เพราะเป็นคำถามแรกที่คนดูควรได้คำตอบ
+                คือสูตรนี้ดีกว่าการไม่ทำอะไรหรือไม่ ตัวเลขมาจากการย้อนทดสอบกับข้อมูลที่ระบบเก็บเอง */}
+            {ready.accuracy && (
+              <>
+                <h3 className="fdemo-box-title">
+                  สูตรนี้แม่นแค่ไหน
+                  <span className="fdemo-acc-scope">
+                    ย้อนทดสอบ {ready.accuracy.cases.toLocaleString("th-TH")} จังหวัด-วัน ·{" "}
+                    {ready.accuracy.provinces} จังหวัด · {ready.accuracy.period_th}
+                  </span>
+                </h3>
+
+                {ready.accuracy.rows.map((row) => {
+                  const worst = Math.max(...ready.accuracy!.rows.map((item) => item.mae));
+                  return (
+                    <div
+                      className={row.current ? "fdemo-acc current" : "fdemo-acc"}
+                      key={row.name_th}
+                    >
+                      <span className="fdemo-acc-name">{row.name_th}</span>
+                      <span className="fdemo-acc-track">
+                        <span
+                          className="fdemo-acc-fill"
+                          style={{ width: `${(row.mae / worst) * 100}%` }}
+                        />
+                      </span>
+                      <span className="fdemo-acc-value">{row.mae.toFixed(2)}</span>
+                    </div>
+                  );
+                })}
+
+                <p className="fdemo-legend-note">{ready.accuracy.note_th}</p>
+              </>
+            )}
+
             <h3 className="fdemo-box-title">หน่วยงานที่พยากรณ์ฝุ่น ใช้สูตรอะไร</h3>
 
             <ul className="fdemo-agencies">

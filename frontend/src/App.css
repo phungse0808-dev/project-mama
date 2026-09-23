@@ -3795,3 +3795,60 @@ button {
     display: none;
   }
 }
+
+/* แถบความแม่นของสูตรในหน้าพยากรณ์ สั้นกว่าคือแม่นกว่า */
+.fdemo-acc {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) 48px;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.fdemo-acc-name {
+  color: var(--text-soft);
+}
+
+.fdemo-acc.current .fdemo-acc-name {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.fdemo-acc-track {
+  height: 15px;
+  border-radius: 5px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.fdemo-acc-fill {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: var(--text-dim);
+}
+
+/* แถบของสูตรที่ระบบใช้อยู่ เน้นสีให้ต่างจากแถบเทียบ */
+.fdemo-acc.current .fdemo-acc-fill {
+  background: var(--ink-ok);
+}
+
+.fdemo-acc-value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.fdemo-acc-scope {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-soft);
+}
+
+@media (max-width: 560px) {
+  .fdemo-acc {
+    grid-template-columns: 130px minmax(0, 1fr) 42px;
+    font-size: 13px;
+  }
+}

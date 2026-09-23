@@ -418,6 +418,16 @@ export type ForecastDemo = {
   weather_source: string;
   formula: string[];
   references: { id: number; text: string; url: string }[];
+  /** ผลย้อนทดสอบความแม่นของสูตร เทียบกับวิธีพื้นฐาน */
+  accuracy?: {
+    tested_at_th: string;
+    provinces: number;
+    cases: number;
+    readings: number;
+    period_th: string;
+    rows: { name_th: string; mae: number; bias: number; current: boolean }[];
+    note_th: string;
+  };
   /** หน่วยงานที่พยากรณ์ฝุ่น พร้อมวิธีของแต่ละแห่ง use บอกว่าระบบนี้ใช้ข้อมูลหรือไม่ */
   agencies?: {
     name_th: string;
