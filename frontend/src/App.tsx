@@ -24,7 +24,6 @@ import { ProvinceRanking } from "./components/ProvinceRanking";
 import { ForecastDemo } from "./components/ForecastDemo";
 import { RainPanel } from "./components/RainPanel";
 import { SignIn } from "./components/SignIn";
-import { SearchOverlay } from "./components/SearchOverlay";
 import { StationMap } from "./components/StationMap";
 import { LevelBar, SummaryCards } from "./components/SummaryCards";
 import { TodayAdvice } from "./components/TodayAdvice";
@@ -106,7 +105,6 @@ export default function App() {
   const weatherTarget = dustProvince || user?.province || "กรุงเทพฯ";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
   // หัวข้อที่เปิดอยู่ในแถบด้านขวา ทั้งเว็บมีที่กดที่เดียวคือแถบนี้
   const [homeTab, setHomeTab] = useState<AirTab>("overview");
 
@@ -379,6 +377,7 @@ export default function App() {
       setDustProvince(found.province);
       setDustStation(found.station_code);
       // การ์ดฝุ่นของสถานีอยู่ในหัวข้อภาพรวม ต้องสลับไปที่นั่นก่อนถึงจะเห็น
+      // ช่องค้นหาจึงเรียกฟังก์ชันนี้ตรง ๆ ได้ ไม่ต้องสั่งเปลี่ยนหัวข้อเองอีก
       setHomeTab("overview");
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
@@ -418,26 +417,21 @@ export default function App() {
   return (
     <>
       <NavBar
-        onSearch={() => setSearching(true)}
         onHome={() => goTab("overview")}
+        stations={stations}
+        ranking={ranking}
+        onPickStation={showStation}
+        onPickProvince={(province) => {
+          setDustProvince(province);
+          setPickedProvince(province);
+          goTab("overview");
+        }}
         onSignOut={handleSignOut}
         provinces={provinces}
         fallbackProvince={user.province ?? ""}
         theme={theme}
         onToggleTheme={() => applyTheme(theme === "dark" ? "light" : "dark")}
       />
-
-      {searching && (
-        <SearchOverlay
-          stations={stations}
-          onSelect={(code) => {
-            setSearching(false);
-            goTab("map");
-            showStation(code);
-          }}
-          onClose={() => setSearching(false)}
-        />
-      )}
 
       <main className="app">
         {/* แบ่งเป็นส่วนตามเมนูด้านบน แต่ยังอยู่หน้าเดียวกัน กดเมนูแล้วเลื่อนไปหา

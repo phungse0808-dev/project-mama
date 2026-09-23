@@ -1,4 +1,6 @@
+import type { ProvinceRank, StationReading } from "../api";
 import { AppIcon } from "./AppIcon";
+import { SearchBox } from "./SearchBox";
 import { NotificationBell } from "./NotificationBell";
 import "./NavBar.css";
 
@@ -62,8 +64,12 @@ export const TAB_GROUPS: {
 ];
 
 type Props = {
-  onSearch: () => void;
   onHome: () => void;
+  /** ข้อมูลที่ช่องค้นหาใช้หา ส่งมาจากที่เดียวกับที่หน้าอื่นใช้ จะได้ไม่ต้องโหลดซ้ำ */
+  stations: StationReading[];
+  ranking: ProvinceRank[];
+  onPickStation: (stationCode: string) => void;
+  onPickProvince: (province: string) => void;
   onSignOut: () => void;
   provinces: string[];
   /** จังหวัดในโปรไฟล์ ส่งต่อให้สรุปประจำวันในแผงระฆัง */
@@ -74,8 +80,11 @@ type Props = {
 };
 
 export function NavBar({
-  onSearch,
   onHome,
+  stations,
+  ranking,
+  onPickStation,
+  onPickProvince,
   onSignOut,
   provinces,
   fallbackProvince,
@@ -95,13 +104,18 @@ export function NavBar({
         </button>
 
 
+        {/* ช่องค้นหาอยู่กลางแถบ เห็นตลอดเวลา พิมพ์ได้เลยโดยไม่ต้องกดเปิดก่อน */}
+        <SearchBox
+          stations={stations}
+          ranking={ranking}
+          onPickStation={onPickStation}
+          onPickProvince={onPickProvince}
+        />
+
         <div className="navbar-right">
           {/* ระฆังอยู่ก่อนปุ่มอื่น เพราะเป็นสิ่งที่ต้องเหลือบดูว่ามีอะไรใหม่ไหม
               ไม่ใช่ปุ่มที่ตั้งใจจะกด การวางไว้ซ้ายสุดของกลุ่มทำให้เจอง่ายกว่า */}
           <NotificationBell provinces={provinces} fallbackProvince={fallbackProvince} />
-          <button className="navbar-action" onClick={onSearch}>
-            ค้นหา
-          </button>
 
           {/* ปุ่มสลับโหมดสี
               ข้อความบอกโหมดที่จะได้เมื่อกด ไม่ใช่โหมดที่อยู่ตอนนี้
