@@ -209,18 +209,31 @@ export function DiseaseAdvice({ provinces, area, onAreaChange }: Props) {
                     <p className="dadv-label">ยังไม่มีค่าฝุ่นล่าสุดของพื้นที่นี้</p>
                   )}
 
-                  <p className="dadv-warning">{item.warning_th}</p>
+                  {/* ป้ายกำกับนำหน้า บอกว่าบรรทัดนี้คืออาการที่ต้องเฝ้าดู
+                      ไม่ใช่คำแนะนำอีกข้อหนึ่งต่อจากรายการด้านบน */}
+                  <p className="dadv-warning">
+                    <span className="dadv-warning-tag">อาการที่ต้องเฝ้าระวัง</span>
+                    {item.warning_th}
+                  </p>
                 </article>
               ))}
             </div>
           </div>
 
-          <p className="dadv-source">
-            {data.disclaimer_th} · ที่มา: {data.source_th}{" "}
-            <a href={data.source_url} target="_blank" rel="noreferrer">
-              ดูข่าวกรมอนามัย
-            </a>
-          </p>
+          <div className="dadv-source">
+            <p>{data.disclaimer_th}</p>
+            {/* แสดงทุกแหล่ง เพราะอาการของโรคตาและผิวหนังมาจากคนละหน่วยงานกับที่เหลือ */}
+            <ul>
+              {(data.sources ?? []).map((source) => (
+                <li key={source.url}>
+                  {source.name_th} · {source.detail_th}{" "}
+                  <a href={source.url} target="_blank" rel="noreferrer">
+                    เปิดแหล่งที่มา
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </>
       )}
     </section>
