@@ -203,10 +203,20 @@ def collect_once() -> int:
             if winds:
                 logger.info("บันทึกลมรายชั่วโมงเพิ่ม %s จังหวัด", winds)
 
-        # ออกค่าพยากรณ์ประจำวันและเติมค่าจริงให้รอบที่ครบกำหนด
-        # ทำในรอบเดียวกับการเก็บข้อมูล เพราะต้องใช้ค่าฝุ่นล่าสุดที่เพิ่งเก็บมา
+        # ค่าพยากรณ์ประจำวัน
+        #
+        # ตัวที่ออกค่าจริงคือ GitHub Actions ซึ่งทำงานทุกชั่วโมงไม่ว่าเครื่องนี้จะเปิดอยู่หรือไม่
+        # แล้ว commit ผลเป็น issues.csv กลับเข้ารีโป เครื่องนี้แค่นำไฟล์นั้นเข้าฐานข้อมูล
+        #
+        # ยังเรียก run_daily ต่อด้วย เป็นตัวสำรองสำหรับตอนทำงานโดยไม่มีอินเทอร์เน็ต
+        # หรือตอนที่ยังไม่ได้ git pull ค่าที่ออกซ้ำจะไม่ถูกบันทึกเพราะติด UniqueConstraint
         try:
             from app.forecast_issue import run_daily
+            from scripts.import_forecast_issues import load as load_issues
+
+            added, updated = load_issues(session)
+            if added or updated:
+                logger.info("นำค่าพยากรณ์จากไฟล์เข้าฐานข้อมูล %s แถว เติมค่าจริง %s แถว", added, updated)
 
             issued, filled = run_daily(session)
         except Exception:

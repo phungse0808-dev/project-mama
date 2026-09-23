@@ -5,6 +5,9 @@
 #
 # ผลลัพธ์เก็บเป็นไฟล์ CSV ใน backend/data/hourly/ แล้ว commit กลับเข้า repo
 # ฐานข้อมูลไม่ขึ้น git เพราะสร้างใหม่จาก CSV ได้ด้วย scripts/import_hourly.py
+#
+# งานนี้ยังออกค่าพยากรณ์ประจำวันด้วย วันละครั้งเมื่อถึงเวลาที่กำหนดใน app/forecast_issue.py
+# ผลเก็บไว้ที่ backend/data/forecast/issues.csv เพื่อให้เทียบกับค่าจริงในวันถัดไปได้
 
 name: เก็บข้อมูลคุณภาพอากาศ
 
@@ -50,11 +53,24 @@ jobs:
         working-directory: backend
         run: python -m scripts.collect_to_csv
 
+      # ออกค่าพยากรณ์ประจำวันที่นี่ ไม่ใช่บนเครื่องส่วนตัว
+      # เพราะเครื่องส่วนตัวเปิดไม่ตรงเวลาทุกวัน ทำให้ข้ามรอบและวัดความแม่นไม่ได้
+      #
+      # ต้องสร้างฐานข้อมูลจาก CSV ก่อน เพราะฐานข้อมูลไม่ขึ้น git
+      # แล้วผลที่ได้เขียนกลับเป็น CSV เพื่อให้ประวัติการพยากรณ์อยู่ในรีโปถาวร
+      - name: สร้างฐานข้อมูลชั่วคราวจาก CSV
+        working-directory: backend
+        run: python -m scripts.import_hourly
+
+      - name: ออกค่าพยากรณ์ประจำวันและเติมค่าจริงของรอบเก่า
+        working-directory: backend
+        run: python -m scripts.issue_forecast
+
       - name: บันทึกผลกลับเข้า repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/data/hourly backend/data/stations.csv
+          git add backend/data/hourly backend/data/stations.csv backend/data/forecast
 
           # ถ้าไม่มีอะไรเปลี่ยน ให้จบงานเงียบๆ ไม่ต้องสร้าง commit เปล่า
           if git diff --staged --quiet; then
