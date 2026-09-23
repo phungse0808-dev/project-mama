@@ -48,6 +48,16 @@ MAIN_DISEASE = "โรคติดเชื้อทางเดินหาย�
 # ต้องมีข้อมูลกี่ปีขึ้นไปในเดือนปฏิทินเดียวกัน จึงเอามาเทียบข้ามปีได้
 MIN_YEARS_PER_MONTH = 3
 
+# ภาคเหนือตอนบนกับจังหวัดที่ได้รับผลจากการเผาในที่โล่งมากที่สุด
+#
+# แยกมาดูต่างหากเพราะค่าเฉลี่ยทั้งประเทศกลบพื้นที่นี้จนหมด
+# ช่วงเดือนกุมภาพันธ์ถึงเมษายนเป็นฤดูเผา ซึ่งเป็นช่วงที่ฝุ่นสูงที่สุดของภาคนี้
+NORTH_PROVINCES = [
+    "เชียงใหม่", "เชียงราย", "แม่ฮ่องสอน", "ลำปาง", "ลำพูน",
+    "น่าน", "แพร่", "พะเยา", "ตาก", "อุตรดิตถ์",
+]
+BURN_MONTHS = ("02", "03", "04")
+
 MONTH_NAMES = [
     "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
     "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
@@ -98,14 +108,28 @@ def _cases_of(cases, province: str, ym: str, disease: str | None) -> int | None:
     return total or None
 
 
-def _within(pm, cases_by_month, disease_index, disease: str | None, by_season: bool) -> float | None:
+def _within(
+    pm,
+    cases_by_month,
+    disease_index,
+    disease: str | None,
+    by_season: bool,
+    only: set[str] | None = None,
+    months: tuple[str, ...] | None = None,
+    least: int | None = None,
+) -> float | None:
     """เทียบกับค่าปกติของจังหวัดนั้นเอง
 
     by_season เท็จ  ใช้ค่าเฉลี่ยของทั้งช่วงเป็นค่าปกติ ตัดเรื่องขนาดจังหวัดออก
     by_season จริง  ใช้ค่าเฉลี่ยของเดือนปฏิทินเดียวกันเป็นค่าปกติ ตัดฤดูกาลออกด้วย
+    only กับ months  จำกัดให้เหลือเฉพาะบางจังหวัดหรือบางเดือน ใช้ตอนเจาะดูภาคเหนือ
     """
     groups: dict[tuple, list[tuple[float, float]]] = defaultdict(list)
     for (province, ym), value in pm.items():
+        if only is not None and province not in only:
+            continue
+        if months is not None and ym[5:7] not in months:
+            continue
         total = (
             disease_index.get((province, ym, disease))
             if disease is not None
@@ -116,7 +140,7 @@ def _within(pm, cases_by_month, disease_index, disease: str | None, by_season: b
         key = (province, ym[5:7]) if by_season else (province,)
         groups[key].append((value, float(total)))
 
-    least = MIN_YEARS_PER_MONTH if by_season else 12
+    least = least or (MIN_YEARS_PER_MONTH if by_season else 12)
     xs, ys = [], []
     for series in groups.values():
         if len(series) < least:
@@ -231,8 +255,50 @@ def _compute(session: Session) -> dict:
         )
     age_top.sort(key=lambda item: -item["share_pct"])
 
+    # ภาคเหนือช่วงเผา แยกมาดูต่างหาก
+    north_all = {}
+    north_burn = {}
+    for disease in diseases + [None]:
+        name = disease or "รวมทุกโรค"
+        north_all[name] = _within(
+            pm, cases_by_month, cases, disease, by_season=False, only=set(NORTH_PROVINCES)
+        )
+        north_burn[name] = _within(
+            pm, cases_by_month, cases, disease, by_season=False,
+            only=set(NORTH_PROVINCES), months=BURN_MONTHS, least=4,
+        )
+
+    north_values = [v for (province, _), v in pm.items() if province in NORTH_PROVINCES]
+    burn_values = [
+        v for (province, ym), v in pm.items()
+        if province in NORTH_PROVINCES and ym[5:7] in BURN_MONTHS
+    ]
+    all_values = list(pm.values())
+
+    focus = {
+        "name_th": "ภาคเหนือช่วงเผา",
+        "provinces": NORTH_PROVINCES,
+        "months_th": "กุมภาพันธ์ ถึง เมษายน",
+        "pm25_north": round(statistics.fmean(north_values), 1) if north_values else 0,
+        "pm25_north_burn": round(statistics.fmean(burn_values), 1) if burn_values else 0,
+        "pm25_north_max": round(max(north_values), 1) if north_values else 0,
+        "pm25_country": round(statistics.fmean(all_values), 1) if all_values else 0,
+        "pm25_country_max": round(max(all_values), 1) if all_values else 0,
+        "rows": [
+            {"group": name, "all_year": north_all[name], "burning": north_burn[name]}
+            for name in north_all
+        ],
+        # ข้อจำกัดที่ต้องบอกคู่กับผลเสมอ ไม่งั้นคนอ่านจะเข้าใจว่าภาคเหนือฝุ่นน้อยกว่าที่อื่น
+        "caveat_th": (
+            "ค่าฝุ่นย้อนหลังที่ใช้มาจากแบบจำลองระดับโลก ซึ่งประเมินฝุ่นจากการเผา "
+            "ในภาคเหนือต่ำกว่าความจริงมาก ค่าเฉลี่ยของภาคเหนือจึงออกมาต่ำกว่าค่าเฉลี่ย "
+            "ทั้งประเทศ ทั้งที่พื้นที่นี้มีปัญหาฝุ่นรุนแรงที่สุด ผลในตารางนี้จึงอ่อนกว่าความจริง"
+        ),
+    }
+
     return {
         "available": True,
+        "focus": focus,
         "provinces": len(provinces),
         "months": len(months),
         "start": months[0],

@@ -503,6 +503,19 @@ export type DustCases = {
     share_pct: number;
     total: number;
   }[];
+  /** ผลเจาะเฉพาะภาคเหนือช่วงเผา ซึ่งเป็นพื้นที่ที่ฝุ่นรุนแรงที่สุด */
+  focus?: {
+    name_th: string;
+    provinces: string[];
+    months_th: string;
+    pm25_north: number;
+    pm25_north_burn: number;
+    pm25_north_max: number;
+    pm25_country: number;
+    pm25_country_max: number;
+    rows: { group: string; all_year: number | null; burning: number | null }[];
+    caveat_th: string;
+  };
   note_th?: string;
   disease_source_th?: string;
   pm25_source_th?: string;

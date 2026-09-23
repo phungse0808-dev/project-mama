@@ -208,6 +208,50 @@ export function DustCases() {
         หยาบเกินกว่าจะเห็นผลนั้น
       </p>
 
+      {/* เจาะเฉพาะภาคเหนือช่วงเผา เพราะค่าเฉลี่ยทั้งประเทศกลบพื้นที่นี้จนหมด
+          ผลที่ได้ต่างจากภาพรวมชัดเจน จึงต้องแสดงคู่กับข้อจำกัดของค่าฝุ่นเสมอ */}
+      {data.focus && (
+        <>
+          <h3 className="dcase-sub">
+            เจาะเฉพาะ{data.focus.name_th}
+            <span>
+              {data.focus.provinces.length} จังหวัด · {data.focus.months_th}
+            </span>
+          </h3>
+          <div className="dcase-table-wrap">
+            <table className="dcase-table">
+              <thead>
+                <tr>
+                  <th>กลุ่มโรค</th>
+                  <th>ภาคเหนือทั้งปี</th>
+                  <th>เฉพาะช่วงเผา</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.focus.rows.map((row) => (
+                  <tr key={row.group}>
+                    <td>{row.group.replace("โรค", "")}</td>
+                    <td className="dcase-num">{signed(row.all_year)}</td>
+                    <td className="dcase-num">{signed(row.burning)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="dcase-note">
+            พอตัดมาดูเฉพาะช่วงเผา กลุ่มโรคที่ไม่ใช่โรคติดเชื้อกลับได้ค่าบวกเกือบทั้งหมด
+            ซึ่งเป็นกลุ่มที่ฝุ่นน่าจะมีผลโดยตรง ส่วนกลุ่มโรคติดเชื้อยังติดลบตามฤดูของตัวเอง ·
+            เป็นข้อสังเกต ยังไม่ใช่ข้อสรุป เพราะข้อมูลช่วงเผามีน้อยกว่ามาก
+          </p>
+          <p className="dcase-warn">
+            <strong>ข้อจำกัดของค่าฝุ่นที่ใช้</strong> ค่าเฉลี่ยของภาคเหนืออยู่ที่{" "}
+            {data.focus.pm25_north} ซึ่งต่ำกว่าค่าเฉลี่ยทั้งประเทศที่ {data.focus.pm25_country}{" "}
+            และค่าสูงสุดรายเดือนของภาคเหนืออยู่ที่ {data.focus.pm25_north_max} ขณะที่ทั้งประเทศ
+            สูงสุด {data.focus.pm25_country_max} · {data.focus.caveat_th}
+          </p>
+        </>
+      )}
+
       {data.age_top && data.age_top.length > 0 && (
         <>
           <h3 className="dcase-sub">
