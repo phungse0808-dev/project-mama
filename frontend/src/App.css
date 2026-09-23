@@ -3852,3 +3852,81 @@ button {
     font-size: 13px;
   }
 }
+
+/* แถบความน่าเชื่อถือใต้การ์ดพยากรณ์ */
+.fdemo-trust {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.fdemo-trust-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.fdemo-trust-row > div {
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  text-align: center;
+}
+
+.fdemo-trust-row span {
+  display: block;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.fdemo-trust-row strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fdemo-trust-note {
+  margin: 9px 0 0;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+@media (max-width: 560px) {
+  .fdemo-trust-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fdemo-trust-row > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    text-align: left;
+  }
+}
+
+/* แถบบอกรอบการออกค่าพยากรณ์ */
+.fdemo-issue {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 9px 13px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 13.5px;
+  color: var(--text-soft);
+}
+
+.fdemo-issue strong {
+  color: var(--text);
+}
+
+.fdemo-issue-check {
+  white-space: nowrap;
+}

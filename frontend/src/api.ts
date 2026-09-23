@@ -425,6 +425,9 @@ export type ForecastDemo = {
     cases: number;
     readings: number;
     period_th: string;
+    /** ทายระดับคุณภาพอากาศถูกกี่เปอร์เซ็นต์ และถ้าเดาด้วยค่าวันก่อนหน้าจะได้เท่าไร */
+    level_hit_pct: number;
+    level_hit_base_pct: number;
     rows: { name_th: string; mae: number; bias: number; current: boolean }[];
     note_th: string;
   };
@@ -531,6 +534,36 @@ export type DustCases = {
   pm25_source_th?: string;
 };
 
+/** ค่าพยากรณ์ที่ระบบออกไว้เป็นรอบ ต่างจาก ForecastDemo ที่คำนวณสดทุกครั้ง */
+export type ForecastIssue = {
+  available: boolean;
+  reason?: string;
+  issued_on?: string;
+  issued_at?: string;
+  issue_hour?: number;
+  targets?: Record<string, { pm25: number; start: string; end: string }>;
+  /** ค่าที่วัดได้จริงสองช่วงก่อนหน้า ณ เวลาที่ออกค่า ใช้ให้การ์ดทั้งสี่ใบเป็นรอบเดียวกัน */
+  observed?: {
+    previous: { pm25: number; start: string; end: string; level: AqiLevel };
+    latest: { pm25: number; start: string; end: string; level: AqiLevel };
+  } | null;
+  /** รอบก่อนหน้าที่มีค่าจริงมาเทียบแล้ว */
+  last_checked?: {
+    issued_on: string;
+    predicted: number;
+    actual: number;
+    error: number;
+  } | null;
+  scoreboard?: {
+    available: boolean;
+    reason?: string;
+    checked?: number;
+    provinces?: number;
+    mae?: number;
+    days?: number;
+  };
+};
+
 export type WeatherNow = {
   available: boolean;
   reason?: string;
@@ -627,6 +660,8 @@ export const api = {
   alerts: () => get<Alerts>("/api/alerts"),
   disease: () => get<DiseaseSummary>("/api/disease"),
   dustCases: () => get<DustCases>("/api/dust-cases"),
+  forecastIssue: (province: string) =>
+    get<ForecastIssue>(`/api/forecast-issue/${encodeURIComponent(province)}`),
   diseaseAdvice: (province?: string | null) =>
     get<DiseaseAdvice>(
       "/api/disease-advice" + (province ? `?province=${encodeURIComponent(province)}` : "")

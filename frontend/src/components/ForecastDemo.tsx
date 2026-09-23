@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AqiLevel, ForecastDemo as ForecastDemoData } from "../api";
+import type { AqiLevel, ForecastDemo as ForecastDemoData, ForecastIssue } from "../api";
 import { api } from "../api";
 
 type Props = {
@@ -20,12 +20,22 @@ function dateRange(start: string, end: string): string {
 }
 
 /** ป้ายล่างของการ์ด เวลาเริ่ม – เวลาจบของช่วง */
+/** เวลาที่ออกค่าพยากรณ์ เช่น 23 ก.ย. 14:31 */
+function thaiStamp(text?: string): string {
+  if (!text) return "-";
+  const day = Number(text.slice(8, 10));
+  const month = MONTHS[Number(text.slice(5, 7)) - 1];
+  return `${day} ${month} ${text.slice(11, 16)}`;
+}
+
 function timeRange(start: string, end: string): string {
   return `${start.slice(11, 16)} – ${end.slice(11, 16)}`;
 }
 
 type DayCardProps = {
   title: string;
+  /** ค่าที่ระบบออกไว้เป็นรอบ ถ้ามีจะใช้แทนค่าที่คำนวณสด */
+  issued?: { pm25: number; start: string; end: string; level?: AqiLevel };
   /** ช่วงของการ์ด เวลาไทย เช่น 2026-09-16T15:00 */
   start: string;
   end: string;
@@ -40,17 +50,38 @@ type DayCardProps = {
 
 /** การ์ดสูงหนึ่งใบ บอกค่าฝุ่นเฉลี่ยหนึ่งช่วง */
 /** การ์ดสูงหนึ่งใบตามแบบที่วาดไว้ ป้ายบนวันเดือนปี ค่าตรงกลาง ป้ายล่างเวลาที่ใช้ */
-function DayCard({ title, start, end, value, level, change, changeFrom, variant = "actual" }: DayCardProps) {
+function DayCard({
+  title,
+  start,
+  end,
+  value,
+  level,
+  change,
+  changeFrom,
+  variant = "actual",
+  issued,
+}: DayCardProps) {
+  // ค่าที่ออกไว้เป็นรอบมาก่อนเสมอ เพราะเป็นค่าที่ผู้ใช้เห็นทั้งวันและใช้วัดความแม่น
+  // ค่าที่คำนวณสดใช้เฉพาะตอนที่ยังไม่ถึงรอบออกค่าของวันนี้
+  const shownValue = issued?.pm25 ?? value;
+  const shownStart = issued?.start ?? start;
+  const shownEnd = issued?.end ?? end;
+  const shownLevel = issued?.level ?? level;
+
   return (
     <article className={variant === "actual" ? "fdemo-day" : `fdemo-day ${variant}`}>
-      <p className="fdemo-day-pill">{dateRange(start, end)}</p>
+      <p className="fdemo-day-pill">{dateRange(shownStart, shownEnd)}</p>
       <div className="fdemo-day-body">
       <p className="card-label">{title}</p>
-      <p className="fdemo-day-value">{value != null ? value.toFixed(1) : "-"}</p>
+      <p className="fdemo-day-value">{shownValue != null ? shownValue.toFixed(1) : "-"}</p>
       <p className="card-unit">µg/m³</p>
       <p className="fdemo-level">
-        <span className="fdemo-dot" style={{ background: level?.color ?? "var(--text-dim)" }} aria-hidden="true" />
-        {level?.label_th ?? "-"}
+        <span
+          className="fdemo-dot"
+          style={{ background: shownLevel?.color ?? "var(--text-dim)" }}
+          aria-hidden="true"
+        />
+        {shownLevel?.label_th ?? "-"}
       </p>
       {change != null && (
         <p className="fdemo-change">
@@ -62,7 +93,7 @@ function DayCard({ title, start, end, value, level, change, changeFrom, variant 
       {/* ทั้งหน้าเป็นเดโม ทุกการ์ดจึงติดป้าย */}
       <span className="fdemo-tag guess">เดโม</span>
       </div>
-      <p className="fdemo-day-pill time">{timeRange(start, end)}</p>
+      <p className="fdemo-day-pill time">{timeRange(shownStart, shownEnd)}</p>
     </article>
   );
 }
@@ -89,6 +120,26 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [province]);
+
+  const [issue, setIssue] = useState<ForecastIssue | null>(null);
+
+  // ค่าที่ระบบออกไว้เป็นรอบของจังหวัดนี้ ใช้แทนค่าที่คำนวณสดในการ์ดพยากรณ์
+  // เพื่อให้ตัวเลขนิ่งทั้งวันและตรงกับค่าที่บันทึกไว้เทียบความแม่น
+  useEffect(() => {
+    let cancelled = false;
+    setIssue(null);
+    api
+      .forecastIssue(province)
+      .then((result) => {
+        if (!cancelled) setIssue(result.available ? result : null);
+      })
+      .catch(() => {
+        if (!cancelled) setIssue(null);
       });
     return () => {
       cancelled = true;
@@ -134,6 +185,7 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
           <div className="fdemo-panel">
             <DayCard
               title="24 ชม. ก่อนหน้า"
+              issued={issue?.observed?.previous}
               start={ready.previous.start}
               end={ready.previous.end}
               value={ready.previous.pm25}
@@ -141,6 +193,7 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
             />
             <DayCard
               title="24 ชม. ล่าสุด"
+              issued={issue?.observed?.latest}
               start={ready.latest.start}
               end={ready.latest.end}
               value={ready.latest.pm25}
@@ -148,6 +201,7 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
             />
             <DayCard
               title="พยากรณ์พรุ่งนี้"
+              issued={issue?.targets?.tomorrow}
               start={ready.tomorrow.start}
               end={ready.tomorrow.end}
               value={ready.tomorrow.pm25}
@@ -159,6 +213,7 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
             {ready.day_after && (
               <DayCard
                 title="พยากรณ์มะรืนนี้"
+                issued={issue?.targets?.day_after}
                 start={ready.day_after.start}
                 end={ready.day_after.end}
                 value={ready.day_after.pm25}
@@ -169,6 +224,53 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
               />
             )}
           </div>
+
+          {/* บอกว่าค่าพยากรณ์นี้ออกเมื่อไรและรอบถัดไปเมื่อไร
+              ตัวเลขไม่เปลี่ยนจนกว่าจะถึงรอบถัดไป คนเปิดเช้ากับเย็นจึงเห็นค่าเดียวกัน */}
+          {issue?.available && (
+            <div className="fdemo-issue">
+              <span>
+                ออกค่าพยากรณ์วันละครั้ง เวลา <strong>{issue.issue_hour}:00</strong> · ครั้งล่าสุด{" "}
+                <strong>{thaiStamp(issue.issued_at)}</strong>
+              </span>
+              {issue.last_checked ? (
+                <span className="fdemo-issue-check">
+                  รอบก่อนทายไว้ <strong>{issue.last_checked.predicted.toFixed(1)}</strong> ค่าจริง{" "}
+                  <strong>{issue.last_checked.actual.toFixed(1)}</strong> คลาด{" "}
+                  <strong>{issue.last_checked.error.toFixed(1)}</strong>
+                </span>
+              ) : (
+                <span className="fdemo-issue-check">รอค่าจริงของรอบนี้ในวันพรุ่งนี้</span>
+              )}
+            </div>
+          )}
+
+          {/* แถบความน่าเชื่อถือ วางใต้การ์ดทันที เพราะเป็นสิ่งที่ควรอ่านคู่กับตัวเลขพยากรณ์
+              แสดงเลขของการเดาไว้ข้าง ๆ ด้วยเสมอ เพราะช่วงที่ทดสอบเป็นฤดูฝนที่ค่าฝุ่นนิ่ง
+              ถ้าโชว์แต่เปอร์เซ็นต์ของระบบ จะทำให้เข้าใจว่าแม่นกว่าความจริง */}
+          {ready.accuracy && (
+            <div className="fdemo-trust">
+              <div className="fdemo-trust-row">
+                <div>
+                  <span>ทายระดับถูก</span>
+                  <strong>{ready.accuracy.level_hit_pct}%</strong>
+                </div>
+                <div>
+                  <span>คลาดเฉลี่ย</span>
+                  <strong>{ready.accuracy.rows.find((row) => row.current)?.mae.toFixed(2)}</strong>
+                </div>
+                <div>
+                  <span>ถ้าเดาเฉย ๆ ได้</span>
+                  <strong>{ready.accuracy.level_hit_base_pct}%</strong>
+                </div>
+              </div>
+              <p className="fdemo-trust-note">
+                ย้อนทดสอบ {ready.accuracy.cases.toLocaleString("th-TH")} จังหวัด-วัน จาก{" "}
+                {ready.accuracy.provinces} จังหวัด ช่วง {ready.accuracy.period_th}{" "}
+                ซึ่งเป็นฤดูฝนที่ค่าฝุ่นต่ำและนิ่ง
+              </p>
+            </div>
+          )}
 
           <div className="fdemo-box">
             {/* เทียบว่าหน่วยงานที่พยากรณ์ฝุ่นจริงเขาใช้สูตรอะไร แล้วของระบบนี้ใช้อะไร
