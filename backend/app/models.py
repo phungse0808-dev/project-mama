@@ -182,6 +182,88 @@ class DiseaseDaily(SQLModel, table=True):
     imported_at: datetime = Field(default_factory=_now)
 
 
+class DiseaseMonthly(SQLModel, table=True):
+    """จำนวนผู้ป่วยรายเดือนของ 7 กลุ่มโรคที่เกี่ยวข้องกับฝุ่น ครบทั้ง 77 จังหวัด
+
+    ที่มา: กองดิจิทัลเพื่อการควบคุมโรค กรมควบคุมโรค จัดทำจากคลัง HDC โครงสร้าง 43 แฟ้ม
+    ตามหนังสือ สธ 0434.3/266 ลงวันที่ 11 กันยายน 2569
+
+    ต่างจาก DiseaseDaily อย่างไร
+        DiseaseDaily เป็นชุดเดิม 5 จังหวัด 8 เดือนของปี 2566 ดึงจากชุดข้อมูลเปิด
+        ชุดนี้ครบ 77 จังหวัด 48 เดือน ปี 2565-2568 และแยกกลุ่มอายุกับเพศได้
+        เก็บทั้งสองชุดไว้ เพราะชุดเดิมเป็นรายวันซึ่งชุดใหม่ไม่มี
+
+    เป็นข้อมูลสรุปทั้งหมด ไม่มีตัวระบุบุคคลใด ๆ ตามที่ต้นทางจัดทำมา
+
+    ข้อจำกัดที่ต้องเขียนในงาน
+        จังหวัดในข้อมูลคือจังหวัดของหน่วยบริการ ไม่ใช่ที่อยู่ผู้ป่วย
+        คนที่ข้ามจังหวัดไปรักษาจะถูกนับที่จังหวัดของโรงพยาบาล
+    """
+
+    __table_args__ = (
+        UniqueConstraint("province", "ym", "disease", name="uq_disease_month"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    province: str = Field(index=True)
+    ym: str = Field(index=True)  # ปีและเดือนแบบ 2024-01 ใช้เป็นคีย์เชื่อมกับค่าฝุ่น
+    disease: str = Field(index=True)
+
+    persons: int  # จำนวนคนไม่ซ้ำในเดือนนั้น
+    visits: int  # จำนวนครั้งที่เข้ารับบริการ มากกว่าจำนวนคนได้
+    opd: int  # ผู้ป่วยนอก
+    ipd: int  # ผู้ป่วยใน
+
+    source: str
+    imported_at: datetime = Field(default_factory=_now)
+
+
+class DiseaseAgeSummary(SQLModel, table=True):
+    """จำนวนผู้ป่วยแยกช่วงอายุและเพศ รวมทุกเดือนของชุดข้อมูลรายเดือน
+
+    ใช้ตอบว่าโรคไหนกระทบวัยไหนมากที่สุด เช่น ปอดอุดกั้นเรื้อรังกระจุกที่ผู้สูงอายุ
+    ส่วนหอบหืดพบมากในเด็กวัยเรียน ซึ่งทำให้คำแนะนำเจาะกลุ่มได้
+    """
+
+    __table_args__ = (
+        UniqueConstraint("province", "disease", "age_group", "sex", name="uq_disease_age"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    province: str = Field(index=True)
+    disease: str = Field(index=True)
+    age_group: str  # ช่วงละ 5 ปี เช่น 0-4 หรือ 80+ และกลุ่มไม่ทราบ
+    sex: str  # ชาย หญิง หรือ ไม่ระบุ
+
+    persons: int
+
+    source: str
+    imported_at: datetime = Field(default_factory=_now)
+
+
+class Pm25Monthly(SQLModel, table=True):
+    """ค่าฝุ่นเฉลี่ยรายเดือนย้อนหลังรายจังหวัด ใช้จับคู่กับจำนวนผู้ป่วยรายเดือน
+
+    ระบบต้นทางไม่เปิดข้อมูลย้อนหลัง และระบบนี้เพิ่งเริ่มเก็บค่าจริงกลางปี 2569
+    ค่าปี 2565-2568 จึงมาจากคลังข้อมูลของ Open-Meteo ซึ่งเป็นผลของแบบจำลอง CAMS
+    ไม่ใช่ค่าที่สถานีตรวจวัดได้ ทุกหน้าที่ใช้ค่านี้ต้องเขียนกำกับไว้
+
+    hours บอกว่าเดือนนั้นมีค่ารายชั่วโมงกี่ค่า ใช้ตัดเดือนที่ข้อมูลไม่ครบออก
+    """
+
+    __table_args__ = (UniqueConstraint("province", "ym", name="uq_pm25_month"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    province: str = Field(index=True)
+    ym: str = Field(index=True)
+
+    pm25: float
+    hours: int
+
+    source: str
+    imported_at: datetime = Field(default_factory=_now)
+
+
 class CollectionLog(SQLModel, table=True):
     """บันทึกทุกครั้งที่ระบบดึงข้อมูล
 

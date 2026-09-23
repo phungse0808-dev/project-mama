@@ -418,6 +418,22 @@ export type ForecastDemo = {
   weather_source: string;
   formula: string[];
   references: { id: number; text: string; url: string }[];
+  /** หน่วยงานที่พยากรณ์ฝุ่น พร้อมวิธีของแต่ละแห่ง use บอกว่าระบบนี้ใช้ข้อมูลหรือไม่ */
+  agencies?: {
+    name_th: string;
+    system_th: string;
+    method_th: string;
+    use: "use" | "ref" | "none";
+    use_th: string;
+    /** สมการที่หน่วยงานนั้นใช้ เป็นข้อความเมื่อไม่เปิดเผยสูตร */
+    formula: string;
+    formula_note_th: string;
+    url: string;
+  }[];
+  /** สรุปวิธีและสูตรของระบบนี้ วางท้ายรายการเพื่อให้เทียบกันได้ */
+  our_method_th?: string;
+  our_formula?: string;
+  mass_balance_note_th?: string;
   tomorrow?: ForecastDemoAhead;
   /** คิดต่อจากพรุ่งนี้ ความคลาดเคลื่อนสะสม change เทียบกับพรุ่งนี้ */
   day_after?: ForecastDemoAhead;
@@ -433,6 +449,8 @@ export type DiseaseAdvice = {
   level_key: string | null;
   source_th: string;
   source_url: string;
+  /** แหล่งอ้างอิงทั้งหมดที่ใช้เขียนถ้อยคำ หน้าเว็บแสดงครบทุกแหล่ง */
+  sources?: { name_th: string; detail_th: string; url: string }[];
   disclaimer_th: string;
   diseases: {
     name: string;
@@ -440,6 +458,8 @@ export type DiseaseAdvice = {
     /** คำแนะนำเป็นข้อสั้น ๆ รายการว่างเมื่อยังไม่มีค่าฝุ่นล่าสุดของพื้นที่ */
     advice: string[];
     warning_th: string;
+    /** ตัวอย่างอาการเริ่มต้นของโรคนี้ */
+    early_th?: string;
     /** true เมื่อใช้คำแนะนำของประชาชนทั่วไป เพราะไม่มีคำแนะนำเฉพาะโรค */
     general: boolean;
   }[];
@@ -452,53 +472,40 @@ export type DiseaseAdvice = {
 export type DustCases = {
   available: boolean;
   reason?: string;
-  provinces?: string[];
+  /** จำนวนจังหวัดและเดือนที่มีทั้งค่าฝุ่นและจำนวนผู้ป่วย */
+  provinces?: number;
+  months?: number;
   start?: string;
   end?: string;
+  pairs?: number;
   total_cases?: number;
-  main_group?: string;
-  buckets?: { label_th: string; range_th: string; days: number; cases_per_day: number }[];
+  main_disease?: string;
+  buckets?: {
+    label_th: string;
+    range_th: string;
+    months: number;
+    cases_per_month: number;
+  }[];
   correlations?: {
     group: string;
-    all_days: number | null;
-    workday: number | null;
-    weekly: number | null;
+    /** รวมทุกจังหวัด · เทียบในจังหวัดเดียวกัน · ตัดฤดูกาลออก */
+    pooled: number | null;
+    within: number | null;
+    deseasonal: number | null;
   }[];
-  /** ผู้ป่วยเฉลี่ยต่อวัน เทียบวันทำการกับวันหยุด ใช้อธิบายว่าทำไมต้องตัดวันหยุด */
-  workday_cases?: number;
-  holiday_cases?: number;
-  /** ค่าที่ได้ถ้าดูรายเดือนโดยไม่ตัดวันหยุด กับค่าหลังตัดแล้ว */
-  monthly_correlation?: number | null;
-  workday_correlation?: number | null;
-  over_standard_days?: number;
-  total_days?: number;
-  /** วิธีคำนวณค่าความสัมพันธ์ ส่งมาเพื่อกางให้ตรวจสอบได้ ไม่ใช่เชื่อตัวเลขอย่างเดียว */
-  method?: {
-    formula: string;
-    pairs: { label_th: string; detail_th: string; count: number }[];
-    reading_th: string;
-    example: {
-      province: string;
-      group: string;
-      points: { day: string; pm25: number; cases: number }[];
-      mean_pm25: number;
-      mean_cases: number;
-      top: number;
-      bottom: number;
-      r: number | null;
-    } | null;
-  };
-  source_th?: string;
-  source_detail_th?: string;
-  source_url?: string;
-  source_note_th?: string;
-  /** วันที่ระบบนำเข้าข้อมูลผู้ป่วยครั้งล่าสุด */
-  imported_at?: string | null;
+  /** รูปแบบตามเดือนปฏิทิน ใช้อธิบายว่าฤดูฝุ่นกับฤดูป่วยไม่ตรงกัน */
+  seasonal?: { month_th: string; pm25: number; cases: number; years: number }[];
+  /** ช่วงอายุที่พบผู้ป่วยมากที่สุดของแต่ละโรค */
+  age_top?: {
+    disease: string;
+    age_group: string;
+    persons: number;
+    share_pct: number;
+    total: number;
+  }[];
+  note_th?: string;
+  disease_source_th?: string;
   pm25_source_th?: string;
-  pm25_source_url?: string;
-  pm25_note_th?: string;
-  /** false เมื่อค่าฝุ่นมาจากแบบจำลอง ไม่ใช่สถานีตรวจวัด */
-  pm25_measured?: boolean;
 };
 
 export type WeatherNow = {

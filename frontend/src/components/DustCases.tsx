@@ -2,44 +2,88 @@ import { useEffect, useState } from "react";
 import type { DustCases as DustCasesData } from "../api";
 import { api } from "../api";
 
-/** เดือนแบบไทยของวันที่รูปแบบ 2023-08-31 ใช้บอกช่วงข้อมูล */
-const MONTHS = [
-  "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
-  "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
-];
-
-function thaiMonth(text: string): string {
-  const [year, month] = text.split("-");
-  return `${MONTHS[Number(month) - 1]} ${Number(year) + 543}`;
-}
-
-/** วันที่แบบไทยของเวลาที่เซิร์ฟเวอร์ส่งมา ใช้บอกว่านำเข้าข้อมูลเมื่อไร */
-function thaiDate(text: string): string {
-  const day = new Date(text);
-  if (Number.isNaN(day.getTime())) return text;
-  return `${day.getDate()} ${MONTHS[day.getMonth()]} ${day.getFullYear() + 543}`;
-}
-
-/** เครื่องหมายลบแบบยูนิโคด ให้ตรงกับที่ใช้ในตาราง ไม่ใช่ขีดสั้นของแป้นพิมพ์ */
-function minus(value: number): string {
-  return String(value).replace("-", "−");
-}
-
 /** เขียนค่าสหสัมพันธ์ให้มีเครื่องหมายบวกเสมอ อ่านง่ายกว่าเวลาอยู่ในตาราง */
 function signed(value: number | null | undefined): string {
   if (value == null) return "—";
   return value > 0 ? `+${value.toFixed(2)}` : value.toFixed(2).replace("-", "−");
 }
 
-/** แผงฝุ่นกับจำนวนผู้ป่วย ต่อท้ายคำแนะนำในหน้าโรคจากฝุ่น
+/** ปี พ.ศ. จากคีย์เดือนแบบ 2024-01 */
+function thaiYear(ym: string): number {
+  return Number(ym.slice(0, 4)) + 543;
+}
+
+type Point = { month_th: string; pm25: number; cases: number };
+
+/** กราฟเส้นสองชั้น ฝุ่นอยู่บน ผู้ป่วยอยู่ล่าง ใช้แกนนอนร่วมกัน
  *
- * ตอบคำถามที่คนดูอยากรู้ต่อจากคำแนะนำ คือฝุ่นมากแล้วคนป่วยมากขึ้นจริงไหม
- * โดยแสดงผลการวิเคราะห์ที่ระบบคำนวณเองจากข้อมูลผู้ป่วยจริง ไม่ใช่ตัวเลขที่พิมพ์ไว้
+ * ไม่วางสองเส้นในกราฟเดียวเพราะหน่วยคนละอย่าง ถ้าใช้แกนตั้งสองข้างจะบีบให้ดูเหมือน
+ * สองเส้นสัมพันธ์กันตามที่คนวาดอยากให้เป็น การแยกสองชั้นบอกรูปร่างของแต่ละเส้นตามจริง
+ */
+function SeasonChart({ points }: { points: Point[] }) {
+  const width = 680;
+  const height = 96;
+  const left = 34;
+  const step = points.length > 1 ? (width - left - 10) / (points.length - 1) : 0;
+
+  const path = (values: number[]) => {
+    const top = Math.max(...values);
+    const bottom = Math.min(...values);
+    const span = top - bottom || 1;
+    return values
+      .map((value, index) => {
+        const x = left + index * step;
+        const y = height - 22 - ((value - bottom) / span) * (height - 40);
+        return `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
+      })
+      .join(" ");
+  };
+
+  const dust = points.map((item) => item.pm25);
+  const cases = points.map((item) => item.cases);
+
+  return (
+    <div className="dcase-chart">
+      <p className="dcase-chart-label dust">ค่าฝุ่นเฉลี่ย µg/m³</p>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="ค่าฝุ่นเฉลี่ยรายเดือน">
+        <path d={path(dust)} fill="none" stroke="var(--warn)" strokeWidth="2.5" />
+        <text x="2" y="16" className="dcase-axis">
+          {Math.max(...dust).toFixed(0)}
+        </text>
+        <text x="2" y={height - 20} className="dcase-axis">
+          {Math.min(...dust).toFixed(0)}
+        </text>
+      </svg>
+
+      <p className="dcase-chart-label cases">ผู้ป่วยเฉลี่ยต่อเดือน ทั้งประเทศ</p>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="จำนวนผู้ป่วยรายเดือน">
+        <path d={path(cases)} fill="none" stroke="var(--accent)" strokeWidth="2.5" />
+        <text x="2" y="16" className="dcase-axis">
+          {(Math.max(...cases) / 1e6).toFixed(1)}ล
+        </text>
+        <text x="2" y={height - 20} className="dcase-axis">
+          {(Math.min(...cases) / 1e6).toFixed(1)}ล
+        </text>
+      </svg>
+
+      <div className="dcase-chart-months">
+        {points.map((item) => (
+          <span key={item.month_th}>{item.month_th}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** หน้าฝุ่นกับจำนวนผู้ป่วย
+ *
+ * ตอบคำถามเดียวคือ ฝุ่นมากแล้วคนป่วยมากขึ้นจริงไหม โดยคำนวณสดจากข้อมูลผู้ป่วยจริง
+ * 7 กลุ่มโรค 77 จังหวัด สี่ปี ไม่ใช่ตัวเลขที่พิมพ์ไว้
  *
  * ลำดับการเล่าเรื่องตั้งใจให้อ่านได้โดยไม่ต้องรู้สถิติ
- *     กราฟแท่งก่อน เห็นด้วยตาว่าเส้นแบน
- *     แล้วค่อยเป็นตารางตัวเลขสำหรับคนที่อยากดูละเอียด
- *     ปิดท้ายด้วยเหตุผลว่าทำไมต้องตัดวันหยุด และข้อสรุปว่ายังสรุปไม่ได้
+ *     กราฟฤดูกาลก่อน เห็นด้วยตาว่าฤดูฝุ่นกับฤดูป่วยไม่ใช่ฤดูเดียวกัน
+ *     แล้วค่อยเป็นตารางสามมุม ให้เห็นว่าการควบคุมตัวแปรเปลี่ยนคำตอบอย่างไร
+ *     ปิดท้ายด้วยข้อสรุปและกลุ่มอายุที่พบผู้ป่วยมากที่สุดของแต่ละโรค
  */
 export function DustCases() {
   const [data, setData] = useState<DustCasesData | null>(null);
@@ -59,48 +103,49 @@ export function DustCases() {
     };
   }, []);
 
-  // ไม่ขึ้นอะไรเลยเมื่อยังไม่มีข้อมูล เพราะแผงนี้เป็นส่วนเสริมของหน้า ไม่ใช่เนื้อหาหลัก
   if (!data?.available) return null;
 
   const buckets = data.buckets ?? [];
-  const most = Math.max(...buckets.map((item) => item.cases_per_day), 1);
-  const busiest = Math.max(data.workday_cases ?? 0, data.holiday_cases ?? 0, 1);
-  const overPercent =
-    data.total_days && data.over_standard_days != null
-      ? Math.round((data.over_standard_days / data.total_days) * 100)
-      : null;
+  const most = Math.max(...buckets.map((item) => item.cases_per_month), 1);
+  const overall = (data.correlations ?? []).find((row) => row.group === "รวมทุกโรค");
 
   return (
     <section className="dcase">
-      {/* ทั้งหน้าเป็นเดโม ใช้แบนเนอร์แบบเดียวกับหน้าพยากรณ์ให้ผู้ใช้จำรูปแบบได้
-          เหตุผลที่ยังเป็นเดโม ค่าฝุ่นย้อนหลังเป็นค่าจากแบบจำลอง ไม่ใช่ค่าที่สถานีวัดได้
-          ข้อมูลผู้ป่วยมีแค่ 5 จังหวัด 8 เดือน และผลวิเคราะห์ยังสรุปความสัมพันธ์ไม่ได้ */}
+      {/* ยังติดป้ายเดโม เพราะค่าฝุ่นย้อนหลังเป็นค่าจากแบบจำลอง ไม่ใช่ค่าที่สถานีวัดได้
+          และผลที่ได้ยังสรุปไม่ได้ว่าฝุ่นทำให้ป่วยมากขึ้นหรือไม่ */}
       <div className="fdemo-banner" role="note">
-        <strong>หน้านี้ทั้งหมดเป็นเดโม ยังใช้งานจริงไม่ได้ และยังใช้สรุปผลไม่ได้</strong>
+        <strong>หน้านี้เป็นเดโม ยังใช้สรุปผลไม่ได้</strong>
         <span>
           จำนวนผู้ป่วยเป็นข้อมูลจริงจากกรมควบคุมโรค แต่ค่าฝุ่นย้อนหลังเป็นค่าจากแบบจำลอง
-          และข้อมูลครอบคลุมเพียง 5 จังหวัด 8 เดือน ผลที่ได้จึงใช้ดูวิธีวิเคราะห์เท่านั้น
-          ยังสรุปไม่ได้ว่าฝุ่นทำให้ป่วยมากขึ้นหรือไม่
+          ไม่ใช่ค่าที่สถานีตรวจวัดได้ ผลที่ได้จึงใช้ดูวิธีวิเคราะห์เท่านั้น
         </span>
       </div>
 
       <div className="dcase-head">
         <h2 className="dcase-title">
-          ฝุ่นกับจำนวนผู้ป่วยในพื้นที่ <span className="fdemo-tag guess">เดโม</span>
+          ฝุ่นกับจำนวนผู้ป่วยทั่วประเทศ <span className="fdemo-tag guess">เดโม</span>
         </h2>
         <span className="dcase-scope">
-          {data.provinces?.length ?? 0} จังหวัด ·{" "}
-          {data.start && data.end ? `${thaiMonth(data.start)}–${thaiMonth(data.end)}` : ""}
+          {data.provinces} จังหวัด · {thaiYear(data.start ?? "")}–{thaiYear(data.end ?? "")}
         </span>
       </div>
       <p className="dcase-lead">
-        ข้อมูลผู้ป่วยจริง {data.total_cases?.toLocaleString("th-TH")} ราย จาก{data.source_th}{" "}
-        ระบบนำมาเทียบกับค่าฝุ่นของวันเดียวกันเพื่อดูว่าสัมพันธ์กันหรือไม่
+        ข้อมูลผู้ป่วยจริง {data.total_cases?.toLocaleString("th-TH")} ราย 7 กลุ่มโรค
+        จับคู่กับค่าฝุ่นรายเดือนของจังหวัดเดียวกันได้ {data.pairs?.toLocaleString("th-TH")} คู่
       </p>
 
       <h3 className="dcase-sub">
-        ผู้ป่วยเฉลี่ยต่อวันทำการ แยกตามระดับฝุ่นของวันนั้น
-        <span>{data.main_group}</span>
+        ฤดูฝุ่นกับฤดูป่วย ไม่ใช่ฤดูเดียวกัน<span>ค่าเฉลี่ยรายเดือนปฏิทิน</span>
+      </h3>
+      {data.seasonal && <SeasonChart points={data.seasonal} />}
+      <p className="dcase-note">
+        เดือนที่ฝุ่นสูงที่สุดคือช่วงต้นปี แต่ผู้ป่วยต่ำที่สุดในเดือนเมษายนซึ่งเป็นช่วงปิดเทอม
+        และสงกรานต์ ส่วนเดือนที่ผู้ป่วยสูงที่สุดคือช่วงฤดูฝนซึ่งเป็นฤดูของโรคติดเชื้อ
+      </p>
+
+      <h3 className="dcase-sub">
+        ผู้ป่วยเฉลี่ยต่อจังหวัดต่อเดือน แยกตามระดับฝุ่นของเดือนนั้น
+        <span>{data.main_disease}</span>
       </h3>
       {buckets.map((item) => (
         <div className="dcase-bar" key={item.label_th}>
@@ -108,191 +153,86 @@ export function DustCases() {
           <span className="dcase-track">
             <span
               className="dcase-fill"
-              style={{ width: `${(item.cases_per_day / most) * 100}%` }}
+              style={{ width: `${(item.cases_per_month / most) * 100}%` }}
             />
           </span>
-          <span className="dcase-bar-value">{item.cases_per_day}</span>
+          <span className="dcase-bar-value">{item.cases_per_month.toLocaleString("th-TH")}</span>
         </div>
       ))}
       <p className="dcase-note">
-        ช่วงค่าฝุ่นใช้ขอบเดียวกับระดับคุณภาพอากาศของไทย นับเฉพาะวันที่มีข้อมูลครบ
+        ช่วงค่าฝุ่นใช้ขอบเดียวกับระดับคุณภาพอากาศของไทย · ตัวเลขท้ายแถวคือผู้ป่วยเฉลี่ยของ
+        หนึ่งจังหวัดในหนึ่งเดือนที่ฝุ่นอยู่ระดับนั้น
       </p>
 
       <h3 className="dcase-sub">
-        ค่าความสัมพันธ์<span>ยิ่งใกล้ 0 ยิ่งไม่เกี่ยวกัน</span>
+        ค่าความสัมพันธ์ 3 มุม<span>ยิ่งใกล้ 0 ยิ่งไม่เกี่ยวกัน</span>
       </h3>
       <div className="dcase-table-wrap">
         <table className="dcase-table">
           <thead>
             <tr>
               <th>กลุ่มโรค</th>
-              <th>ทุกวัน</th>
-              <th>ตัดวันหยุด</th>
-              <th>รายสัปดาห์</th>
+              <th>รวมทุกจังหวัด</th>
+              <th>ในจังหวัดเดียวกัน</th>
+              <th>ตัดฤดูกาลออก</th>
             </tr>
           </thead>
           <tbody>
             {(data.correlations ?? []).map((row) => (
               <tr key={row.group}>
-                <td>{row.group.replace("กลุ่มโรค", "")}</td>
-                <td className="dcase-num">{signed(row.all_days)}</td>
-                <td className="dcase-num">{signed(row.workday)}</td>
-                <td className="dcase-num">{signed(row.weekly)}</td>
+                <td>{row.group.replace("โรค", "")}</td>
+                <td className="dcase-num">{signed(row.pooled)}</td>
+                <td className="dcase-num">{signed(row.within)}</td>
+                <td className="dcase-num">{signed(row.deseasonal)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      <h3 className="dcase-sub">
-        ทำไมต้องตัดวันหยุดออกก่อน<span>ผู้ป่วยเฉลี่ยต่อวัน</span>
-      </h3>
-      <div className="dcase-bar">
-        <span className="dcase-bar-name">วันทำการ</span>
-        <span className="dcase-track">
-          <span
-            className="dcase-fill"
-            style={{ width: `${((data.workday_cases ?? 0) / busiest) * 100}%` }}
-          />
-        </span>
-        <span className="dcase-bar-value">{data.workday_cases}</span>
-      </div>
-      <div className="dcase-bar">
-        <span className="dcase-bar-name">เสาร์อาทิตย์</span>
-        <span className="dcase-track">
-          <span
-            className="dcase-fill dim"
-            style={{ width: `${((data.holiday_cases ?? 0) / busiest) * 100}%` }}
-          />
-        </span>
-        <span className="dcase-bar-value">{data.holiday_cases}</span>
-      </div>
       <p className="dcase-note">
-        ข้อมูลนับจากวันที่ผู้ป่วยเข้ารับบริการ วันที่สถานพยาบาลปิดจึงมีผู้ป่วยน้อย
-        โดยไม่เกี่ยวกับค่าฝุ่น
+        <strong>รวมทุกจังหวัด</strong> เอาทุกจังหวัดมากองรวมกัน ค่าที่ได้สะท้อนขนาดจังหวัด ·{" "}
+        <strong>ในจังหวัดเดียวกัน</strong> เทียบกับค่าปกติของจังหวัดนั้นเอง ·{" "}
+        <strong>ตัดฤดูกาลออก</strong> เทียบเดือนเดียวกันข้ามปี
       </p>
 
       <p className="dcase-good">
-        <strong>สิ่งที่การตัดวันหยุดแก้ได้</strong> ถ้าดูรายเดือนโดยไม่ตัดวันหยุด
-        จะได้ค่า {signed(data.monthly_correlation)} ซึ่งแปลผิดว่าฝุ่นมากแล้วป่วยน้อยลง
-        พอตัดออกเหลือ {signed(data.workday_correlation)}
+        <strong>สิ่งที่การควบคุมตัวแปรแก้ได้</strong> ถ้าดูแบบในจังหวัดเดียวกันจะได้{" "}
+        {signed(overall?.within)} ซึ่งถ้าอ่านตรง ๆ จะสรุปผิดว่าฝุ่นมากแล้วคนป่วยน้อยลง
+        พอตัดฤดูกาลออกเหลือ {signed(overall?.deseasonal)} ค่าลบก้อนใหญ่หายไป
+        ยืนยันว่าเป็นผลของฤดู ไม่ใช่ของฝุ่น
       </p>
       <p className="dcase-warn">
-        <strong>ข้อสรุปตอนนี้ (เดโม)</strong> ยังไม่พบความสัมพันธ์ระหว่างค่าฝุ่นกับจำนวนผู้ป่วย
-        {overPercent != null
-          ? ` เพราะช่วงข้อมูลที่มีมีวันที่ฝุ่นเกินมาตรฐานเพียงร้อยละ ${overPercent} และยังไม่ครอบคลุมฤดูหนาว`
-          : ""}
+        <strong>ข้อสรุปตอนนี้</strong> ข้อมูลระดับจังหวัดรายเดือนชุดนี้
+        ยังไม่พบความสัมพันธ์ระหว่างค่าฝุ่นกับจำนวนผู้ป่วย ทุกกลุ่มโรคอยู่ใกล้ศูนย์หลังตัดฤดูกาล
+        · การไม่พบไม่ได้แปลว่าฝุ่นไม่มีผลต่อสุขภาพ แต่แปลว่าข้อมูลรายเดือนระดับจังหวัด
+        หยาบเกินกว่าจะเห็นผลนั้น
       </p>
 
-      {/* วิธีคำนวณ พับเก็บไว้เพราะคนส่วนใหญ่อ่านแค่ผล แต่คนที่จะตรวจต้องกางดูได้
-          ตัวอย่างที่แสดงเป็นช่วงที่ฝุ่นสูงที่สุดในข้อมูล ซึ่งได้ค่าต่างจากค่ารวมมาก
-          จงใจเลือกช่วงนี้เพื่อให้เห็นว่าหยิบมาไม่กี่วันแล้วสรุปไม่ได้ */}
-      {data.method && (
-        <details className="dcase-how">
-          <summary>ค่าเหล่านี้คำนวณอย่างไร</summary>
-
-          <p className="dcase-note">
-            จับคู่ตัวเลขสองตัวของแต่ละจังหวัดในแต่ละวัน คือค่าฝุ่นเฉลี่ยของวันนั้น
-            กับจำนวนผู้ป่วยของวันนั้น แล้วใส่สูตรสหสัมพันธ์แบบเพียร์สัน
-          </p>
-
-          <ul className="dcase-pairs">
-            {data.method.pairs.map((item) => (
-              <li key={item.label_th}>
-                <strong>{item.label_th}</strong> {item.detail_th} ·{" "}
-                {item.count.toLocaleString("th-TH")} คู่
-              </li>
-            ))}
-          </ul>
-
-          <p className="dcase-formula">{data.method.formula}</p>
-          <p className="dcase-note">{data.method.reading_th}</p>
-
-          {data.method.example && (
-            <>
-              <h3 className="dcase-sub">
-                ตัวอย่างคำนวณจริง
-                <span>
-                  {data.method.example.province} · {data.method.example.group} · 5 วันที่ฝุ่นสูงที่สุด
-                </span>
-              </h3>
-              <div className="dcase-table-wrap">
-                <table className="dcase-table">
-                  <thead>
-                    <tr>
-                      <th>วันที่</th>
-                      <th>ฝุ่น</th>
-                      <th>ผู้ป่วย</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.method.example.points.map((point) => (
-                      <tr key={point.day}>
-                        <td>{thaiDate(point.day)}</td>
-                        <td className="dcase-num">{point.pm25}</td>
-                        <td className="dcase-num">{point.cases}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      {data.age_top && data.age_top.length > 0 && (
+        <>
+          <h3 className="dcase-sub">
+            ช่วงอายุที่พบผู้ป่วยมากที่สุดของแต่ละโรค<span>รวมทุกจังหวัดทุกเดือน</span>
+          </h3>
+          <div className="dcase-ages">
+            {data.age_top.map((item) => (
+              <div className="dcase-age" key={item.disease}>
+                <p className="dcase-age-name">{item.disease.replace("โรค", "")}</p>
+                <p className="dcase-age-value">
+                  {item.age_group} <span>{item.share_pct}%</span>
+                </p>
+                <p className="dcase-age-note">
+                  {item.persons.toLocaleString("th-TH")} ราย จาก{" "}
+                  {item.total.toLocaleString("th-TH")}
+                </p>
               </div>
-              <p className="dcase-formula">
-                เฉลี่ยฝุ่น {data.method.example.mean_pm25} · เฉลี่ยผู้ป่วย{" "}
-                {data.method.example.mean_cases} · ตัวบน {minus(data.method.example.top)} · ตัวล่าง{" "}
-                {minus(data.method.example.bottom)} · r = {signed(data.method.example.r)}
-              </p>
-              <p className="dcase-note">
-                ห้าวันนี้ได้ค่า {signed(data.method.example.r)} ซึ่งต่างจากค่ารวมทั้งชุดที่{" "}
-                {signed(data.workday_correlation)} มาก เพราะข้อมูลไม่กี่วันแกว่งได้ง่าย
-                จึงต้องดูทั้งชุด ไม่ใช่หยิบบางช่วงมาสรุป
-              </p>
-            </>
-          )}
-        </details>
+            ))}
+          </div>
+        </>
       )}
 
-      {/* กล่องที่มา แยกสองแหล่งให้ชัด เพราะสองแหล่งนี้เชื่อถือได้ไม่เท่ากัน
-          จำนวนผู้ป่วยเป็นข้อมูลจริงจากหน่วยงานรัฐ ส่วนค่าฝุ่นย้อนหลังเป็นค่าจากแบบจำลอง
-          ถ้าเขียนรวมบรรทัดเดียวคนอ่านจะเข้าใจว่าทั้งสองอย่างเป็นค่าตรวจวัดจริง */}
-      <div className="dcase-src">
-        <h3 className="dcase-sub">ข้อมูลนี้มาจากไหน เป็นของปีอะไร</h3>
-
-        <div className="dcase-src-row">
-          <span className="dcase-src-tag ok">ข้อมูลจริง</span>
-          <div>
-            <p className="dcase-src-name">
-              จำนวนผู้ป่วย ปี {Number(data.start?.slice(0, 4) ?? 0) + 543} · {data.source_th}
-            </p>
-            <p className="dcase-src-note">
-              {data.source_detail_th} · {data.source_note_th}
-              {data.imported_at ? ` · ระบบนำเข้าเมื่อ ${thaiDate(data.imported_at)}` : ""}
-            </p>
-            {data.source_url && (
-              <a className="dcase-src-link" href={data.source_url} target="_blank" rel="noreferrer">
-                เปิดหน้าข้อมูลเปิดของกรมควบคุมโรค
-              </a>
-            )}
-          </div>
-        </div>
-
-        <div className="dcase-src-row">
-          <span className="dcase-src-tag warn">ค่าจากแบบจำลอง</span>
-          <div>
-            <p className="dcase-src-name">ค่าฝุ่น ปี 2566 · {data.pm25_source_th}</p>
-            <p className="dcase-src-note">{data.pm25_note_th}</p>
-            {data.pm25_source_url && (
-              <a
-                className="dcase-src-link"
-                href={data.pm25_source_url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                เปิดเอกสารของ Open-Meteo
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
+      <p className="dcase-source">
+        ที่มา {data.disease_source_th} · {data.pm25_source_th} · {data.note_th}
+      </p>
     </section>
   );
 }
