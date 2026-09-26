@@ -87,7 +87,6 @@ station_code,name_th,name_en,area_th,area_en,province,station_type,latitude,long
 83t,ศูนย์แสดงและจำหน่ายสินค้า OTOP จังหวัดอุบลราชธานี,"OTOP Center, Ubon Ratchathani","ต.ในเมือง อ.เมือง, อุบลราชธานี","Mueang, Ubon Ratchathani",อุบลราชธานี,GROUND,15.245413,104.846219
 84t,สำนักงานสาธารณสุขจังหวัดสมุทรสงคราม,Samut Songkhram Health Office," ต.ลาดใหญ่ อ.เมือง, สมุทรสงคราม","Mueang, Samut Songkhram",สมุทรสงคราม,GROUND,13.428581,100.024664
 85t,สนามกีฬากลางจังหวัดสุพรรณบุรี,Suphan Buri Provincial Central Stadium,"ต.ดอนกำยาน อ.เมือง, สุพรรณบุรี","Don Kamyan, Mueang, Suphun Buri",สุพรรณบุรี,GROUND,14.476214,100.086095
-86t,สวนชมน่านเฉลิมพระเกียรติ,Chom Nan Chaloem Phrakiat Public Park,"ต.ในเมือง อ.เมือง, พิษณุโลก","Nai Mueang, Mueang, Phitsanulok",พิษณุโลก,GROUND,16.820833,100.258056
 87t,สนามกีฬากลางจังหวัดตราด,Trat Provincial Central Stadium,"ต.บางพระ อ.เมือง, ตราด","Bang Phra, Mueang, Trat",ตราด,GROUND,12.234862,102.523721
 88t,สถานีอุตุนิยมวิทยานครพนม,"Meteorological stations, Nakhon Phanom","ต.ในเมือง อ.เมือง, นครพนม","Nai Mueang, Meuang, Nakhon Phanom",นครพนม,GROUND,17.412345,104.7786123
 89t,ศูนย์ฟื้นฟูสุขภาพผู้สูงอายุ,Elderly Health Rehabilitation Center,"ต.คลัง อ.เมือง, นครศรีธรรมราช","Khlang, Mueang, Nakhon Si Thammarat",นครศรีธรรมราช,GROUND,8.426923,99.961469
@@ -172,3 +171,4 @@ bkp99t,สำนักงานเขตสะพานสูง,"Saphan Sung Di
 o10,เคหะชุมชนคลองจั่น,National Housing Authority Klongchan,"แขวงคลองจั่น, เขตบางกะปิ,กรุงเทพฯ","Klong Chan, Khet Bang Kapi, Bangkok",กรุงเทพฯ,GROUND,13.779873,100.646009
 o61,สนามกีฬาเทศบาลแหลมฉบัง,Laem Chabang Municipal Stadium,"ต.ทุ่งสุขลา อ.ศรีราชา, ชลบุรี","Thung Sukhla, Si Racha, Chon buri",ชลบุรี,GROUND,13.11923333,100.91855
 o63,ค่ายสุรสิงหนาท,Khai Surasinghanat,"ต.ตะพง อ.เมือง, ระยอง","Taphong, Mueang, Rayong",ระยอง,MOBILE,12.648576,101.32245
+o72,สวนชมน่านเฉลิมพระเกียรติ,Chom Nan Chaloem Phrakiat Public Park,"ต.ในเมือง อ.เมือง, พิษณุโลก","Nai Mueang, Mueang, Phitsanulok",พิษณุโลก,GROUND,16.820833,100.258056
