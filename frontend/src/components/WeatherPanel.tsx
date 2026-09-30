@@ -38,6 +38,9 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
   const [province, setProvince] = useState(defaultProvince ?? "เชียงใหม่");
   const [days, setDays] = useState(90);
   const [points, setPoints] = useState<WeatherPoint[]>([]);
+  // ค่าฝุ่นในหน้านี้มาจากคนละแหล่งตามความยาวของช่วง ต้องบอกผู้ใช้ว่ากำลังดูแหล่งไหน
+  const [pmSource, setPmSource] = useState("");
+  const [granularity, setGranularity] = useState("day");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +52,11 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
     void (async () => {
       try {
         const result = await api.weather(province, days);
-        if (!cancelled) setPoints(result.points);
+        if (!cancelled) {
+          setPoints(result.points);
+          setPmSource(result.pm25_source_th);
+          setGranularity(result.granularity);
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "โหลดข้อมูลอากาศไม่สำเร็จ");
@@ -68,6 +75,10 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
   // ช่วงเวลายาวมีจุดข้อมูลมากเกินกว่าจะอ่านออก จึงสุ่มเว้นระยะให้เหลือราว 120 จุด
   const step = Math.max(1, Math.ceil(points.length / 120));
   const chartData = points.filter((_, index) => index % step === 0);
+
+  const dusty = points.filter((item) => item.pm25 != null);
+  const dustAvg =
+    dusty.length > 0 ? dusty.reduce((sum, p) => sum + (p.pm25 ?? 0), 0) / dusty.length : null;
 
   const rainTotal = points.reduce((sum, p) => sum + (p.rainfall_mm ?? 0), 0);
   const tempAvg =
@@ -114,8 +125,13 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
             <span>
               อุณหภูมิเฉลี่ย <strong>{tempAvg?.toFixed(1)}</strong> °C
             </span>
+            {dustAvg != null && (
+              <span>
+                ฝุ่นเฉลี่ย <strong>{dustAvg.toFixed(1)}</strong> µg/m³
+              </span>
+            )}
             <span>
-              <strong>{points.length}</strong> วัน
+              <strong>{points.length}</strong> {granularity === "month" ? "เดือน" : "วัน"}
             </span>
           </div>
         )}
@@ -124,8 +140,41 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
       {loading && <p className="empty">กำลังโหลดข้อมูลอากาศ...</p>}
       {error && <p className="empty">{error}</p>}
 
+      {/* กราฟค่าฝุ่นแยกต่างหาก ไม่รวมกับกราฟอากาศ
+          ฝุ่นกับฝนคนละหน่วย ถ้าใช้แกนร่วมกันจะบีบให้เส้นหนึ่งแบนติดพื้น
+          แยกกราฟทำให้แต่ละตัวมีแกนของตัวเอง แต่ยังอ่านคู่กันได้เพราะแกนนอนตรงกัน */}
+      {!loading && !error && dusty.length > 0 && (
+        <div className="chart">
+          <p className="chart-label">ค่าฝุ่น PM2.5 (µg/m³)</p>
+          <ResponsiveContainer width="100%" height={170}>
+            <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: -12 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf1" />
+              <XAxis dataKey="label" tick={{ fontSize: 13 }} interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 13 }} width={58} />
+              <Tooltip
+                contentStyle={{ borderRadius: 8, borderColor: "#ccd6e0", background: "#ffffff", color: "#131a24", fontSize: 13.5 }}
+                labelFormatter={(label) => `วันที่ ${label}`}
+              />
+              {/* connectNulls ปิดไว้ เพื่อให้ช่วงที่ยังไม่ได้เก็บข้อมูลเป็นช่องว่างจริง
+                  ไม่ใช่เส้นลากข้ามซึ่งจะอ่านเหมือนมีข้อมูล */}
+              <Line
+                type="monotone"
+                dataKey="pm25"
+                name="ค่าฝุ่น PM2.5 (µg/m³)"
+                stroke="#e8730c"
+                strokeWidth={2.5}
+                dot={false}
+                connectNulls={false}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+          {pmSource && <p className="weather-source">ค่าฝุ่นในกราฟนี้ {pmSource}</p>}
+        </div>
+      )}
+
       {!loading && !error && chartData.length > 0 && (
         <div className="chart">
+          <p className="chart-label">อากาศ</p>
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: -12 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf1" />
@@ -170,6 +219,12 @@ export function WeatherPanel({ provinces, defaultProvince }: Props) {
               />
             </ComposedChart>
           </ResponsiveContainer>
+          {granularity === "month" && (
+            <p className="weather-source">
+              ช่วงยาวถูกยุบเป็นค่าเฉลี่ยรายเดือน ฝนแสดงเป็นค่าเฉลี่ยต่อวันของเดือนนั้น
+              ไม่ใช่ผลรวมทั้งเดือน จะได้เทียบกับมุมมองรายวันได้ตรง ๆ
+            </p>
+          )}
         </div>
       )}
 

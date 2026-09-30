@@ -1,6 +1,7 @@
 """ตรรกะการคำนวณทั้งหมด แยกออกจากชั้น API เพื่อให้เขียนเทสต์ได้ง่าย"""
 
 import statistics
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 
 from sqlmodel import Session, col, desc, func, select
@@ -17,7 +18,15 @@ from app.health_advice import (
 from app.forecast import fetch_now, fetch_pm25_forecast, fetch_wind
 from app.live import minutes_behind
 from app.thaiwater import rain_near
-from app.models import AppUser, CollectionLog, DiseaseDaily, Reading, Station, WeatherDaily
+from app.models import (
+    AppUser,
+    CollectionLog,
+    DiseaseDaily,
+    Pm25Monthly,
+    Reading,
+    Station,
+    WeatherDaily,
+)
 
 # ถ้าสถานีไม่ส่งข้อมูลใหม่เกินจำนวนชั่วโมงนี้ ถือว่าข้อมูลค้าง ไม่นำมาคิดภาพรวม
 STALE_HOURS = 6
@@ -817,17 +826,67 @@ def station_summary(session: Session, station_code: str, hours: int = 24) -> dic
     }
 
 
+# ช่วงที่ยาวกว่านี้ ยุบข้อมูลอากาศเป็นรายเดือน
+#
+# รายวันเกินหนึ่งปีคือจุดกว่าสามร้อยจุด อ่านไม่ออกและหนักเครื่อง
+# และค่าฝุ่นย้อนหลังที่มีก็เป็นรายเดือนอยู่แล้ว ยุบให้เท่ากันจึงวางคู่กันได้
+MONTHLY_FROM_DAYS = 180
+
+
+def _mean(values: list[float | None]) -> float | None:
+    found = [v for v in values if v is not None]
+    return round(statistics.fmean(found), 1) if found else None
+
+
+def _station_daily_pm(session: Session, province: str, since: date) -> dict[str, float]:
+    """ค่าฝุ่นเฉลี่ยรายวันที่สถานีในจังหวัดนั้นวัดได้จริง"""
+    rows = session.exec(
+        select(func.substr(col(Reading.measured_at), 1, 10), func.avg(Reading.pm25))
+        .join(Station, col(Station.id) == col(Reading.station_id))
+        .where(
+            Station.province == province,
+            col(Reading.pm25).is_not(None),
+            col(Reading.measured_at) >= since.isoformat(),
+        )
+        .group_by(func.substr(col(Reading.measured_at), 1, 10))
+    ).all()
+    return {day: round(float(value), 1) for day, value in rows}
+
+
+def _model_monthly_pm(session: Session, province: str) -> dict[str, float]:
+    """ค่าฝุ่นรายเดือนจากแบบจำลอง ใช้เมื่อค่าจริงย้อนไม่ถึง"""
+    rows = session.exec(
+        select(Pm25Monthly.ym, Pm25Monthly.pm25).where(Pm25Monthly.province == province)
+    ).all()
+    return {ym: value for ym, value in rows}
+
+
+MONTH_SHORT = [
+    "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+    "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
+]
+
 def weather_history(session: Session, province: str, days: int) -> dict:
-    """ข้อมูลอากาศรายวันย้อนหลังของหนึ่งจังหวัด"""
+    """ข้อมูลอากาศย้อนหลังของหนึ่งจังหวัด พร้อมค่าฝุ่นของช่วงเดียวกัน
+
+    ใส่ค่าฝุ่นมาด้วยเพราะหน้านี้มีไว้ดูว่าอากาศแบบไหนทำให้ฝุ่นสะสมหรือกระจาย
+    ถ้าไม่มีค่าฝุ่นอยู่ในภาพเดียวกัน ก็ตอบคำถามนั้นไม่ได้
+
+    ค่าฝุ่นมาจากสองแหล่งตามความยาวของช่วงที่ขอ
+        ช่วงสั้น ใช้ค่าที่สถานีวัดได้จริง ซึ่งย้อนได้เท่าที่ระบบเริ่มเก็บ
+        ช่วงยาว ใช้ค่ารายเดือนจากแบบจำลอง เพราะค่าจริงย้อนไม่ถึง
+    ต้องบอกให้หน้าเว็บรู้ว่าใช้แหล่งไหนอยู่ ไม่งั้นคนอ่านจะเข้าใจว่าเป็นค่าที่วัดได้ทั้งหมด
+    """
     since = date.today() - timedelta(days=days)
     rows = session.exec(
         select(WeatherDaily)
         .where(WeatherDaily.province == province, col(WeatherDaily.observed_on) >= since)
         .order_by(col(WeatherDaily.observed_on))
     ).all()
-    return {
-        "province": province,
-        "points": [
+
+    if days <= MONTHLY_FROM_DAYS:
+        measured = _station_daily_pm(session, province, since)
+        points = [
             {
                 "observed_on": w.observed_on.isoformat(),
                 "label": f"{w.observed_on:%d/%m}",
@@ -837,9 +896,45 @@ def weather_history(session: Session, province: str, days: int) -> dict:
                 "rainfall_mm": w.rainfall_mm,
                 "humidity": w.humidity,
                 "wind_speed": w.wind_speed,
+                "pm25": measured.get(w.observed_on.isoformat()),
             }
             for w in rows
-        ],
+        ]
+        return {
+            "province": province,
+            "granularity": "day",
+            "pm25_source_th": "ค่าที่สถานีตรวจวัดได้จริง",
+            "points": points,
+        }
+
+    grouped: dict[str, list[WeatherDaily]] = defaultdict(list)
+    for row in rows:
+        grouped[f"{row.observed_on:%Y-%m}"].append(row)
+
+    modelled = _model_monthly_pm(session, province)
+    points = []
+    for ym in sorted(grouped):
+        month = grouped[ym]
+        points.append(
+            {
+                "observed_on": f"{ym}-01",
+                "label": f"{MONTH_SHORT[int(ym[5:]) - 1]} {(int(ym[:4]) + 543) % 100:02d}",
+                "temp_avg": _mean([w.temp_avg for w in month]),
+                "temp_max": _mean([w.temp_max for w in month]),
+                "temp_min": _mean([w.temp_min for w in month]),
+                # ฝนรายเดือนใช้ค่าเฉลี่ยต่อวัน ไม่ใช่ผลรวม จะได้เทียบกับมุมมองรายวันได้ตรง ๆ
+                "rainfall_mm": _mean([w.rainfall_mm for w in month]),
+                "humidity": _mean([w.humidity for w in month]),
+                "wind_speed": _mean([w.wind_speed for w in month]),
+                "pm25": modelled.get(ym),
+            }
+        )
+
+    return {
+        "province": province,
+        "granularity": "month",
+        "pm25_source_th": "ค่าจากแบบจำลอง CAMS เพราะค่าที่วัดได้จริงย้อนไม่ถึง",
+        "points": points,
     }
 
 

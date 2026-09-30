@@ -46,6 +46,16 @@ function thaiSeason(day: Date): string {
 
 type WeatherTip = { icon: number; text: string; why?: string };
 
+/** สีพื้นจางของป้ายระดับ ต่อค่าความทึบท้ายรหัสสีหกหลัก
+ *
+ * เช็ครูปแบบก่อนเพราะถ้าเซิร์ฟเวอร์ส่งสีมาเป็นรูปแบบอื่น การต่อท้ายจะได้สีที่ใช้ไม่ได้
+ * แล้วป้ายจะกลายเป็นพื้นโปร่งจนอ่านยาก ถอยไปใช้พื้นของการ์ดแทนปลอดภัยกว่า
+ */
+function levelTint(color: string | null | undefined): string {
+  if (!color || !/^#[0-9a-f]{6}$/i.test(color)) return "var(--surface)";
+  return `${color}22`;
+}
+
 /** กล่องคำแนะนำวันนี้ ใต้การ์ดฝุ่นกับสภาพอากาศในหน้าแรก
  *
  * ฝั่งฝุ่นใช้คำแนะนำการป้องกันตามระดับที่เซิร์ฟเวอร์ส่งมากับค่าสรุป
@@ -171,14 +181,40 @@ export function TodayAdvice({ summary, stationSummary, weatherNow, weatherProvin
         {/* ช่องนี้ขึ้นเฉพาะคนที่เลือกโรคประจำตัวไว้ในหน้าโรคจากฝุ่น */}
         {myAdvice.length > 0 && (
           <div className="advice-col">
-            <p className="advice-col-head">โรคของคุณ</p>
+            {/* ใส่สีระดับฝุ่นให้ช่องนี้ด้วย คำแนะนำรายโรคเปลี่ยนตามระดับอยู่แล้ว
+                แต่เดิมหน้าตาเหมือนกันทุกระดับ คนอ่านจึงไม่รู้ว่าชุดคำแนะนำที่เห็นมาจากค่าเท่าไร */}
+            <p className="advice-col-head advice-col-head-row">
+              <span
+                className="advice-dot"
+                style={{ background: level?.color ?? "var(--text-dim)" }}
+                aria-hidden="true"
+              />
+              โรคของคุณ
+              {level && (
+                <span className="advice-chip" style={{ background: levelTint(level.color) }}>
+                  {level.label_th}
+                  {pm25 != null ? ` ${pm25}` : ""}
+                </span>
+              )}
+            </p>
             {myAdvice.map((item) => (
               <div className="advice-mine" key={item.name}>
-                <p className="advice-mine-name">{item.name}</p>
+                <p className="advice-mine-name">
+                  <span
+                    className="advice-mine-dot"
+                    style={{ background: level?.color ?? "var(--text-dim)" }}
+                    aria-hidden="true"
+                  />
+                  {item.name}
+                </p>
                 <ul className="advice-list">
                   {item.advice.map((line) => (
                     <li key={line}>
-                      <span className="advice-bullet" aria-hidden="true" />
+                      <span
+                        className="advice-bullet"
+                        style={{ background: level?.color ?? "var(--text-dim)" }}
+                        aria-hidden="true"
+                      />
                       <span>{line}</span>
                     </li>
                   ))}

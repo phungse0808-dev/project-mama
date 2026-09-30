@@ -140,6 +140,8 @@ export type WeatherPoint = {
   rainfall_mm: number | null;
   humidity: number | null;
   wind_speed: number | null;
+  /** ค่าฝุ่นของช่วงเวลาเดียวกัน ว่างได้เมื่อระบบยังไม่ได้เก็บช่วงนั้น */
+  pm25: number | null;
 };
 
 export type CollectionHealth = {
@@ -482,6 +484,14 @@ export type DiseaseAdvice = {
  *
  * ค่าสหสัมพันธ์เป็น null ได้เมื่อข้อมูลน้อยเกินไป หน้าเว็บต้องเผื่อกรณีนั้นไว้
  */
+type LaggedBucket = {
+  label_th: string;
+  range_th: string;
+  months: number;
+  change_pct: number;
+  median_pct: number;
+};
+
 export type DustCases = {
   available: boolean;
   reason?: string;
@@ -490,6 +500,9 @@ export type DustCases = {
   months?: number;
   start?: string;
   end?: string;
+  /** ค่าฝุ่นมีถึงเดือนนี้ ยาวกว่าช่วงที่วิเคราะห์ได้ เพราะข้อมูลผู้ป่วยตามไม่ทัน */
+  pm_end?: string;
+  case_end?: string;
   pairs?: number;
   total_cases?: number;
   main_disease?: string;
@@ -506,6 +519,61 @@ export type DustCases = {
     within: number | null;
     deseasonal: number | null;
   }[];
+  /** ค่าฝุ่นรายเดือนตามเวลาจริง ทุกเดือนที่มีข้อมูล ใช้วาดกราฟย้อนหลัง */
+  dust_series?: {
+    /** แหล่งค่าฝุ่นย้อนหลังทุกแหล่งที่มี แต่ละแหล่งตอบคนละคำถาม */
+    sources: {
+      key: string;
+      label_th: string;
+      detail_th: string;
+      /** month หรือ day ใช้เลือกว่าป้ายแกนนอนเป็นเดือนหรือวัน */
+      granularity: string;
+      labels: string[];
+      national: (number | null)[];
+      provinces: Record<string, (number | null)[]>;
+    }[];
+    default_key: string;
+    thai_standard: number;
+    who_guideline: number;
+  };
+  /** ค่าฝุ่นจริงของเดือนล่าสุด ใช้คำนวณว่าเดือนถัดไปสัดส่วนผู้ป่วยจะเป็นอย่างไร */
+  next_month?: {
+    from_ym: string;
+    to_ym: string;
+    national_pm25: number;
+    provinces: Record<string, number>;
+    level_counts: { label_th: string; range_th: string; provinces: number }[];
+  };
+  /** ฝุ่นเดือนหนึ่ง กับสัดส่วนผู้ป่วยโรคเรื้อรังของเดือนเดียวกันและเดือนถัดไป */
+  lagged?: {
+    disease_th: string;
+    measure_th: string;
+    targets: { key: string; label_th: string; buckets: LaggedBucket[] }[];
+    /** ผลของทุกโรคแยกทีละโรค เรียงจากโรคที่มีผู้ป่วยมากสุด */
+    by_disease: {
+      disease: string;
+      short_th: string;
+      total: number;
+      age_group: string | null;
+      age_share_pct: number | null;
+      /** โรคติดต่อ ผลกลับทางกับโรคอื่นเพราะขึ้นกับการเปิดเทอม ไม่ใช่ฝุ่น */
+      infectious: boolean;
+      early_th: string | null;
+      warning_th: string | null;
+      buckets: LaggedBucket[];
+      /** มุมมองความรุนแรง นับเฉพาะผู้ป่วยที่ต้องนอนโรงพยาบาล */
+      admitted: number;
+      ipd_share_pct: number;
+      /** ฐานผู้ป่วยในใหญ่พอจะเชื่อตัวเลขความรุนแรงได้หรือไม่ */
+      ipd_reliable: boolean;
+      ipd_buckets: LaggedBucket[];
+    }[];
+    measure_ipd_th: string;
+    ipd_note_th: string;
+    infectious_note_th: string;
+    tried_th: string[];
+    caveat_th: string;
+  };
   /** รูปแบบตามเดือนปฏิทิน ใช้อธิบายว่าฤดูฝุ่นกับฤดูป่วยไม่ตรงกัน */
   seasonal?: { month_th: string; pm25: number; cases: number; years: number }[];
   /** ช่วงอายุที่พบผู้ป่วยมากที่สุดของแต่ละโรค */
@@ -686,7 +754,13 @@ export const api = {
   stationSummary: (code: string, hours = 24) =>
     get<StationSummary>(`/api/stations/${code}/summary?hours=${hours}`),
   weather: (province: string, days = 30) =>
-    get<{ province: string; points: WeatherPoint[] }>(
+    get<{
+      province: string;
+      /** day หรือ month ช่วงยาวถูกยุบเป็นรายเดือนเพื่อให้วางคู่กับค่าฝุ่นได้ */
+      granularity: string;
+      pm25_source_th: string;
+      points: WeatherPoint[];
+    }>(
       `/api/weather/${encodeURIComponent(province)}?days=${days}`,
     ),
   collectionHealth: () => get<CollectionHealth>("/api/collection/health"),

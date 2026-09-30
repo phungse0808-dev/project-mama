@@ -27,12 +27,15 @@
     จังหวัดในข้อมูลผู้ป่วยคือจังหวัดของหน่วยบริการ ไม่ใช่ที่อยู่ผู้ป่วย
 """
 
+import json
 import statistics
 from collections import defaultdict
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, func, select
 
-from app.models import DiseaseAgeSummary, DiseaseMonthly, Pm25Monthly
+from app.config import DATA_DIR
+from app.disease_advice import DISEASES as ADVICE_DISEASES
+from app.models import DiseaseAgeSummary, DiseaseMonthly, Pm25Monthly, Reading, Station
 
 # ช่วงค่าฝุ่นที่ใช้แบ่งกลุ่ม ใช้ขอบเดียวกับระดับคุณภาพอากาศของไทยใน app.aqi
 BUCKETS = [
@@ -44,6 +47,40 @@ BUCKETS = [
 
 # กลุ่มโรคที่ใช้เป็นตัวแทนในกราฟ เพราะเป็นกลุ่มที่คนนึกถึงก่อนเมื่อพูดถึงฝุ่น
 MAIN_DISEASE = "โรคติดเชื้อทางเดินหายใจส่วนบนเฉียบพลัน"
+
+# โรคเรื้อรังที่งานวิจัยระบุว่าฝุ่นกระตุ้นให้กำเริบโดยตรง ใช้เป็นค่ารวมของหน้า
+CHRONIC_DISEASES = ("โรคหอบหืด", "โรคปอดอุดกั้นเรื้อรัง")
+
+# โรคติดต่อในชุดข้อมูล แยกออกมาเพราะไม่ได้ขึ้นกับฝุ่น แต่ขึ้นกับการเปิดเทอมและฤดูฝน
+#
+# เป็นผู้ป่วยราว 73% ของทั้งหมด ผลของโรคนี้จึงลากภาพรวมไปทั้งก้อน
+# ต้องกำกับไว้บนหน้าเว็บ ไม่งั้นคนอ่านจะงงว่าทำไมโรคนี้กลับทางกับอีกหกโรค
+INFECTIOUS_DISEASES = ("โรคติดเชื้อทางเดินหายใจส่วนบนเฉียบพลัน",)
+
+# ชื่อย่อสำหรับป้ายใต้แท่งกราฟ ชื่อเต็มยาวเกินกว่าจะวางเรียงกันเจ็ดโรคได้
+SHORT_NAME_OF = {
+    "โรคเยื่อจมูกอักเสบจากภูมิแพ้": "ภูมิแพ้จมูก",
+    "โรคเยื่อบุตาอักเสบ": "เยื่อบุตาอักเสบ",
+    "โรคหอบหืด": "หอบหืด",
+    "โรคผิวหนังอักเสบ": "ผิวหนังอักเสบ",
+    "โรคปอดอุดกั้นเรื้อรัง": "ปอดอุดกั้น",
+    "โรคลมพิษ": "ลมพิษ",
+    "โรคติดเชื้อทางเดินหายใจส่วนบนเฉียบพลัน": "ติดเชื้อทางเดินหายใจ",
+}
+
+# จับคู่ชื่อโรคในชุดข้อมูลของกรมควบคุมโรค กับชื่อโรคในตารางคำแนะนำของระบบ
+#
+# สองฝั่งใช้ชื่อไม่ตรงกัน เพราะฝั่งคำแนะนำจัดกลุ่มตามที่ผู้ใช้เลือกได้
+# ส่วนฝั่งข้อมูลใช้ชื่อตามรหัสวินิจฉัย จับคู่ไว้เพื่อไม่ต้องเขียนข้อความอาการซ้ำสองที่
+ADVICE_NAME_OF = {
+    "โรคหอบหืด": "โรคหอบหืด",
+    "โรคปอดอุดกั้นเรื้อรัง": "โรคปอดอุดกั้นเรื้อรัง",
+    "โรคเยื่อจมูกอักเสบจากภูมิแพ้": "โรคภูมิแพ้",
+    "โรคเยื่อบุตาอักเสบ": "กลุ่มโรคตาอักเสบ",
+    "โรคผิวหนังอักเสบ": "กลุ่มโรคผิวหนังอักเสบ",
+    "โรคลมพิษ": "กลุ่มโรคผิวหนังอักเสบ",
+    "โรคติดเชื้อทางเดินหายใจส่วนบนเฉียบพลัน": "โรคปอดอักเสบ",
+}
 
 # ต้องมีข้อมูลกี่ปีขึ้นไปในเดือนปฏิทินเดียวกัน จึงเอามาเทียบข้ามปีได้
 MIN_YEARS_PER_MONTH = 3
@@ -57,6 +94,24 @@ NORTH_PROVINCES = [
     "น่าน", "แพร่", "พะเยา", "ตาก", "อุตรดิตถ์",
 ]
 BURN_MONTHS = ("02", "03", "04")
+
+# ไฟล์ค่าฝุ่นรายวันปี 2566 ของห้าจังหวัดภาคเหนือตอนล่าง
+#
+# เป็นของที่ดึงไว้ตั้งแต่ตอนโปรเจคยังทำห้าจังหวัด เก็บไว้ใช้ต่อเพราะเป็นข้อมูลรายวัน
+# ชุดเดียวที่ครอบคลุมฤดูเผาเต็มรอบ ค่ารายเดือนเฉลี่ยยอดแหลมของฤดูเผาหายไปมาก
+DAILY_2023_FILE = DATA_DIR / "pm25_2023.json"
+
+# วันหนึ่งต้องมีกี่จังหวัดรายงานขึ้นไป จึงเอาค่าเฉลี่ยทั้งประเทศของวันนั้นมาใช้ได้
+#
+# วันแรก ๆ ที่ระบบเพิ่งเริ่มเก็บมีไม่กี่จังหวัด ถ้ารวมเข้าไปด้วย
+# ค่าเฉลี่ยทั้งประเทศของวันนั้นจะมาจากสองสามจังหวัด ซึ่งไม่ใช่ค่าของทั้งประเทศ
+MIN_PROVINCES_PER_DAY = 60
+
+# โรคต้องมีสัดส่วนผู้ป่วยในอย่างน้อยเท่านี้ จึงนำมุมมองความรุนแรงมาแสดงได้
+#
+# โรคตา ผิวหนัง และภูมิแพ้จมูก มีคนนอนโรงพยาบาลไม่ถึง 0.3% ของผู้ป่วยทั้งหมด
+# ฐานเล็กเกินกว่าจะเชื่อถือได้ ตัวเลขแกว่งจนสลับเครื่องหมายไปมาระหว่างระดับฝุ่น
+MIN_IPD_SHARE_PCT = 1.0
 
 MONTH_NAMES = [
     "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
@@ -84,9 +139,11 @@ def _load(session: Session):
         for row in session.exec(select(Pm25Monthly)).all()
     }
     cases: dict[tuple[str, str, str], int] = {}
+    admitted: dict[tuple[str, str, str], int] = {}
     for row in session.exec(select(DiseaseMonthly)).all():
         cases[(row.province, row.ym, row.disease)] = row.persons
-    return pm, cases
+        admitted[(row.province, row.ym, row.disease)] = row.ipd or 0
+    return pm, cases, admitted
 
 
 def _pooled(pm, cases, disease: str | None) -> float | None:
@@ -155,6 +212,324 @@ def _within(
     return _pearson(xs, ys)
 
 
+def _series_of(values: dict[tuple[str, str], float], labels: list[str]) -> dict:
+    """จัดค่าที่จับคู่ (จังหวัด, ป้ายเวลา) ให้เป็นชุดข้อมูลพร้อมวาดกราฟ
+
+    ส่งค่าของทุกจังหวัดไปพร้อมกัน เพราะทั้งชุดเล็กพอจะส่งทีเดียวจบ
+    และทำให้หน้าเว็บสลับจังหวัดได้ทันทีโดยไม่ต้องเรียกใหม่
+    """
+    provinces = sorted({province for province, _ in values})
+    national = []
+    for label in labels:
+        found = [values[(p, label)] for p in provinces if (p, label) in values]
+        national.append(round(statistics.fmean(found), 1) if found else None)
+    return {
+        "labels": labels,
+        "national": national,
+        "provinces": {p: [values.get((p, label)) for label in labels] for p in provinces},
+    }
+
+
+def _station_daily(session: Session) -> dict | None:
+    """ค่าเฉลี่ยรายวันจากสถานีตรวจวัดจริง ที่ระบบเก็บเองเข้าไฟล์ CSV
+
+    เป็นค่าที่สถานีวัดได้จริง ไม่ใช่ค่าจากแบบจำลอง จึงใช้ตรวจสอบแบบจำลองได้ด้วย
+    ย้อนได้เท่าที่ระบบเริ่มเก็บเท่านั้น จึงต้องมีคู่กับแบบจำลอง ไม่ใช่แทนกัน
+    """
+    rows = session.exec(
+        select(
+            func.substr(col(Reading.measured_at), 1, 10),
+            Station.province,
+            func.avg(Reading.pm25),
+        )
+        .join(Station, col(Station.id) == col(Reading.station_id))
+        .where(col(Reading.pm25).is_not(None))
+        .group_by(func.substr(col(Reading.measured_at), 1, 10), col(Station.province))
+    ).all()
+    if not rows:
+        return None
+
+    per_day: dict[str, int] = defaultdict(int)
+    values: dict[tuple[str, str], float] = {}
+    for day, province, average in rows:
+        values[(province, day)] = round(float(average), 1)
+        per_day[day] += 1
+
+    days = sorted(day for day, count in per_day.items() if count >= MIN_PROVINCES_PER_DAY)
+    if len(days) < 2:
+        return None
+
+    keep = {(p, d): v for (p, d), v in values.items() if d in set(days)}
+    return {
+        "key": "station_daily",
+        "label_th": "สถานีตรวจวัดจริง",
+        "detail_th": "รายวัน · ค่าที่ระบบเก็บเอง",
+        "granularity": "day",
+        **_series_of(keep, days),
+    }
+
+
+def _model_daily_2023() -> dict | None:
+    """ค่าฝุ่นรายวันปี 2566 ของห้าจังหวัด จากไฟล์ที่เก็บไว้ตั้งแต่ระยะแรกของโปรเจค"""
+    if not DAILY_2023_FILE.exists():
+        return None
+    try:
+        raw = json.loads(DAILY_2023_FILE.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return None
+    if not raw:
+        return None
+
+    days = sorted({day for series in raw.values() for day in series})
+    values = {
+        (province, day): round(float(value), 1)
+        for province, series in raw.items()
+        for day, value in series.items()
+    }
+    return {
+        "key": "model_daily_2023",
+        "label_th": "แบบจำลอง รายวัน 2566",
+        "detail_th": "รายวัน · เฉพาะ 5 จังหวัดภาคเหนือตอนล่าง",
+        "granularity": "day",
+        **_series_of(values, days),
+    }
+
+
+def _dust_sources(session: Session, pm, pm_months: list[str]) -> dict:
+    """แหล่งค่าฝุ่นย้อนหลังทุกแหล่งที่มี ส่งไปให้หน้าเว็บเลือกดูเอง
+
+    สามแหล่งตอบคนละคำถาม จึงต้องมีครบ ไม่ใช่เลือกอันเดียว
+        แบบจำลองรายเดือน  ย้อนได้ไกลที่สุดและครบทุกจังหวัด ใช้ดูภาพรวมข้ามปี
+        สถานีจริงรายวัน    เป็นค่าที่วัดได้จริง ใช้ตรวจว่าแบบจำลองตรงแค่ไหน
+        แบบจำลองรายวัน 2566 ละเอียดพอจะเห็นยอดแหลมของฤดูเผาที่ค่ารายเดือนกลบไป
+    """
+    monthly = {
+        "key": "model_monthly",
+        "label_th": "แบบจำลอง รายเดือน",
+        "detail_th": "รายเดือน · ครบทุกจังหวัด ย้อนไกลสุด",
+        "granularity": "month",
+        **_series_of(pm, pm_months),
+    }
+
+    sources = [monthly]
+    station = _station_daily(session)
+    if station:
+        sources.insert(0, station)
+    daily_2023 = _model_daily_2023()
+    if daily_2023:
+        sources.append(daily_2023)
+
+    return {
+        "sources": sources,
+        "default_key": monthly["key"],
+        "thai_standard": 37.5,
+        "who_guideline": 15.0,
+    }
+
+
+def _next_month(pm, pm_months: list[str]) -> dict:
+    """เอาค่าฝุ่นจริงของเดือนล่าสุด มาบอกว่าเดือนถัดไปน่าจะเป็นอย่างไร
+
+    ไม่ใช่สูตรใหม่ เป็นการนำค่าที่วัดได้จากข้อมูลย้อนหลังมาใช้กับเดือนล่าสุด
+    คือดูว่าเดือนล่าสุดจังหวัดนั้นฝุ่นอยู่ระดับไหน แล้วหยิบค่าของระดับนั้นมาตอบ
+
+    ส่งค่าฝุ่นของทุกจังหวัดไปด้วย เพื่อให้หน้าเว็บสลับจังหวัดได้ทันที
+    และส่งจำนวนจังหวัดในแต่ละระดับ เพราะถ้าเดือนล่าสุดเป็นหน้าฝนแล้วทุกจังหวัด
+    อยู่ระดับดีมากหมด ตัวเลขคาดการณ์จะต่ำทั้งกระดาน ต้องบอกให้เห็นว่าเป็นเพราะอะไร
+    """
+    latest = pm_months[-1]
+    values = {province: value for (province, ym), value in pm.items() if ym == latest}
+    if not values:
+        return {}
+
+    counts = {label: 0 for label, _, _, _ in BUCKETS}
+    for value in values.values():
+        for label, _, low, high in BUCKETS:
+            if low <= value < high:
+                counts[label] += 1
+                break
+
+    return {
+        "from_ym": latest,
+        "to_ym": _next_ym(latest),
+        "national_pm25": round(statistics.fmean(values.values()), 1),
+        "provinces": {province: round(value, 1) for province, value in sorted(values.items())},
+        "level_counts": [
+            {"label_th": label, "range_th": range_th, "provinces": counts[label]}
+            for label, range_th, _, _ in BUCKETS
+        ],
+    }
+
+
+def _next_ym(ym: str) -> str:
+    year, month = int(ym[:4]), int(ym[5:])
+    return f"{year + (month == 12)}-{(month % 12) + 1:02d}"
+
+
+def _share_effect(pm, share, step: int) -> dict[str, list[float]]:
+    """ส่วนต่างจากค่าปกติ แยกตามระดับฝุ่นของเดือนตั้งต้น
+
+    step = 0 เทียบเดือนเดียวกัน · step = 1 เทียบเดือนถัดไป
+    ค่าปกติคือค่าเฉลี่ยของจังหวัดนั้นในเดือนปฏิทินเดียวกัน ซึ่งหักทั้งขนาดจังหวัด
+    และรูปแบบตามฤดูกาลออกไปพร้อมกัน
+    """
+    grouped = defaultdict(list)
+    for (province, ym), value in share.items():
+        grouped[(province, ym[5:])].append(value)
+    normal = {
+        key: statistics.fmean(values)
+        for key, values in grouped.items()
+        if len(values) >= MIN_YEARS_PER_MONTH
+    }
+
+    rows: dict[str, list[float]] = defaultdict(list)
+    for (province, ym), dust in pm.items():
+        target_ym = _next_ym(ym) if step else ym
+        value = share.get((province, target_ym))
+        base = normal.get((province, target_ym[5:]))
+        if value is None or not base:
+            continue
+        for label, _, low, high in BUCKETS:
+            if low <= dust < high:
+                rows[label].append((value - base) / base * 100)
+                break
+    return rows
+
+
+def _buckets_of(rows: dict[str, list[float]]) -> list[dict]:
+    return [
+        {
+            "label_th": label,
+            "range_th": range_th,
+            "months": len(rows[label]),
+            "change_pct": round(statistics.fmean(rows[label]), 1),
+            "median_pct": round(statistics.median(rows[label]), 1),
+        }
+        for label, range_th, _, _ in BUCKETS
+        if rows[label]
+    ]
+
+
+def _lagged(pm, cases, admitted, age_top_of: dict) -> dict:
+    """ฝุ่นเดือนหนึ่ง กับสัดส่วนผู้ป่วยของเดือนเดียวกันและเดือนถัดไป
+
+    ทำไมต้องใช้สัดส่วน ไม่ใช่จำนวนผู้ป่วย
+        จำนวนผู้ป่วยรวมขึ้นกับว่าเดือนนั้นคนไปโรงพยาบาลมากหรือน้อย
+        เดือนที่ฝุ่นสูงที่สุดคือมีนาคมถึงเมษายน ซึ่งตรงกับปิดเทอมและสงกรานต์พอดี
+        จำนวนผู้ป่วยรวมจึงตกทุกปีด้วยเหตุผลที่ไม่เกี่ยวกับฝุ่นเลย
+        เมื่อวัดด้วยจำนวนรวม ผลจึงออกมาว่าฝุ่นมากแล้วผู้ป่วยน้อยลง ซึ่งเป็นภาพลวง
+        สัดส่วนตัดเรื่องนี้ออกได้ เพราะทั้งตัวตั้งและตัวหารได้รับผลเท่ากัน
+
+    ทำไมต้องแยกรายโรค
+        ทำครบทุกโรค ไม่ได้เลือกเฉพาะโรคที่ผลออกมาดี ผลที่ได้คือโรคแยกตัวเอง
+        เป็นสองกลุ่ม โรคที่ฝุ่นกระตุ้นหกโรคขึ้นพร้อมกัน ส่วนโรคติดต่อลง
+        การแยกตัวตามธรรมชาติของโรคเป็นหลักฐานที่หนักแน่นกว่าการเลือกโรคมาวิเคราะห์เอง
+    """
+    totals: dict[tuple[str, str], int] = defaultdict(int)
+    per_disease: dict[str, dict[tuple[str, str], int]] = defaultdict(dict)
+    per_admitted: dict[str, dict[tuple[str, str], int]] = defaultdict(dict)
+    grand: dict[str, int] = defaultdict(int)
+    grand_admitted: dict[str, int] = defaultdict(int)
+    for (province, ym, disease), value in cases.items():
+        totals[(province, ym)] += value
+        per_disease[disease][(province, ym)] = value
+        grand[disease] += value
+        stay = admitted.get((province, ym, disease), 0)
+        per_admitted[disease][(province, ym)] = stay
+        grand_admitted[disease] += stay
+
+    def share_of(members, table_of=None) -> dict:
+        """สัดส่วนของกลุ่มโรคที่เลือก ต่อผู้ป่วยทุกโรคในเดือนนั้น
+
+        ตัวหารเป็นผู้ป่วยทั้งหมดเสมอ แม้ตอนนับเฉพาะผู้ป่วยใน
+        เพื่อให้สองมุมมองใช้ฐานเดียวกันและเทียบกันได้ตรง ๆ
+        """
+        source = table_of or per_disease
+        picked = [source[name] for name in members if name in source]
+        out = {}
+        for key, total in totals.items():
+            if total:
+                out[key] = sum(table.get(key, 0) for table in picked) / total * 100
+        return out
+
+    advice_of = {item["name"]: item for item in ADVICE_DISEASES}
+
+    by_disease = []
+    for disease in sorted(per_disease, key=lambda name: -grand[name]):
+        rows = _share_effect(pm, share_of([disease]), step=1)
+        buckets = _buckets_of(rows)
+        if not buckets:
+            continue
+        # มุมมองความรุนแรง นับเฉพาะคนที่อาการหนักพอต้องนอนโรงพยาบาล
+        #
+        # ตอบคำถามที่มุมมองแรกตอบไม่ได้ คือฝุ่นทำให้คนมาหาหมอมากขึ้นเฉย ๆ
+        # หรือทำให้คนที่อาการหนักเพิ่มขึ้นด้วย
+        ipd_share = grand_admitted[disease] / grand[disease] * 100 if grand[disease] else 0.0
+        ipd_buckets = _buckets_of(_share_effect(pm, share_of([disease], per_admitted), step=1))
+
+        advice = advice_of.get(ADVICE_NAME_OF.get(disease, ""), {})
+        age = age_top_of.get(disease, {})
+        by_disease.append({
+            "disease": disease,
+            "short_th": SHORT_NAME_OF.get(disease, disease),
+            "total": grand[disease],
+            "age_group": age.get("age_group"),
+            "age_share_pct": age.get("share_pct"),
+            "infectious": disease in INFECTIOUS_DISEASES,
+            "early_th": advice.get("early"),
+            "warning_th": advice.get("warning"),
+            "buckets": buckets,
+            "admitted": grand_admitted[disease],
+            "ipd_share_pct": round(ipd_share, 2),
+            # ฐานใหญ่พอจะเชื่อตัวเลขความรุนแรงได้หรือไม่
+            "ipd_reliable": ipd_share >= MIN_IPD_SHARE_PCT,
+            "ipd_buckets": ipd_buckets,
+        })
+
+    chronic = share_of(CHRONIC_DISEASES)
+    targets = [
+        {
+            "key": key,
+            "label_th": label,
+            "buckets": _buckets_of(_share_effect(pm, chronic, step=step)),
+        }
+        for key, label, step in (("same", "เดือนเดียวกัน", 0), ("next", "เดือนถัดไป", 1))
+    ]
+
+    return {
+        "disease_th": "โรคหอบหืดและโรคปอดอุดกั้นเรื้อรัง",
+        "measure_th": "สัดส่วนผู้ป่วยโรคนั้น ต่อผู้ป่วยทุกโรคในเดือนนั้น",
+        "measure_ipd_th": "สัดส่วนผู้ป่วยโรคนั้นที่ต้องนอนโรงพยาบาล ต่อผู้ป่วยทุกโรคในเดือนนั้น",
+        "ipd_note_th": (
+            "แสดงเฉพาะโรคที่มีสัดส่วนผู้ป่วยในอย่างน้อย 1% ของผู้ป่วยโรคนั้น "
+            "โรคตา ผิวหนัง และภูมิแพ้จมูก มีคนนอนโรงพยาบาลไม่ถึง 0.3% "
+            "ฐานเล็กเกินกว่าจะเชื่อถือได้ จึงไม่นำมาแสดงในมุมมองนี้"
+        ),
+        "targets": targets,
+        "by_disease": by_disease,
+        "infectious_note_th": (
+            "โรคติดเชื้อทางเดินหายใจส่วนบนเฉียบพลันให้ผลกลับทางกับอีกหกโรค "
+            "เพราะเป็นโรคติดต่อที่ขึ้นกับการเปิดเทอมและฤดูฝน ไม่ได้ขึ้นกับฝุ่น "
+            "และเป็นผู้ป่วยราว 73% ของทั้งหมด จึงลากภาพรวมให้ติดลบ"
+        ),
+        # สิ่งที่ลองแล้วไม่ได้ผล ต้องแสดงคู่กันเสมอ
+        #
+        # ถ้าโชว์แต่แบบที่ได้ผล คนอ่านจะไม่รู้ว่าผู้จัดทำลองมากี่แบบกว่าจะเจอ
+        # ซึ่งเป็นข้อมูลที่จำเป็นต่อการตัดสินว่าผลนี้น่าเชื่อแค่ไหน
+        "tried_th": [
+            "จำนวนผู้ป่วยรวมทุกโรค ได้ผลกลับทาง เดือนฝุ่นสูงมีผู้ป่วยเดือนถัดไปน้อยกว่าปกติ 6.8%",
+            "ค่าสหสัมพันธ์ของสัดส่วนรายโรคทีละโรค อยู่ระหว่าง −0.08 ถึง +0.08 ทุกโรค "
+            "ผลที่เห็นจึงมาจากการแบ่งกลุ่มตามระดับฝุ่น ไม่ใช่จากความสัมพันธ์แบบเส้นตรง",
+        ],
+        "caveat_th": (
+            "ตัวเลขนี้บอกว่าส่วนผสมของผู้ป่วยเปลี่ยนไป ไม่ได้บอกว่ามีคนป่วยเพิ่มขึ้นกี่คน "
+            "ระดับปานกลางกับเกินมาตรฐานให้ผลใกล้เคียงกัน แปลว่าเมื่อเกิน 25 ไปแล้ว "
+            "ไม่ได้แย่ลงตามปริมาณฝุ่นอีก และค่าฝุ่นย้อนหลังมาจากแบบจำลองซึ่งประเมิน "
+            "ฝุ่นภาคเหนือช่วงฤดูเผาต่ำกว่าความจริง"
+        ),
+    }
+
+
 _cache: dict | None = None
 
 
@@ -173,13 +548,21 @@ def dust_cases(session: Session) -> dict:
 
 
 def _compute(session: Session) -> dict:
-    pm, cases = _load(session)
+    pm, cases, admitted = _load(session)
     if not pm or not cases:
         return {"available": False, "reason": "ยังไม่มีข้อมูลผู้ป่วยหรือค่าฝุ่นย้อนหลัง"}
 
     diseases = sorted({d for _, _, d in cases})
     provinces = sorted({p for p, _ in pm})
-    months = sorted({m for _, m in pm})
+
+    # เดือนที่ใช้วิเคราะห์ได้จริงคือเดือนที่มีทั้งค่าฝุ่นและข้อมูลผู้ป่วย
+    #
+    # ค่าฝุ่นยาวกว่าข้อมูลผู้ป่วย เพราะดึงจากแบบจำลองได้ถึงเดือนปัจจุบัน
+    # ส่วนข้อมูลผู้ป่วยได้มาเป็นชุด ต้องขอใหม่จึงจะมีของปีล่าสุด
+    # ถ้ารายงานช่วงของค่าฝุ่นอย่างเดียว คนอ่านจะเข้าใจว่าวิเคราะห์ครบถึงเดือนล่าสุด
+    pm_months = sorted({m for _, m in pm})
+    case_months = sorted({m for _, m, _ in cases})
+    months = [m for m in pm_months if m in set(case_months)]
 
     cases_by_month: dict[tuple[str, str], int] = defaultdict(int)
     for (province, ym, _), value in cases.items():
@@ -303,11 +686,17 @@ def _compute(session: Session) -> dict:
         "months": len(months),
         "start": months[0],
         "end": months[-1],
+        # ช่วงของค่าฝุ่นที่มี ยาวกว่าช่วงที่วิเคราะห์ได้ ใช้บอกว่าข้อมูลผู้ป่วยตามไม่ทัน
+        "pm_end": pm_months[-1],
+        "case_end": case_months[-1],
         "pairs": sum(1 for key in pm if key in cases_by_month),
         "total_cases": sum(cases.values()),
         "main_disease": MAIN_DISEASE,
         "buckets": buckets,
         "correlations": correlations,
+        "dust_series": _dust_sources(session, pm, pm_months),
+        "lagged": _lagged(pm, cases, admitted, {row["disease"]: row for row in age_top}),
+        "next_month": _next_month(pm, pm_months),
         "seasonal": seasonal,
         "age_top": age_top,
         "note_th": NOTE_TH,

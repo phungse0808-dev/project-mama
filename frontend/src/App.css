@@ -1879,6 +1879,22 @@ button {
   font-weight: 600;
 }
 
+/* หัวข้อเหนือกราฟแต่ละอัน ใช้บอกว่ากราฟไหนคืออะไรเมื่อมีหลายกราฟเรียงกัน */
+.chart-label {
+  margin: 0 0 2px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* บรรทัดบอกที่มาของค่าฝุ่นในกราฟอากาศ ต้องมีเสมอเพราะสองช่วงใช้คนละแหล่ง */
+.weather-source {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+
 .weather-stats {
   display: flex;
   gap: 16px;
@@ -3276,16 +3292,52 @@ button {
 }
 
 .advice-mine-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   margin: 0;
   font-size: 15px;
   font-weight: 700;
+}
+
+/* หัวช่องโรคของคุณ ใช้ flex เพื่อดันป้ายระดับไปชิดขวา
+   ไม่แก้ .advice-col-head รวม เพราะอีกสองช่องเป็นข้อความยาวที่ต้องตัดบรรทัดตามปกติ */
+.advice-col-head-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.advice-col-head-row .advice-dot {
+  margin-right: 0;
+}
+
+.advice-chip {
+  margin-left: auto;
+  padding: 1px 9px;
+  border: 1px solid var(--level-edge);
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+/* จุดนำหน้าชื่อโรคและนำหน้าคำแนะนำ รับสีของระดับฝุ่นมาจาก TodayAdvice
+   มีเส้นขอบบางเพราะสีเหลืองของระดับปานกลางจางจนหายไปบนพื้นการ์ด */
+.advice-mine-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--level-edge);
+  background: var(--accent);
 }
 
 .advice-bullet {
   flex: none;
   width: 7px;
   height: 7px;
-  margin-top: 7px;
+  margin-top: 6px;
+  border: 1px solid var(--level-edge);
   border-radius: 50%;
   background: var(--accent);
 }
@@ -3444,6 +3496,576 @@ button {
   color: var(--ink-warn);
 }
 
+/* กราฟค่าฝุ่นรายเดือนตามเวลาจริง */
+.dtrend {
+  margin-top: 10px;
+}
+
+.dtrend-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.dtrend-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.dtrend-pick span {
+  color: var(--text-soft);
+}
+
+.dtrend-pick select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.dtrend-scope {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.dtrend svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.dtrend-grid {
+  stroke: var(--border);
+  stroke-width: 0.5;
+}
+
+.dtrend-axis,
+.dtrend-year {
+  font-size: 9.5px;
+  fill: var(--text-dim);
+}
+
+.dtrend-threshold {
+  stroke-dasharray: 4 3;
+  stroke-width: 1;
+}
+
+.dtrend-threshold-text {
+  font-size: 9px;
+}
+
+.dtrend-line {
+  stroke: var(--text);
+}
+
+/* วงขอบสีพื้นการ์ด ทำให้จุดที่ติดกันไม่กลายเป็นก้อนเดียว */
+.dtrend-dot {
+  stroke: var(--surface);
+  stroke-width: 1;
+}
+
+.dtrend-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.dtrend-stats > div {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.dtrend-key {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.dtrend-value {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.dtrend-unit {
+  margin: 1px 0 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ปุ่มเลือกแหล่งค่าฝุ่น แต่ละแหล่งมีคำอธิบายบรรทัดที่สองว่าละเอียดแค่ไหนและย้อนได้ไกลแค่ไหน */
+.dtrend-sources {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 11px;
+}
+
+.dtrend-sources button {
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dtrend-sources button small {
+  display: block;
+  font-size: 11.5px;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+.dtrend-sources button.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink-accent-on-tint);
+  font-weight: 700;
+}
+
+.dtrend-years {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.dtrend-years button {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.dtrend-years button.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink-accent-on-tint);
+  font-weight: 700;
+}
+
+/* ตัวเลขบนหัวแท่ง ใช้เฉพาะตอนเลือกปีเดียว เพราะมีที่พอ */
+.dtrend-barvalue {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* พื้นที่กราฟใต้แท็บ กรอบเดียวครอบทั้งสองแท็บ ตามที่ออกแบบไว้ */
+.dcase-stage {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.dcase-stage > .dcase-note:last-child {
+  margin-bottom: 0;
+}
+
+/* กราฟแท่งส่วนต่างจากค่าปกติ */
+.dchart {
+  margin: 4px 0 2px;
+}
+
+.dchart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.dchart-grid {
+  stroke: var(--border);
+  stroke-width: 0.5;
+}
+
+/* เส้นศูนย์ต้องเข้มกว่าเส้นอื่น เพราะเป็นเส้นที่บอกว่าแท่งชี้ขึ้นหรือลง */
+.dchart-zero {
+  stroke: var(--text-dim);
+  stroke-width: 1;
+}
+
+.dchart-axis {
+  font-size: 10px;
+  fill: var(--text-dim);
+}
+
+.dchart-cat {
+  font-size: 11.5px;
+  fill: var(--text-soft);
+}
+
+.dchart-range {
+  font-size: 10px;
+  fill: var(--text-dim);
+}
+
+.dchart-value {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dchart-median {
+  stroke: var(--text);
+  stroke-width: 1.5;
+  opacity: 0.75;
+}
+
+.dchart-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.dchart-legend-median {
+  flex: none;
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--text);
+  opacity: 0.75;
+}
+
+/* ปุ่มสลับมุมมองผู้ป่วยทั้งหมดกับเฉพาะที่ต้องนอนโรงพยาบาล */
+.dnext-modes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 11px;
+}
+
+.dnext-modes button {
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dnext-modes button small {
+  display: block;
+  font-size: 11.5px;
+  opacity: 0.75;
+}
+
+.dnext-modes button.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink-accent-on-tint);
+  font-weight: 700;
+}
+
+/* แผงคาดการณ์เดือนถัดไป จากค่าฝุ่นจริงของเดือนล่าสุด */
+.dnext-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 11px;
+  font-size: 14px;
+  color: var(--text-soft);
+}
+
+.dnext-pick select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.dnext-flow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.dnext-box {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  min-width: 190px;
+}
+
+.dnext-key {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.dnext-value {
+  margin: 2px 0 0;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.dnext-unit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+
+/* จุดสีมีเส้นขอบ เพราะสีเหลืองของระดับปานกลางจางจนหายไปบนพื้นการ์ด */
+.dnext-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--level-edge);
+  border-radius: 50%;
+}
+
+.dnext-arrow {
+  font-size: 20px;
+  color: var(--text-dim);
+}
+
+/* แท่งเส้นประของกรณีฝุ่นเกินมาตรฐาน วาดไว้ด้านหลังแท่งจริงเพื่อใช้เทียบระยะ */
+.dnext-worst {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+}
+
+.dnext-name {
+  font-size: 11px;
+  fill: var(--text-soft);
+}
+
+.dnext-name-off {
+  font-size: 11px;
+  fill: var(--text-dim);
+}
+
+.dnext-legend-now,
+.dnext-legend-worst {
+  flex: none;
+  width: 13px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+.dnext-legend-worst {
+  border: 1.5px dashed var(--text-dim);
+  margin-left: 8px;
+}
+
+/* ปุ่มเลือกโรคในแท็บรายโรค เล็กกว่าปุ่มแท็บเพราะมีเจ็ดปุ่ม */
+.dcase-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.dcase-chips button {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dcase-chips button.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink-accent-on-tint);
+  font-weight: 700;
+}
+
+.dcase-dhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.dcase-dname {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.dcase-dmeta {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.dcase-dadvice {
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dcase-dadvice p {
+  margin: 0 0 6px;
+}
+
+.dcase-dkey {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin-bottom: 2px !important;
+}
+
+/* แผงฝุ่นเดือนนี้กับสัดส่วนผู้ป่วยโรคเรื้อรัง */
+.dcase-lagtabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 10px;
+  flex-wrap: wrap;
+}
+
+.dcase-lagtabs button {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.dcase-lagtabs button.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink-accent-on-tint);
+  font-weight: 700;
+}
+
+.dcase-lagcards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dcase-lagcard {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.dcase-lagname {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+/* จุดสีมีเส้นขอบ เพราะสีเหลืองของระดับปานกลางจางจนหายไปบนพื้นการ์ด */
+.dcase-lagdot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--level-edge);
+  border-radius: 50%;
+}
+
+.dcase-lagrange {
+  margin: 2px 0 8px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.dcase-lagbig {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dcase-lagmeta {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.dcase-tried {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.dcase-tried summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.dcase-tried ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  color: var(--text-soft);
+}
+
+.dcase-tried li {
+  padding: 2px 0;
+}
+
+.dcase-tried p {
+  margin: 8px 0 0;
+  color: var(--text-soft);
+}
+
 .dcase-source {
   margin: 12px 0 0;
   font-size: 12.5px;
@@ -3452,6 +4074,11 @@ button {
 }
 
 @media (max-width: 560px) {
+  .dcase-lagcards,
+  .dtrend-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .dcase {
     padding: 14px;
   }
