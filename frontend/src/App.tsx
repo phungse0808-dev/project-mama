@@ -20,7 +20,7 @@ import { DustCases } from "./components/DustCases";
 import { NavBar } from "./components/NavBar";
 import type { AirTab } from "./components/NavBar";
 import { TAB_GROUPS } from "./components/NavBar";
-import { ProvinceRanking } from "./components/ProvinceRanking";
+import { ProvinceDustRanking } from "./components/ProvinceDustRanking";
 import { ForecastDemo } from "./components/ForecastDemo";
 import { RainPanel } from "./components/RainPanel";
 import { SignIn } from "./components/SignIn";
@@ -485,7 +485,7 @@ export default function App() {
               {homeTab === "ranking" && (
                 <>
                   {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
-                  <ProvinceRanking ranking={ranking} />
+                  <ProvinceDustRanking />
                 </>
               )}
 

@@ -33,11 +33,13 @@ Air4Thai ของกรมควบคุมมลพิษ 174 สถานี
 1.94 ส่วนการวิเคราะห์ความสัมพันธ์ระหว่างค่าฝุ่นกับจำนวนผู้ป่วยจาก 3,157 คู่จังหวัด-เดือน
 พบว่าเมื่อวัดด้วยจำนวนผู้ป่วยไม่พบความสัมพันธ์ เพราะจำนวนผู้ป่วยที่บันทึกไว้ขึ้นกับ
 ปฏิทินการศึกษาและวันหยุดมากกว่าขึ้นกับฝุ่น แต่เมื่อเปลี่ยนไปวัดด้วยสัดส่วนผู้ป่วยรายโรค
-ต่อผู้ป่วยทั้งหมด โรคแยกตัวเองเป็นสองกลุ่ม คือโรคที่ฝุ่นกระตุ้นให้กำเริบหกโรค
-มีสัดส่วนสูงกว่าค่าปกติราว 7–11% ในเดือนถัดจากเดือนที่ฝุ่นเกิน 25 ไมโครกรัมต่อลูกบาศก์เมตร
-เทียบกับราว 1–4% ในเดือนที่อากาศดี ส่วนโรคติดต่อหนึ่งโรคลดลง 4% ข้อเสนอแนะสำหรับ
-การพัฒนาต่อคือเก็บข้อมูลค่าฝุ่นให้ครบทุกฤดูกาลแล้วปรับสูตรพยากรณ์ใหม่
-และขอข้อมูลผู้ป่วยรายวันเพื่อวิเคราะห์ผลกระทบระยะสั้น
+ต่อผู้ป่วยทั้งหมด และควบคุมทั้งขนาดจังหวัด ฤดูกาล และแนวโน้มรายปีแล้ว โรคแยกตัวเอง
+เป็นสองกลุ่ม คือโรคที่ฝุ่นกระตุ้นให้กำเริบหกโรคมีสัดส่วนสูงกว่าค่าปกติ 5.1% ถึง 7.3%
+ในเดือนถัดจากเดือนที่ฝุ่นเกินมาตรฐาน ส่วนโรคติดต่อหนึ่งโรคลดลง 3.2% อย่างไรก็ตาม
+เมื่อทดสอบด้วยสี่วิธีในการจัดการปี 2565 ซึ่งยังมีมาตรการโควิด พบว่าทิศทางของผลคงที่
+แต่ขนาดอยู่ระหว่าง 1.3% ถึง 7.1% จึงยังสรุปขนาดของผลเป็นตัวเลขเดียวไม่ได้
+ข้อเสนอแนะสำหรับการพัฒนาต่อคือเก็บข้อมูลค่าฝุ่นให้ครบทุกฤดูกาลแล้วปรับสูตรพยากรณ์ใหม่
+และขอข้อมูลผู้ป่วยปี 2569 เพิ่มเพื่อให้มีปีที่ไม่มีผลของมาตรการโควิดมากพอ
 
 ---
 
@@ -66,9 +68,12 @@ compares it against measured values; back-testing on 484 cases gave a mean absol
 error of 1.85 µg/m³, better than the 1.94 of the persistence baseline. Analysis of
 3,157 province-month pairs found no relationship when measured by patient counts,
 because recorded counts track the school calendar and public holidays more than they
-track dust. Measured instead as each disease's share of all patients, the diseases
-separate into two groups: the six dust-aggravated conditions all rise, to roughly
-7–11% above their seasonal norm in the month following a month above 25 µg/m³,
-against roughly 1–4% after clean months, while the one communicable disease falls by
-4%. Future work should collect a full year of readings before recalibrating the
-forecast, and request daily patient data for short-term analysis.
+track dust. Measured instead as each disease's share of all patients, and controlling
+for province size, season and the year-on-year trend, the diseases separate into two
+groups: the six dust-aggravated conditions all rise, to 5.1–7.3% above their seasonal
+norm in the month following a month above the Thai standard, while the one
+communicable disease falls by 3.2%. Testing four ways of handling 2022, the year
+still under COVID-19 measures, the direction holds but the size ranges from 1.3% to
+7.1%, so the magnitude cannot yet be stated as a single figure. Future work should
+collect a full year of readings before recalibrating the forecast, and obtain 2026
+patient data so that enough years without pandemic measures are available.

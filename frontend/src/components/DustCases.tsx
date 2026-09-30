@@ -310,6 +310,7 @@ function DustTrend({ data }: { data: DustSeries }) {
 }
 
 type Lagged = NonNullable<DustCasesData["lagged"]>;
+type LaggedBucket = Lagged["by_disease"][number]["buckets"][number];
 type NextMonth = NonNullable<DustCasesData["next_month"]>;
 
 /** ระดับคุณภาพอากาศของค่านั้น คืนลำดับที่ตรงกับ buckets ที่เซิร์ฟเวอร์ส่งมา */
@@ -519,20 +520,25 @@ function NextMonthNotes({
   lagged: Lagged;
   severe: boolean;
 }) {
+  const asthma = lagged.by_disease.find((item) => item.disease === "โรคหอบหืด");
+  const best = lagged.robustness.rows.find((row) => row.current);
+  const last = (buckets: LaggedBucket[]) => buckets[buckets.length - 1]?.change_pct ?? 0;
+
   return (
     <>
       <p className="dcase-note">
         <strong>วิธีคำนวณ</strong> ดูว่าเดือน {data.from_ym} พื้นที่นั้นค่าฝุ่นอยู่ระดับไหน
         แล้วใช้ค่าที่วัดได้จากข้อมูลย้อนหลังว่าเดือนถัดจากเดือนที่ฝุ่นอยู่ระดับนั้น
-        {severe ? lagged.measure_ipd_th : lagged.measure_th}สูงกว่าค่าปกติเฉลี่ยกี่เปอร์เซ็นต์
-        ไม่ใช่สูตรใหม่
+        {severe ? lagged.measure_ipd_th : lagged.measure_th}ต่างจากค่าปกติเฉลี่ยกี่เปอร์เซ็นต์
+        ไม่ใช่สูตรใหม่ · {lagged.control_th}
       </p>
 
-      {severe && (
+      {severe && asthma && (
         <p className="dcase-good">
-          <strong>มุมมองนี้บอกความรุนแรง ไม่ใช่แค่จำนวน</strong> เดือนที่ฝุ่นเกิน 25 µg/m³
-          เดือนถัดไปสัดส่วนผู้ป่วยที่ต้องนอนโรงพยาบาลด้วยโรคหอบหืดสูงกว่าปกติ 14.0%
-          เทียบกับ 8.0% เมื่อนับผู้ป่วยทั้งหมด แปลว่าฝุ่นไม่ได้ทำให้คนมาหาหมอมากขึ้นเฉย ๆ
+          <strong>มุมมองนี้บอกความรุนแรง ไม่ใช่แค่จำนวน</strong> เดือนที่ฝุ่นเกินมาตรฐาน
+          เดือนถัดไปสัดส่วนผู้ป่วยที่ต้องนอนโรงพยาบาลด้วย{asthma.disease}ต่างจากค่าปกติ{" "}
+          {signedPct(last(asthma.ipd_buckets))} เทียบกับ {signedPct(last(asthma.buckets))}{" "}
+          เมื่อนับผู้ป่วยทั้งหมด แปลว่าฝุ่นไม่ได้ทำให้คนมาหาหมอมากขึ้นเฉย ๆ
           แต่ทำให้คนที่อาการหนักเพิ่มขึ้นด้วย
         </p>
       )}
@@ -551,9 +557,51 @@ function NextMonthNotes({
         <strong>รูปแบบเดียวกันทุกโรคที่ฝุ่นกระตุ้น</strong> ช่องว่างระหว่างแท่งทึบกับแท่งเส้นประ
         คือระยะห่างจากกรณีที่ฝุ่นเกินมาตรฐาน ซึ่งกว้างใกล้เคียงกันทุกโรค
         แปลว่าฝุ่นไม่ได้กระทบโรคใดโรคหนึ่งเป็นพิเศษ แต่กระทบทั้งกลุ่มพร้อมกัน
+        {best ? ` · ค่าของกลุ่มโรคเรื้อรังที่ระดับเกินมาตรฐานอยู่ที่ ${signedPct(last(best.buckets))}` : ""}
       </p>
 
       <p className="dcase-warn">{lagged.infectious_note_th}</p>
+
+      {/* ตารางทดสอบความคงทน ต้องอยู่ติดกับตัวเลขเสมอ
+          เพราะขนาดของผลขึ้นกับวิธีจัดการปี 2565 มาก
+          ถ้าโชว์ตัวเลขเดียวจะถูกอ่านว่าแน่นอนกว่าความจริง */}
+      <p className="dcase-warn">
+        <strong>ขนาดของผลยังสรุปเป็นตัวเลขเดียวไม่ได้</strong> เมื่อเปลี่ยนวิธีจัดการปี 2565
+        ค่าที่ระดับเกินมาตรฐานอยู่ในช่วง {lagged.robustness.range_th} ·{" "}
+        {lagged.robustness.note_th}
+      </p>
+
+      <details className="dcase-tried">
+        <summary>ผลของแต่ละวิธีจัดการปี 2565 ({lagged.robustness.rows.length} แบบ)</summary>
+        <div className="dcase-table-wrap">
+          <table className="dcase-table">
+            <thead>
+              <tr>
+                <th>วิธี</th>
+                {lagged.robustness.rows[0]?.buckets.map((bucket) => (
+                  <th key={bucket.label_th}>{bucket.label_th}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {lagged.robustness.rows.map((row) => (
+                <tr key={row.label_th}>
+                  <td>
+                    {row.label_th}
+                    {row.current ? " · ใช้เป็นหลัก" : ""}
+                  </td>
+                  {row.buckets.map((bucket) => (
+                    <td className="dcase-num" key={bucket.label_th}>
+                      {signedPct(bucket.change_pct)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p>{lagged.robustness.why_th}</p>
+      </details>
 
       {/* ต้องบอกว่าลองอะไรมาบ้างกว่าจะได้วิธีนี้
           ถ้าแสดงเฉพาะวิธีที่ได้ผล คนอ่านจะประเมินไม่ได้ว่าผลนี้น่าเชื่อแค่ไหน */}

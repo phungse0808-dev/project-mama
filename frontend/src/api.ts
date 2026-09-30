@@ -569,6 +569,14 @@ export type DustCases = {
       ipd_buckets: LaggedBucket[];
     }[];
     measure_ipd_th: string;
+    control_th: string;
+    /** ผลเปลี่ยนไปแค่ไหนเมื่อจัดการปี 2565 ด้วยวิธีต่างกัน ต้องแสดงคู่กับผลหลักเสมอ */
+    robustness: {
+      rows: { label_th: string; current: boolean; buckets: LaggedBucket[] }[];
+      range_th: string;
+      note_th: string;
+      why_th: string;
+    };
     ipd_note_th: string;
     infectious_note_th: string;
     tried_th: string[];

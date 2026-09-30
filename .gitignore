@@ -13,6 +13,10 @@ backend/data/raw/
 
 backend/data/collector.log
 
+# บันทึกของเซิร์ฟเวอร์ เก็บไว้ดู traceback ตอนเกิด 500 ในเครื่องพอ
+backend/data/server.log
+backend/data/server.err.log
+
 # ชุดใบรับรองที่รวมไว้ใช้งาน สร้างใหม่อัตโนมัติจาก certifi + backend/data/certs/
 backend/data/ca_bundle.pem
 

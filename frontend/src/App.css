@@ -714,7 +714,6 @@ button {
 .rain-figure strong,
 .rain-stat-value,
 .health-value,
-.ranking-value,
 .alert-count,
 .level-segment,
 .field-pct {
@@ -751,7 +750,6 @@ button {
    บนพื้นขาว สีเหลือง #ffd400 ต่างจากพื้นแค่ 1.43:1 ส่วนสีอื่นก็ไม่ถึง 3:1
    ถ้าไม่มีขอบ แถบจะไม่มีที่สิ้นสุดให้ตาจับ โดยเฉพาะช่วงที่ค่าน้อยจนแถบสั้น
    ใช้ดำโปร่งไม่ใช่สีทึบ ขอบจึงเข้มตามสีที่อยู่ข้างใต้เองโดยไม่เปลี่ยนเนื้อสี */
-.ranking-bar,
 .level-segment,
 .field-fill {
   box-shadow: inset 0 0 0 1px var(--level-edge);
@@ -1233,78 +1231,6 @@ button {
     border-top: 1px solid var(--border);
     max-height: none;
   }
-}
-
-/* ---------- อันดับจังหวัด ---------- */
-
-.ranking {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.ranking-row {
-  display: grid;
-  grid-template-columns: 27px minmax(94px, 1fr) minmax(0, 2fr) 51px;
-  align-items: center;
-  gap: 9px;
-  font-size: 16.5px;
-}
-
-.ranking-no {
-  color: var(--text-soft);
-  font-size: 14px;
-  text-align: right;
-}
-
-.ranking-name {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.25;
-}
-
-.ranking-name small {
-  color: var(--text-soft);
-  font-size: 13.5px;
-}
-
-.ranking-bar-track {
-  background: var(--border);
-  border-radius: 999px;
-  height: 9px;
-  overflow: hidden;
-}
-
-.ranking-bar {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.4s;
-  /* ไล่ความสว่างในแท่งเดียวกัน ทำให้แท่งดูนูนขึ้นเล็กน้อย
-     ใช้ทับสีเดิมที่กำหนดมาจากระดับคุณภาพอากาศ จึงไม่ทำให้สื่อความหมายผิด */
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.05));
-}
-
-.ranking-row {
-  transition: background 0.15s ease;
-  border-radius: 8px;
-  /* ดึงขอบไฮไลต์ออกด้านข้างเท่ากับ padding ที่เพิ่ม
-     พื้นที่ไฮไลต์จึงกว้างขึ้นโดยความกว้างของแท่งกราฟไม่เปลี่ยน */
-  padding: 5px 7px;
-  margin: -5px -8px;
-}
-
-.ranking-row:hover {
-  background: var(--accent-soft);
-}
-
-.ranking-value {
-  text-align: right;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- กราฟ ---------- */
@@ -3608,6 +3534,69 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+/* ปุ่มเลือกปีในหน้าอันดับจังหวัด เว้นระยะจากปุ่มเลือกแหล่งด้านบน */
+.drank-years {
+  margin-bottom: 12px;
+}
+
+/* ตารางอันดับจังหวัด */
+.drank {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.drank-table td:first-child,
+.drank-table th:first-child {
+  width: 30px;
+}
+
+.drank-no {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.drank-name {
+  font-weight: 700;
+}
+
+.drank-when {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.drank-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.drank-track {
+  flex: 1;
+  min-width: 42px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.drank-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #ff7e00;
+}
+
+/* แถวคั่นบอกว่ามีจังหวัดที่ไม่ได้แสดงอีกกี่จังหวัด */
+.drank-gap td {
+  padding: 4px 6px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+  border-bottom: 0;
+}
+
 /* ปุ่มเลือกแหล่งค่าฝุ่น แต่ละแหล่งมีคำอธิบายบรรทัดที่สองว่าละเอียดแค่ไหนและย้อนได้ไกลแค่ไหน */
 .dtrend-sources {
   display: flex;
@@ -4194,25 +4183,6 @@ button {
   font-size: 13.5px;
   line-height: 1.7;
   overflow-x: auto;
-}
-
-/* ข้อความแทนตารางอันดับ เมื่อไม่มีจังหวัดใดถึงเกณฑ์ */
-.ranking-none {
-  margin: 10px 0 0;
-  padding: 22px 14px;
-  border-radius: 10px;
-  background: var(--surface-2);
-  color: var(--text-soft);
-  font-size: 15px;
-  text-align: center;
-  line-height: 1.6;
-}
-
-.ranking-none small {
-  display: block;
-  margin-top: 3px;
-  font-size: 13px;
-  color: var(--text-dim);
 }
 
 /* ป้ายกำกับหน้าบรรทัดอาการ ใช้พื้นโปร่งบนกล่องสีเดิม จะได้ไม่ต้องเพิ่มสีใหม่ */

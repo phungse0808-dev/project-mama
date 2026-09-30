@@ -366,15 +366,29 @@ def _next_ym(ym: str) -> str:
     return f"{year + (month == 12)}-{(month % 12) + 1:02d}"
 
 
-def _share_effect(pm, share, step: int) -> dict[str, list[float]]:
+def _share_effect(
+    pm,
+    share,
+    step: int,
+    control_year: bool = True,
+    skip_years: tuple[str, ...] = (),
+) -> dict[str, list[float]]:
     """ส่วนต่างจากค่าปกติ แยกตามระดับฝุ่นของเดือนตั้งต้น
 
     step = 0 เทียบเดือนเดียวกัน · step = 1 เทียบเดือนถัดไป
+
     ค่าปกติคือค่าเฉลี่ยของจังหวัดนั้นในเดือนปฏิทินเดียวกัน ซึ่งหักทั้งขนาดจังหวัด
     และรูปแบบตามฤดูกาลออกไปพร้อมกัน
+
+    control_year หักค่าเฉลี่ยของปีนั้นออกอีกชั้น
+        จำเป็นเพราะสัดส่วนโรคเรื้อรังไต่ขึ้นทุกปี จาก -14.8% ในปี 2565 เป็น +13.3% ในปี 2568
+        ปี 2565 ยังอยู่ในช่วงมาตรการโควิดและมีข้อมูลเฉพาะเดือนฝุ่นต่ำ
+        ถ้าไม่หักแนวโน้มนี้ออก สิ่งที่วัดได้จะเป็นความต่างระหว่างปี ไม่ใช่ความต่างระหว่างระดับฝุ่น
     """
+    usable = {k: v for k, v in share.items() if k[1][:4] not in skip_years}
+
     grouped = defaultdict(list)
-    for (province, ym), value in share.items():
+    for (province, ym), value in usable.items():
         grouped[(province, ym[5:])].append(value)
     normal = {
         key: statistics.fmean(values)
@@ -382,16 +396,30 @@ def _share_effect(pm, share, step: int) -> dict[str, list[float]]:
         if len(values) >= MIN_YEARS_PER_MONTH
     }
 
+    deviation = {}
+    for (province, ym), value in usable.items():
+        base = normal.get((province, ym[5:]))
+        if base:
+            deviation[(province, ym)] = (value - base) / base * 100
+
+    by_year: dict[str, list[float]] = defaultdict(list)
+    for (_, ym), value in deviation.items():
+        by_year[ym[:4]].append(value)
+    year_mean = {year: statistics.fmean(values) for year, values in by_year.items()}
+
     rows: dict[str, list[float]] = defaultdict(list)
     for (province, ym), dust in pm.items():
-        target_ym = _next_ym(ym) if step else ym
-        value = share.get((province, target_ym))
-        base = normal.get((province, target_ym[5:]))
-        if value is None or not base:
+        if ym[:4] in skip_years:
             continue
+        target_ym = _next_ym(ym) if step else ym
+        value = deviation.get((province, target_ym))
+        if value is None:
+            continue
+        if control_year:
+            value -= year_mean.get(target_ym[:4], 0.0)
         for label, _, low, high in BUCKETS:
             if low <= dust < high:
-                rows[label].append((value - base) / base * 100)
+                rows[label].append(value)
                 break
     return rows
 
@@ -408,6 +436,45 @@ def _buckets_of(rows: dict[str, list[float]]) -> list[dict]:
         for label, range_th, _, _ in BUCKETS
         if rows[label]
     ]
+
+
+def _robustness(pm, chronic_share) -> dict:
+    """ผลเปลี่ยนไปแค่ไหนเมื่อจัดการปี 2565 ด้วยวิธีต่างกัน
+
+    ต้องแสดงคู่กับผลหลักเสมอ เพราะขนาดของผลขึ้นกับวิธีจัดการปีนั้นมาก
+    ถ้ารายงานตัวเลขเดียวโดยไม่บอกช่วง ผู้อ่านที่ลองวิธีอื่นจะได้คำตอบต่างกันหลายเท่า
+    """
+    variants = [
+        ("ไม่คุมอะไร", dict(control_year=False)),
+        ("คุมแนวโน้มรายปี", dict(control_year=True)),
+        ("ตัดปี 2565 ออก", dict(control_year=False, skip_years=("2022",))),
+        ("ตัดปี 2565 และคุมปี", dict(control_year=True, skip_years=("2022",))),
+    ]
+    rows = []
+    for label, options in variants:
+        buckets = _buckets_of(_share_effect(pm, chronic_share, step=1, **options))
+        if buckets:
+            rows.append({
+                "label_th": label,
+                "current": options.get("control_year", False) and not options.get("skip_years"),
+                "buckets": buckets,
+            })
+
+    highest = [row["buckets"][-1]["change_pct"] for row in rows]
+    return {
+        "rows": rows,
+        "range_th": f"{min(highest):+.1f}% ถึง {max(highest):+.1f}%",
+        "note_th": (
+            "ทุกวิธีให้ค่าเป็นบวกที่ระดับเกินมาตรฐาน และสูงกว่าเดือนที่อากาศดีเสมอ "
+            "ทิศทางจึงคงที่ แต่ขนาดของผลต่างกันหลายเท่าตามวิธีจัดการปี 2565 "
+            "จึงสรุปขนาดเป็นตัวเลขเดียวจากข้อมูลชุดนี้ไม่ได้"
+        ),
+        "why_th": (
+            "ปี 2565 ยังอยู่ในช่วงมาตรการโควิด สัดส่วนโรคเรื้อรังต่ำกว่าค่าปกติ 14.8% "
+            "และมีข้อมูลเพียงเดือนสิงหาคมถึงธันวาคม ซึ่งเป็นเดือนที่ฝุ่นต่ำทั้งหมด "
+            "จึงดึงค่าปกติของเดือนฝุ่นต่ำลง ทำให้เดือนฝุ่นสูงของปีอื่นดูสูงกว่าปกติ"
+        ),
+    }
 
 
 def _lagged(pm, cases, admitted, age_top_of: dict) -> dict:
@@ -487,6 +554,7 @@ def _lagged(pm, cases, admitted, age_top_of: dict) -> dict:
         })
 
     chronic = share_of(CHRONIC_DISEASES)
+    robustness = _robustness(pm, chronic)
     targets = [
         {
             "key": key,
@@ -499,6 +567,7 @@ def _lagged(pm, cases, admitted, age_top_of: dict) -> dict:
     return {
         "disease_th": "โรคหอบหืดและโรคปอดอุดกั้นเรื้อรัง",
         "measure_th": "สัดส่วนผู้ป่วยโรคนั้น ต่อผู้ป่วยทุกโรคในเดือนนั้น",
+        "control_th": "หักค่าปกติของจังหวัดในเดือนปฏิทินเดียวกัน และหักแนวโน้มรายปีออกแล้ว",
         "measure_ipd_th": "สัดส่วนผู้ป่วยโรคนั้นที่ต้องนอนโรงพยาบาล ต่อผู้ป่วยทุกโรคในเดือนนั้น",
         "ipd_note_th": (
             "แสดงเฉพาะโรคที่มีสัดส่วนผู้ป่วยในอย่างน้อย 1% ของผู้ป่วยโรคนั้น "
@@ -507,6 +576,7 @@ def _lagged(pm, cases, admitted, age_top_of: dict) -> dict:
         ),
         "targets": targets,
         "by_disease": by_disease,
+        "robustness": robustness,
         "infectious_note_th": (
             "โรคติดเชื้อทางเดินหายใจส่วนบนเฉียบพลันให้ผลกลับทางกับอีกหกโรค "
             "เพราะเป็นโรคติดต่อที่ขึ้นกับการเปิดเทอมและฤดูฝน ไม่ได้ขึ้นกับฝุ่น "
@@ -531,19 +601,42 @@ def _lagged(pm, cases, admitted, age_top_of: dict) -> dict:
 
 
 _cache: dict | None = None
+_cache_stamp: tuple | None = None
+
+
+def _stamp(session: Session) -> tuple:
+    """ลายเซ็นของข้อมูลที่ผลลัพธ์ชุดนี้ขึ้นอยู่กับ
+
+    ใช้ค่าที่อ่านเร็วอย่างเวลาล่าสุดกับจำนวนแถว ไม่ใช่การคำนวณจริง
+    ถ้าลายเซ็นเปลี่ยนแปลว่ามีข้อมูลใหม่เข้ามา ต้องคำนวณใหม่
+
+    ต้องมี Reading อยู่ในนี้ด้วย เพราะกราฟค่าฝุ่นรายวันจากสถานีอ่านจากตารางนี้
+    ซึ่งตัวเก็บข้อมูลเขียนเพิ่มทุกชั่วโมง ไม่ใช่ข้อมูลนิ่งเหมือนข้อมูลผู้ป่วย
+    """
+    return (
+        session.exec(select(func.max(col(Reading.measured_at)))).one(),
+        session.exec(select(func.count()).select_from(Reading)).one(),
+        session.exec(select(func.max(col(Pm25Monthly.ym)))).one(),
+        session.exec(select(func.count()).select_from(DiseaseMonthly)).one(),
+    )
 
 
 def dust_cases(session: Session) -> dict:
     """ข้อมูลทั้งหมดของหน้าฝุ่นกับผู้ป่วย
 
-    คำนวณครั้งแรกใช้เวลาราวสิบวินาทีเพราะต้องไล่ข้อมูลสามหมื่นแถวหลายรอบ
-    ผลจึงเก็บไว้ในหน่วยความจำ ข้อมูลชุดนี้เป็นข้อมูลนิ่งที่เปลี่ยนเฉพาะตอนนำเข้าใหม่
-    ซึ่งต้องรีสตาร์ตเซิร์ฟเวอร์อยู่แล้ว
+    คำนวณครั้งแรกใช้เวลาราวยี่สิบวินาทีเพราะต้องไล่ข้อมูลสามหมื่นแถวหลายรอบ
+    ผลจึงเก็บไว้ในหน่วยความจำ แล้วคำนวณใหม่เมื่อข้อมูลต้นทางเปลี่ยน
+
+    ห้ามเก็บไว้ถาวรโดยไม่ตรวจสอบ เพราะค่าฝุ่นรายวันจากสถานีในผลลัพธ์นี้
+    มาจากตาราง Reading ที่มีข้อมูลเพิ่มทุกชั่วโมง ถ้าไม่ตรวจ หน้าเว็บจะค้าง
+    อยู่ที่ข้อมูลของตอนที่เซิร์ฟเวอร์เริ่มทำงาน โดยไม่มีอาการอะไรให้สังเกต
     """
-    global _cache
-    if _cache is not None:
+    global _cache, _cache_stamp
+    stamp = _stamp(session)
+    if _cache is not None and _cache_stamp == stamp:
         return _cache
     _cache = _compute(session)
+    _cache_stamp = stamp
     return _cache
 
 
