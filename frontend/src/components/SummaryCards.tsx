@@ -296,43 +296,56 @@ export function SummaryCards({
                 ไม่ใช่แค่เปลี่ยนตัวเลข เพราะคำว่าเฉลี่ยกับค่าที่วัดได้จุดเดียว
                 เป็นคนละอย่างกัน และบรรทัดล่างเปลี่ยนจากช่วงระหว่างสถานี
                 เป็นช่วงตามเวลาของสถานีนั้น */}
-            <p className="card-label">
-              {picked
-                ? `PM2.5 ${picked.name_th}`
-                : `PM2.5 เฉลี่ย${summary.province ? summary.province : "ทั้งประเทศ"}`}
-            </p>
-            <p className="card-value">
-              {picked ? picked.pm25 ?? "-" : summary.pm25_avg ?? "-"}
-              <span className="card-unit">µg/m³</span>
-            </p>
-            {detailed ? (
-              <>
-                <p className="card-note">
-                  {level ? `คุณภาพอากาศ${level.label_th} · ` : ""}
+            {/* การ์ดแบ่งสองฝั่งด้วยเส้นคั่น
+                ฝั่งซ้ายตอบว่าค่าเท่าไรและอยู่ระดับไหน
+                ฝั่งขวาตอบว่าค่านั้นมาจากไหน คือวัดจากกี่สถานีและรัศมีเท่าไร
+                สองคำถามนี้เป็นคนละเรื่องกัน เส้นคั่นจึงมีความหมายจริง
+                ไม่ใช่แค่ขีดแบ่งพื้นที่ */}
+            <div className="hero-split">
+              <div className="hero-main">
+                {/* อ่านขอบเขตจากคำตอบของเซิร์ฟเวอร์ ไม่ใช่จากค่าที่หน้าเว็บส่งไป
+                    เพราะระหว่างที่คำขอใหม่ยังไม่กลับมา ตัวเลขบนจอยังเป็นของขอบเขตเดิม
+                    ถ้าเปลี่ยนป้ายทันทีที่กดจะกลายเป็นป้ายไม่ตรงกับตัวเลข */}
+                <p className="card-label">
                   {picked
-                    ? picked.area_th
-                    : `ต่ำสุด ${summary.pm25_min ?? "-"} · สูงสุด ${summary.pm25_max ?? "-"}`}
+                    ? `PM2.5 ${picked.name_th}`
+                    : `PM2.5 เฉลี่ย${summary.province ? summary.province : "ทั้งประเทศ"}`}
                 </p>
-              </>
-            ) : (
-              <>
-                {/* ตามแบบจำลอง บรรทัดใต้ตัวเลขบอกแค่ระดับ ดูหลายสถานีบอกจำนวนสถานีต่อท้าย
-                    รายละเอียดอื่นอยู่ในการ์ดเล็กข้างล่างแล้ว ไม่ต้องบอกซ้ำ */}
+                <p className="card-value">
+                  {picked ? picked.pm25 ?? "-" : summary.pm25_avg ?? "-"}
+                  <span className="card-unit">µg/m³</span>
+                </p>
                 <p className="card-note">
-                  {level ? level.label_th : "ไม่มีข้อมูลระดับ"}
-                  {picked ? "" : ` · ${summary.stations_reporting} สถานี`}
+                  {level ? `คุณภาพอากาศ${level.label_th}` : "ไม่มีข้อมูลระดับ"}
                 </p>
-                {/* บอกรัศมีวัดทุกขอบเขต ไม่ใช่เฉพาะตอนเลือกสถานีเดียว
-                    เลือกสถานีเดียวบอกรัศมีของสถานีนั้น
-                    ดูทั้งจังหวัดหรือทั้งประเทศเป็นค่าเฉลี่ยหลายสถานี จึงบอกว่าแต่ละสถานีวัดรัศมีเท่าไร */}
-                <p className="dust-distance">
-                  <span aria-hidden="true">📍</span>
-                  {picked
-                    ? `รัศมีวัด ${STATION_RADIUS_KM} กม. รอบสถานี`
-                    : `แต่ละสถานีวัดรัศมี ${STATION_RADIUS_KM} กม.`}
-                </p>
-              </>
-            )}
+              </div>
+
+              {/* บอกรัศมีวัดทุกขอบเขต ไม่ใช่เฉพาะตอนเลือกสถานีเดียว
+                  เลือกสถานีเดียวบอกรัศมีของสถานีนั้น
+                  ดูทั้งจังหวัดหรือทั้งประเทศเป็นค่าเฉลี่ยหลายสถานี จึงบอกว่าแต่ละสถานีวัดรัศมีเท่าไร */}
+              <div className="hero-source">
+                {picked ? (
+                  <>
+                    <p className="hero-source-key">พื้นที่</p>
+                    <p className="hero-source-main">{picked.area_th}</p>
+                    <p className="hero-source-note">
+                      รัศมีวัด {STATION_RADIUS_KM} กม. รอบสถานี
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="hero-source-key">วัดจาก</p>
+                    <p className="hero-source-main">
+                      {summary.stations_reporting}
+                      <span> สถานี</span>
+                    </p>
+                    <p className="hero-source-note">
+                      แต่ละสถานีวัดรัศมี {STATION_RADIUS_KM} กม.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
           </article>
           {detailed ? (
             <>
@@ -425,7 +438,9 @@ export function SummaryCards({
                   </p>
                 </article>
               ) : (
-                <article className="card card-mini">
+                /* ซ้ำกับฝั่งขวาของการ์ดใบใหญ่ที่บอกว่าวัดจากกี่สถานี
+                   จอแคบจึงซ่อนใบนี้ ดู card-mini-dup ใน App.css */
+                <article className="card card-mini card-mini-dup">
                   <p className="card-label">สถานีที่รายงาน</p>
                   <p className="card-value card-value-sm">
                     {summary.stations_reporting} / {summary.stations_total}
@@ -475,7 +490,22 @@ export function SummaryCards({
               {/* ใบนี้กินเต็มความกว้าง เพราะมีทั้งไอคอน อุณหภูมิ คำอธิบาย
                   และช่วงต่ำสุดถึงสูงสุด ถ้าอยู่ครึ่งเดียวจะเบียดจนตัดบรรทัด */}
               <article className="card card-wide">
-                <p className="card-label">อากาศตอนนี้</p>
+                {/* เวลาที่วัดไปอยู่มุมขวาบนของการ์ด แทนการแยกเป็นการ์ดของตัวเองใบหนึ่ง
+                    เวลาไม่ใช่ค่าที่คนเปิดมาดู แต่เป็นคำกำกับว่าค่าที่เห็นเป็นของเมื่อไร
+                    จึงควรอยู่ติดกับค่า ไม่ใช่แยกไปเป็นกล่องเท่า ๆ กับค่าอื่น
+
+                    อายุของข้อมูลกับชื่อแหล่งอยู่บรรทัดล่างถัดมา เล็กกว่าและจางกว่า
+                    เพราะเป็นข้อมูลประกอบที่ดูเมื่อสงสัย ไม่ใช่สิ่งที่ต้องอ่านทุกครั้ง */}
+                <div className="weather-now-head">
+                  <p className="card-label">อากาศตอนนี้</p>
+                  <div className="weather-now-stamp">
+                    <p className="weather-now-clock">{formatClock(now.observed_at)}</p>
+                    <p className="weather-now-origin">
+                      {now.minutes_behind != null ? `${now.minutes_behind} นาทีที่แล้ว · ` : ""}
+                      Open-Meteo
+                    </p>
+                  </div>
+                </div>
 
                 <div className="weather-now-main">
                   <WeatherIcon code={now.weather_code} />
@@ -525,6 +555,22 @@ export function SummaryCards({
                       </div>
                     </div>
                   )}
+
+                  {/* โอกาสฝนตกย้ายเข้ามาอยู่ในการ์ดนี้ จากเดิมที่เป็นการ์ดแยกใบหนึ่ง
+                      อุณหภูมิกับฝนเป็นสองคำถามแรกที่คนเปิดดูอากาศอยากรู้
+                      คือร้อนแค่ไหนกับจะเปียกไหม จึงควรอยู่แถวบนสุดคู่กัน
+                      ส่วนลมเป็นรายละเอียดรอง จอแคบจะตกลงไปอยู่แถวล่างเอง */}
+                  <div className="weather-now-rain">
+                    <span className="weather-now-divider" />
+                    <div>
+                      <p className="card-label">โอกาสฝนตกวันนี้</p>
+                      <p className="card-value card-value-md">
+                        {now.rain_chance_pct ?? "-"}
+                        <span className="card-unit">%</span>
+                      </p>
+                      <p className="weather-now-condition">ความชื้น {now.humidity ?? "-"}%</p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* ช่วงอุณหภูมิของวัน แสดงเป็นแถบแทนบรรทัดตัวหนังสือ
@@ -568,28 +614,6 @@ export function SummaryCards({
 
               </article>
 
-              <article className="card">
-                <p className="card-label">โอกาสฝนตกวันนี้</p>
-                <p className="card-value card-value-md">
-                  {now.rain_chance_pct ?? "-"}
-                  <span className="card-unit">%</span>
-                </p>
-                {/* เอาลมออกจากบรรทัดนี้แล้ว เพราะย้ายไปอยู่คู่กับอุณหภูมิในการ์ดใหญ่
-                    ถ้าปล่อยไว้ทั้งสองที่จะเป็นตัวเลขเดียวกันโผล่สองรอบในกลุ่มเดียวกัน
-                    เหลือความชื้นซึ่งเกี่ยวกับโอกาสฝนโดยตรง จึงอยู่ถูกที่แล้ว */}
-                <p className="card-note">ความชื้น {now.humidity ?? "-"}%</p>
-              </article>
-
-              <article className="card">
-                <p className="card-label">อากาศ ณ เวลา</p>
-                <p className="card-value card-value-sm">{formatClock(now.observed_at)}</p>
-                <p className="card-note">
-                  {now.minutes_behind != null
-                    ? `ข้อมูลเมื่อ ${now.minutes_behind} นาทีที่แล้ว · `
-                    : ""}
-                  จาก Open-Meteo
-                </p>
-              </article>
             </div>
           ) : (
             <div className="cards cards-weather">

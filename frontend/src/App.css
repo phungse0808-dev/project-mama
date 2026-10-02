@@ -453,6 +453,63 @@ body {
   }
 }
 
+/* จอมือถือ การ์ดใบใหญ่กินเต็มแถว การ์ดเล็กวางคู่กัน
+ *
+ * เคยลองวางกลุ่มฝุ่นกับกลุ่มอากาศข้างกันคนละคอลัมน์ แต่การ์ดเหลือกว้าง 152 พิกเซล
+ * ซึ่งแคบเกินไปสำหรับการ์ดที่มีตัวเลขหลักกับหน่วย หน่วยตกบรรทัดแยกจากตัวเลข
+ * และการ์ดอุณหภูมิต่ำสุดสูงสุดอัดกันจนแยกไม่ออกว่าตัวเลขไหนคืออะไร
+ *
+ * จึงให้สองกลุ่มซ้อนกันเหมือนเดิม แล้วไปแบ่งสองคอลัมน์ข้างในกลุ่มแทน
+ * การ์ดใบใหญ่ยังกินเต็มแถวด้วยกฎ grid-column ที่ประกาศไว้แล้วข้างบน
+ * ส่วนการ์ดเล็กซึ่งมีแค่ป้ายกับตัวเลขสั้น ๆ วางคู่กันได้สบายที่ความกว้างครึ่งแถว
+ *
+ * ต้องประกาศหลังกฎของ 461px เพราะกฎนั้นสั่งให้เหลือคอลัมน์เดียว
+ */
+@media (max-width: 900px) {
+  .cards-dust,
+  .cards-weather {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  /* การ์ดเล็กมีที่น้อยกว่าเดิม ตัวเลขจึงต้องเล็กลงตาม
+     แต่การ์ดใบใหญ่ยังใช้ขนาดเดิมเพราะได้ความกว้างเต็มแถว */
+  .card-mini .card-value,
+  .card-mini .card-value-sm,
+  .card-mini .card-value-md {
+    font-size: 21px;
+    letter-spacing: -0.4px;
+  }
+
+  /* การ์ดจำนวนสถานีที่รายงาน ซ้ำกับฝั่งขวาของการ์ดใบใหญ่ซึ่งบอกว่าวัดจากกี่สถานี
+     จอแคบมีที่น้อย จึงตัดใบที่ซ้ำออก เหลือไว้เฉพาะบนจอกว้าง
+     ซ่อนด้วย CSS ไม่ใช่ลบออกจากโค้ด เพราะบนจอกว้างยังมีประโยชน์
+     ตรงที่บอกจำนวนสถานีทั้งหมดด้วย ไม่ใช่แค่จำนวนที่ส่งข้อมูล */
+  .card-mini-dup {
+    display: none;
+  }
+
+  /* การ์ดที่เหลือสองใบวางคู่กันพอดี ไม่ต้องให้ใบไหนกินเต็มแถว
+     แต่วันที่กับเวลาเต็มรูปแบบยาวกว่าครึ่งแถว จึงต้องเล็กลงและยอมให้ตกบรรทัด */
+  /* กลุ่มอากาศเหลือการ์ดเล็กใบเดียวหลังยุบฝนเข้าการ์ดใหญ่
+     ถ้าปล่อยไว้ครึ่งแถวจะมีช่องว่างข้าง ๆ และข้อความตกบรรทัดสามบรรทัด */
+  .cards-weather .card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .cards-dust .card-mini:last-child .card-value {
+    font-size: 17px;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  /* ตัวเลขกับหน่วยต้องอยู่บรรทัดเดียวกันเสมอ
+     ถ้าปล่อยให้ตกบรรทัด จะอ่านเป็น 162 กับ 175 คนละค่า แทนที่จะเป็น 162 จาก 175 */
+  .card-mini .card-value {
+    white-space: nowrap;
+  }
+}
+
 /* ข้อความสำหรับโปรแกรมอ่านหน้าจอ ซ่อนจากสายตาแต่ยังอ่านออกเสียงได้
    ใช้กับป้ายกำกับช่องเลือกที่หน้าจอสื่อความหมายด้วยตำแหน่งอยู่แล้ว */
 .sr-only {
@@ -1500,7 +1557,14 @@ button {
   border: 1px solid var(--border-strong);
   border-radius: 10px;
   background: var(--surface-2);
+  /* ต้องกำหนดสีตัวอักษรเอง ไม่งั้นช่องกรอกจะใช้สีดำตั้งต้นของเบราว์เซอร์
+     ซึ่งจมหายไปกับพื้นหลังสีเข้มในธีมมืด */
+  color: var(--text);
   transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.signin-input::placeholder {
+  color: var(--text-dim);
 }
 
 .signin-input:focus {
@@ -2180,6 +2244,49 @@ button {
   margin-left: auto;
 }
 
+/* หัวการ์ดอากาศ ชื่อการ์ดอยู่ซ้าย เวลาที่วัดอยู่ขวา */
+.weather-now-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.weather-now-head .card-label {
+  margin: 0;
+}
+
+.weather-now-stamp {
+  flex: none;
+  text-align: right;
+}
+
+.weather-now-clock {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* อายุข้อมูลกับชื่อแหล่ง จางและเล็กกว่าเวลา เพราะเป็นข้อมูลประกอบ */
+.weather-now-origin {
+  margin: 1px 0 0;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+/* บล็อกโอกาสฝนตก อยู่ขวาสุดของแถวบน คั่นด้วยเส้นตั้งแบบเดียวกับลม */
+.weather-now-rain {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.weather-now-rain .card-value {
+  margin: 0;
+}
+
 .weather-now-divider {
   width: 1px;
   height: 44px;
@@ -2213,17 +2320,61 @@ button {
 @media (max-width: 496px) {
   .weather-now-main {
     flex-wrap: wrap;
+    /* บีบระยะห่างลง เพราะไอคอน อุณหภูมิ และฝน ต้องอยู่ให้ครบในแถวเดียว
+       ที่ระยะเดิม 12 พิกเซล รวมแล้วเกินความกว้างการ์ดไปไม่กี่พิกเซล
+       ซึ่งพอให้ฝนตกบรรทัดใหม่ แล้วเส้นคั่นตั้งก็ไปโผล่กลางการ์ดโดยไม่ได้คั่นอะไร */
+    gap: 7px;
+  }
+
+  /* ไอคอนเล็กลงเพื่อแบ่งที่ให้สองบล็อกข้าง ๆ */
+  .weather-now-main > svg:first-child {
+    width: 34px;
+    height: 34px;
+    flex: none;
+  }
+
+  /* แถวบนเหลืออุณหภูมิกับฝน ส่วนลมลงไปอยู่แถวล่างเต็มความกว้าง
+     สลับลำดับด้วย order เพราะในโค้ดลมเขียนไว้ก่อนฝน
+     แต่บนจอแคบฝนต้องขึ้นมาอยู่คู่กับอุณหภูมิแทน */
+  .weather-now-rain {
+    order: 2;
+    /* ตรึงความกว้างไว้สี่สิบสองเปอร์เซ็นต์ ไม่งั้นบล็อกอุณหภูมิจะกินที่จนฝนตกบรรทัดใหม่
+       ซึ่งทำให้เส้นคั่นตั้งไปโผล่กลางการ์ดโดยไม่ได้คั่นอะไร */
+    flex: 0 0 42%;
+    margin-left: auto;
+    gap: 7px;
+  }
+
+  /* บล็อกอุณหภูมิต้องยอมหดได้ จะได้แบ่งที่ให้ฝน */
+  .weather-now-main > div:first-of-type {
+    min-width: 0;
+  }
+
+  .weather-now-main > div:first-of-type .card-value,
+  .weather-now-rain .card-value {
+    font-size: 27px;
+    letter-spacing: -0.5px;
+  }
+
+  .weather-now-main .weather-now-condition {
+    font-size: 13px;
   }
 
   .weather-now-wind {
+    order: 3;
     margin: 10px 0 0;
     width: 100%;
     padding-top: 10px;
     border-top: 1px solid var(--border);
   }
 
-  .weather-now-divider {
+  /* ซ่อนเฉพาะเส้นคั่นของลม ของฝนยังต้องมีเพราะยังอยู่แถวเดียวกับอุณหภูมิ */
+  .weather-now-wind .weather-now-divider {
     display: none;
+  }
+
+  .weather-now-rain .weather-now-divider {
+    height: 52px;
   }
 }
 
@@ -2491,44 +2642,119 @@ button {
   outline-offset: 2px;
 }
 
-/* จอแคบย้ายแถบขึ้นไปไว้บนเนื้อหา เป็นแถวเลื่อนซ้ายขวาได้
-   ถ้ายังอยู่ด้านขวา กล่องเนื้อหาจะเหลือแคบจนกราฟกับตารางอ่านไม่ได้ */
+/* จอแคบเปลี่ยนไปใช้แถบหัวข้อด้านล่างแทนแถบด้านขวา
+   ถ้าคงแถบไว้ด้านขวา กล่องเนื้อหาจะเหลือแคบจนกราฟกับตารางอ่านไม่ได้ */
 @media (max-width: 900px) {
   .air-layout {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* จอแคบใช้แถบหัวข้อด้านล่างแทน แถบด้านขวาจึงซ่อนทั้งก้อน
+     ดูโครงสร้างแถบล่างใน components/MobileNav.tsx */
   .air-side {
-    order: -1;
-    position: static;
+    display: none;
   }
 
-  .air-side-group {
-    flex-direction: row;
-    align-items: center;
-    overflow-x: auto;
-    padding: 9px;
-  }
-
-  .air-side-head {
-    flex: none;
-    padding: 0 6px 0 2px;
-  }
-
-  .air-side-head span {
-    display: inline;
-    margin-left: 5px;
-  }
-
-  .air-side-btn {
-    flex: none;
-    padding: 9px 13px;
-    font-size: 14.5px;
-    white-space: nowrap;
-  }
-
+  /* เว้นที่ท้ายหน้าเท่าความสูงของแถบล่าง ไม่ให้แถบทับเนื้อหาบรรทัดสุดท้าย */
   .air-main {
-    padding: 10px;
+    padding: 10px 10px calc(74px + env(safe-area-inset-bottom));
+  }
+}
+
+/* การ์ดค่าฝุ่นใบใหญ่ แบ่งสองฝั่งด้วยเส้นคั่น
+   ซ้ายคือค่ากับระดับ ขวาคือที่มาของค่า */
+.hero-split {
+  display: flex;
+  align-items: stretch;
+  gap: 13px;
+}
+
+.hero-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* เส้นคั่นเป็นขอบของฝั่งขวา ไม่ใช่กล่องแยกอีกใบ
+   จะได้สูงเท่าฝั่งที่สูงกว่าเสมอโดยไม่ต้องกำหนดความสูง */
+.hero-source {
+  flex: none;
+  width: 38%;
+  max-width: 190px;
+  padding-left: 13px;
+  border-left: 1px solid var(--border-strong);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-source-key {
+  margin: 0 0 2px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.hero-source-main {
+  margin: 0 0 7px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+/* หน่วยต่อท้ายจำนวนสถานี เล็กกว่าตัวเลขและไม่หนา */
+.hero-source-main span {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.hero-source-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+/* จอแคบยังแบ่งสองฝั่งเหมือนเดิม แค่บีบคอลัมน์ขวาและลดขนาดตัวอักษรลง
+   เส้นคั่นตั้งเป็นสิ่งที่ทำให้อ่านออกว่าซ้ายกับขวาเป็นคนละเรื่อง
+   ถ้าเปลี่ยนเป็นเส้นนอนแล้ววางซ้อนกัน ความหมายนั้นหายไป */
+@media (max-width: 560px) {
+  .hero-split {
+    gap: 10px;
+  }
+
+  /* ฝั่งซ้ายเหลือกว้างราวหนึ่งร้อยสี่สิบห้าพิกเซล ตัวเลขกับหน่วยต้องเล็กลงตาม
+     ไม่งั้นหน่วยจะล้นไปชนเส้นคั่น */
+  .hero-main .card-value {
+    font-size: 29px;
+    letter-spacing: -0.6px;
+  }
+
+  .hero-main .card-unit {
+    font-size: 11px;
+  }
+
+  .hero-source {
+    width: 40%;
+    padding-left: 10px;
+  }
+
+  .hero-source-key {
+    font-size: 11px;
+  }
+
+  .hero-source-main {
+    font-size: 15px;
+    margin-bottom: 5px;
+  }
+
+  .hero-source-main span {
+    font-size: 11px;
+  }
+
+  .hero-source-note {
+    font-size: 11px;
+    line-height: 1.4;
   }
 }
 

@@ -20,6 +20,7 @@ import { DustCases } from "./components/DustCases";
 import { NavBar } from "./components/NavBar";
 import type { AirTab } from "./components/NavBar";
 import { TAB_GROUPS } from "./components/NavBar";
+import { MobileNav } from "./components/MobileNav";
 import { ProvinceDustRanking } from "./components/ProvinceDustRanking";
 import { ForecastDemo } from "./components/ForecastDemo";
 import { RainPanel } from "./components/RainPanel";
@@ -542,6 +543,15 @@ export default function App() {
               ))}
             </aside>
           </div>
+
+          {/* แถบหัวข้อด้านล่าง โผล่เฉพาะจอแคบ ตอนนั้น air-side ด้านบนจะถูกซ่อน */}
+          <MobileNav
+            active={homeTab}
+            onPick={goTab}
+            theme={theme}
+            onToggleTheme={() => applyTheme(theme === "dark" ? "light" : "dark")}
+            onSignOut={handleSignOut}
+          />
 
         <footer className="footer">
           <p>

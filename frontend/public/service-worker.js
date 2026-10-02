@@ -9,18 +9,49 @@
  *     ซึ่งอันตรายกว่าการไม่เห็นอะไรเลย เพราะเป็นข้อมูลที่ใช้ตัดสินใจเรื่องสุขภาพ
  */
 
-const CACHE = "pm25-shell-v2";
+/** เปิดหรือปิดการเก็บไฟล์ไว้ในเครื่อง
+ *
+ * ตั้งเป็น false ระหว่างที่ยังแก้หน้าเว็บบ่อย
+ *     ของที่เก็บไว้ในเครื่องทำให้เปิดเว็บแล้วเห็นรุ่นเก่า ทั้งที่เซิร์ฟเวอร์มีของใหม่แล้ว
+ *     และผู้ใช้ไม่มีทางรู้ว่าต้องล้างข้อมูลเว็บไซต์เองถึงจะเห็นของใหม่
+ *     ตอนปิด ตัวช่วยนี้จะไม่แตะคำขอใด ๆ เลย ทุกอย่างไปเอาจากเซิร์ฟเวอร์ตรง ๆ
+ *     และจะลบของที่เคยเก็บไว้ทิ้งให้ด้วย เครื่องที่ติดอยู่กับรุ่นเก่าจึงหลุดออกมาได้
+ *
+ * ตั้งกลับเป็น true ก่อนส่งงานจริง
+ *     เพื่อให้เปิดแอปได้เร็วและใช้ได้ตอนเน็ตไม่ติด ซึ่งเป็นเหตุผลที่มีไฟล์นี้ตั้งแต่แรก
+ *     เปลี่ยนค่าแล้วต้องเปลี่ยนเลขรุ่นใน CACHE ด้วย ของเก่าจะได้ถูกลบทิ้ง
+ */
+const OFFLINE_CACHE_ENABLED = false;
+
+const CACHE = "pm25-shell-v3";
 
 // เก็บเฉพาะโครงของหน้าเว็บ ไฟล์ที่เหลือจะถูกเก็บตอนถูกเรียกใช้จริง
 const SHELL = ["/", "/index.html", "/app-icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
+  if (!OFFLINE_CACHE_ENABLED) {
+    // ไม่ต้องเก็บอะไรไว้ก่อน ข้ามไปเริ่มทำงานแทนรุ่นเก่าทันที
+    event.waitUntil(self.skipWaiting());
+    return;
+  }
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()),
   );
 });
 
 self.addEventListener("activate", (event) => {
+  if (!OFFLINE_CACHE_ENABLED) {
+    // ลบของที่เคยเก็บไว้ทั้งหมด แล้วสั่งให้หน้าที่เปิดค้างอยู่โหลดใหม่
+    // เครื่องที่ติดอยู่กับรุ่นเก่าจะได้เห็นของใหม่โดยไม่ต้องล้างข้อมูลเว็บไซต์เอง
+    event.waitUntil(
+      caches
+        .keys()
+        .then((names) => Promise.all(names.map((n) => caches.delete(n))))
+        .then(() => self.clients.claim())
+        .then(() => refreshOpenPages()),
+    );
+    return;
+  }
   event.waitUntil(
     caches
       .keys()
@@ -57,6 +88,9 @@ function refreshOpenPages() {
 }
 
 self.addEventListener("fetch", (event) => {
+  // ปิดการเก็บไว้ในเครื่อง จึงไม่แตะคำขอใด ๆ ปล่อยให้เบราว์เซอร์ไปเอาจากเซิร์ฟเวอร์เอง
+  if (!OFFLINE_CACHE_ENABLED) return;
+
   const { request } = event;
 
   if (request.method !== "GET") return;

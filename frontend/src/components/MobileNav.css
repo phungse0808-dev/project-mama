@@ -1,0 +1,163 @@
+/* แถบหัวข้อด้านล่างจอ ใช้เฉพาะมือถือ
+ *
+ * ซ่อนไว้ตลอดบนจอกว้าง แล้วเปิดใช้พร้อมกับซ่อนแถบด้านขวาที่ความกว้างเดียวกัน
+ * จุดตัดต้องตรงกับ air-side ใน App.css ไม่งั้นจะมีช่วงที่โชว์ทั้งสองอันหรือไม่โชว์เลย
+ */
+.mnav,
+.mnav-sheet,
+.mnav-veil {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mnav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    display: flex;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    /* เผื่อแถบลากของมือถือที่ไม่มีปุ่มโฮม ไม่ให้ปุ่มล่างสุดโดนบัง */
+    padding: 7px 2px calc(9px + env(safe-area-inset-bottom));
+  }
+
+  .mnav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    border: none;
+    background: none;
+    padding: 2px 1px;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+
+  .mnav-btn svg {
+    width: 23px;
+    height: 23px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* จุดสามจุดของปุ่มอื่น ๆ เป็นรูปทึบ ไม่ใช่เส้น จึงต้องกลับค่าเอง */
+  .mnav-btn .mnav-dot {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .mnav-btn.active {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .mnav-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    border-radius: 8px;
+  }
+
+  /* ---------- แผ่นหัวข้ออื่น ---------- */
+
+  .mnav-veil {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    border: none;
+    padding: 0;
+    background: rgba(5, 9, 15, 0.55);
+    cursor: pointer;
+  }
+
+  .mnav-sheet {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 960;
+    max-height: 82vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border-top: 1px solid var(--border-strong);
+    border-radius: 18px 18px 0 0;
+    padding: 11px 14px calc(16px + env(safe-area-inset-bottom));
+  }
+
+  /* ขีดสั้นบนสุด บอกว่าแผ่นนี้ปิดได้ ใช้แทนปุ่มกากบาท */
+  .mnav-grip {
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto 13px;
+    border-radius: 2px;
+    background: var(--border-strong);
+  }
+
+  .mnav-group {
+    margin-bottom: 13px;
+  }
+
+  .mnav-group.demo {
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 9px 10px 10px;
+  }
+
+  .mnav-group-head {
+    margin: 0 0 7px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+
+  .mnav-group-head span {
+    font-weight: 400;
+    margin-left: 5px;
+  }
+
+  .mnav-group-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .mnav-item {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border-radius: 9px;
+    padding: 9px 12px;
+    font-family: inherit;
+    font-size: 14.5px;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .mnav-item.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .mnav-tools {
+    display: flex;
+    gap: 7px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+
+  .mnav-tools .mnav-item {
+    flex: 1;
+    text-align: center;
+  }
+}

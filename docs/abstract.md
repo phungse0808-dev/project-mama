@@ -19,11 +19,11 @@ Python, FastAPI, React, SQLite
 
 ระบบพัฒนาด้วยภาษา Python ร่วมกับ FastAPI และฐานข้อมูล SQLite ส่วนหน้าเว็บใช้ React
 และ TypeScript ข้อมูลที่ใช้เป็นข้อมูลจริงทั้งหมด ได้แก่ ค่าฝุ่นรายชั่วโมงจากระบบ
-Air4Thai ของกรมควบคุมมลพิษ 174 สถานี ใน 74 จังหวัด ข้อมูลอุตุนิยมวิทยาจาก NASA POWER
-และ Open-Meteo และจำนวนผู้ป่วยกลุ่มโรคที่เกี่ยวข้องกับการรับสัมผัสฝุ่นระดับจังหวัด
-รายเดือน ครบทั้ง 77 จังหวัด ปี 2565 ถึง 2568 จากกรมควบคุมโรค เนื่องจากต้นทาง
-เก็บข้อมูลย้อนหลังไว้เพียงระยะสั้น ระบบจึงเก็บค่าฝุ่นอัตโนมัติทุกชั่วโมง
-ปัจจุบันสะสมแล้ว 72,871 ค่า
+Air4Thai ของกรมควบคุมมลพิษ ประมาณ 175 สถานี ใน 74 จังหวัด ข้อมูลอุตุนิยมวิทยา
+จาก NASA POWER และ Open-Meteo และจำนวนผู้ป่วยกลุ่มโรคที่เกี่ยวข้องกับการรับสัมผัสฝุ่น
+ระดับจังหวัดรายเดือน ครบทั้ง 77 จังหวัด ปี 2565 ถึง 2568 จากกรมควบคุมโรค
+เนื่องจากต้นทางเก็บข้อมูลย้อนหลังไว้เพียงระยะสั้น ระบบจึงเก็บค่าฝุ่นอัตโนมัติทุกชั่วโมง
+ปัจจุบันสะสมแล้ว 61,511 ค่า
 
 ผลการพัฒนาพบว่าระบบใช้งานได้ตามที่ออกแบบไว้ ผู้ใช้ดูค่าฝุ่นรายจังหวัดและรายสถานี
 แผนที่คุณภาพอากาศ อันดับจังหวัด และคำแนะนำการปฏิบัติตัวที่แยกตามระดับฝุ่นและโรคประจำตัว
@@ -54,11 +54,11 @@ specific disease.
 
 The server side uses Python with FastAPI and SQLite; the client side uses React
 with TypeScript. All data is real: hourly PM2.5 from the Pollution Control
-Department's Air4Thai network (174 stations across 74 provinces), weather data from
-NASA POWER and Open-Meteo, and monthly province-level counts of dust-related
+Department's Air4Thai network (about 175 stations across 74 provinces), weather data
+from NASA POWER and Open-Meteo, and monthly province-level counts of dust-related
 illnesses for all 77 provinces from 2022 to 2025, obtained from the Department of
 Disease Control. Because the source retains only a short window of history, the system
-collects and stores readings itself every hour, accumulating 72,871 readings to date.
+collects and stores readings itself every hour, accumulating 61,511 readings to date.
 
 The system performs as designed. Users can view PM2.5 by province and station, an
 air-quality map, provincial rankings, and advice tailored to the air-quality level

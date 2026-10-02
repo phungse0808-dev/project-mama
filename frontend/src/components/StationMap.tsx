@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MapContainer, useMap } from "react-leaflet";
 import type { ProvinceRank, StationReading, Summary } from "../api";
 import { ProvinceLayer } from "./ProvinceLayer";
@@ -72,6 +72,46 @@ const LOCKED = {
   maxBounds: PAN_LIMIT,
   maxBoundsViscosity: 1,
 } as const;
+
+/** ความกว้างที่ถือว่าเป็นมือถือ ตรงกับจุดตัดที่เปลี่ยนไปใช้แถบหัวข้อด้านล่าง */
+const NARROW = "(max-width: 900px)";
+
+/** ตั้งค่าแผนที่สำหรับมือถือ ปิดการลากและการซูมทั้งหมด
+ *
+ * ทำไมบนมือถือต้องล็อก ทั้งที่บนคอมปล่อยให้ลากได้
+ *     บนคอมการลากแผนที่ใช้เมาส์ ส่วนการเลื่อนหน้าใช้ล้อ เป็นคนละอย่างกัน
+ *     แต่บนมือถือทั้งสองอย่างคือการลากนิ้วเหมือนกัน แผนที่จึงกินการลากไปหมด
+ *     คนที่เลื่อนหน้าลงมาแล้วนิ้วไปแตะโดนแผนที่พอดี จะเลื่อนต่อไม่ได้
+ *     ต้องยกนิ้วไปเริ่มใหม่นอกแผนที่ ซึ่งไม่มีอะไรบอกให้รู้ว่าต้องทำแบบนั้น
+ *
+ *     แผนที่นี้เสียการลากไปแล้วไม่เดือดร้อน เพราะวาดทั้งประเทศพอดีกล่องอยู่แล้ว
+ *     ไม่ได้ต้องซูมเข้าไปหา และการกดเลือกจังหวัดยังทำได้ตามปกติ
+ *     เพราะการกดไม่ใช่การลาก
+ */
+const MOBILE_LOCKED = {
+  dragging: false,
+  keyboard: false,
+  touchZoom: false,
+  scrollWheelZoom: false,
+  doubleClickZoom: false,
+  zoomControl: false,
+} as const;
+
+/** จอแคบอยู่หรือไม่ ติดตามการหมุนจอด้วย ไม่ใช่อ่านครั้งเดียวตอนเปิด */
+function useNarrow(): boolean {
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(NARROW).matches,
+  );
+
+  useEffect(() => {
+    const query = window.matchMedia(NARROW);
+    const update = () => setNarrow(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  return narrow;
+}
 
 /** บอกแผนที่ให้วัดกล่องใหม่และจัดประเทศให้พอดีเมื่อกล่องเปลี่ยนขนาด
  *
@@ -148,6 +188,8 @@ function FitOnResize({ trigger }: { trigger: unknown }) {
  *     ซึ่งเป็นที่ที่ความต่างนั้นถูกเปิดเผย
  */
 export function StationMap({ stations, onSelect, ranking, picked, onPick, levels }: Props) {
+  const narrow = useNarrow();
+
   // สถานีของจังหวัดที่กดเลือก เรียงจากค่าสูงไปต่ำ
   // เรียงแบบนี้เพราะจุดที่แย่ที่สุดคือสิ่งที่ควรเห็นก่อน ไม่ใช่ตามชื่อ
   const pickedStations = picked
@@ -184,12 +226,15 @@ export function StationMap({ stations, onSelect, ranking, picked, onPick, levels
           ระดับที่พอดีกับกรอบมักอยู่ระหว่างสองระดับ ไลบรารีจึงเลือกระดับที่เล็กกว่า
           ผลคือประเทศไทยเล็กนิดเดียวกลางกล่อง เหลือที่ว่างรอบตัวเกินครึ่ง */}
       <div className={picked ? "map-wrapper with-detail" : "map-wrapper"}>
+        {/* ไลบรารีแผนที่อ่านตัวเลือกเหล่านี้ตอนสร้างครั้งเดียว เปลี่ยนทีหลังไม่มีผล
+            จึงต้องใส่ key ให้สร้างใหม่เมื่อข้ามจุดตัดจอแคบ เช่นตอนหมุนจอ */}
         <MapContainer
+          key={narrow ? "narrow" : "wide"}
           bounds={THAILAND_BOUNDS}
           boundsOptions={{ padding: [10, 10] }}
           zoomSnap={0.1}
           zoomDelta={0.5}
-          {...LOCKED}
+          {...(narrow ? MOBILE_LOCKED : LOCKED)}
           minZoom={ZOOM_FLOOR}
           maxZoom={MAX_ZOOM}
           className="map map-plain"
