@@ -438,6 +438,115 @@ def _buckets_of(rows: dict[str, list[float]]) -> list[dict]:
     ]
 
 
+def _backtest(pm, chronic_share) -> dict | None:
+    """ย้อนทดสอบว่าค่าที่คำนวณได้ ใช้ทายเดือนถัดไปของจังหวัดหนึ่งได้จริงหรือไม่
+
+    ทำไมต้องมี
+        หน้านี้แสดงตัวเลขที่อ่านได้ว่าเป็นคำทำนาย ถ้าไม่วัดความแม่น
+        ก็ไม่มีทางรู้ว่าตัวเลขนั้นใช้ได้จริงหรือเป็นแค่ค่าเฉลี่ยที่บังเอิญดูมีความหมาย
+        และหน้าพยากรณ์ฝุ่นของระบบเดียวกันก็รายงานความแม่นไว้แล้ว หน้านี้จึงต้องมีด้วย
+
+    วิธี
+        ตัดปีที่จะทายออกจากการคำนวณค่าเฉลี่ยของแต่ละระดับฝุ่นก่อน
+        แล้วเอาค่าที่ได้จากปีที่เหลือมาทายทุกคู่จังหวัด-เดือนในปีนั้น ทำครบทุกปี
+        ถ้าไม่ตัดออก จะเป็นการเอาคำตอบมาคำนวณค่าที่ใช้ทายคำตอบนั้นเอง
+
+    เกณฑ์เทียบ
+        ทายว่าฝุ่นไม่มีผลเลย ซึ่งคือการทายศูนย์ทุกครั้ง
+        วิธีใดก็ตามที่แพ้เกณฑ์นี้ แปลว่าไม่ได้เพิ่มความแม่นจากการไม่ทำอะไรเลย
+    """
+    grouped = defaultdict(list)
+    for (province, ym), value in chronic_share.items():
+        grouped[(province, ym[5:])].append(value)
+    normal = {
+        key: statistics.fmean(values)
+        for key, values in grouped.items()
+        if len(values) >= MIN_YEARS_PER_MONTH
+    }
+
+    deviation = {}
+    for (province, ym), value in chronic_share.items():
+        base = normal.get((province, ym[5:]))
+        if base:
+            deviation[(province, ym)] = (value - base) / base * 100
+
+    # หักแนวโน้มรายปีออก ใช้วิธีเดียวกับที่หน้าเว็บใช้คำนวณตัวเลขที่แสดง
+    by_year = defaultdict(list)
+    for (_, ym), value in deviation.items():
+        by_year[ym[:4]].append(value)
+    year_mean = {year: statistics.fmean(values) for year, values in by_year.items()}
+    deviation = {key: value - year_mean[key[1][:4]] for key, value in deviation.items()}
+
+    pairs = []
+    for (province, ym), dust in pm.items():
+        target = _next_ym(ym)
+        actual = deviation.get((province, target))
+        if actual is None:
+            continue
+        for label, _, low, high in BUCKETS:
+            if low <= dust < high:
+                pairs.append((target[:4], label, actual))
+                break
+
+    years = sorted({year for year, _, _ in pairs})
+    if len(years) < 2:
+        return None
+
+    total = 0
+    sum_model = 0.0
+    sum_zero = 0.0
+    right = 0
+    for holdout in years:
+        train = [row for row in pairs if row[0] != holdout]
+        test = [row for row in pairs if row[0] == holdout]
+        if not train or not test:
+            continue
+        grouped_train = defaultdict(list)
+        for _, label, value in train:
+            grouped_train[label].append(value)
+        model = {label: statistics.fmean(values) for label, values in grouped_train.items()}
+        for _, label, actual in test:
+            guess = model.get(label, 0.0)
+            sum_model += abs(actual - guess)
+            sum_zero += abs(actual)
+            if (guess >= 0) == (actual >= 0):
+                right += 1
+        total += len(test)
+
+    if total == 0:
+        return None
+
+    model_mae = sum_model / total
+    zero_mae = sum_zero / total
+    beats = model_mae < zero_mae
+
+    return {
+        "pairs": total,
+        "years": len(years),
+        "model_mae": round(model_mae, 2),
+        "zero_mae": round(zero_mae, 2),
+        "direction_pct": round(right / total * 100, 1),
+        "beats_baseline": beats,
+        "verdict_th": (
+            "ใช้ทำนายรายจังหวัดได้"
+            if beats
+            else "ใช้ทำนายรายจังหวัดไม่ได้"
+        ),
+        "method_th": (
+            "ตัดปีที่จะทายออกจากการคำนวณค่าอ้างอิงก่อน แล้วใช้ปีที่เหลือทายปีนั้น "
+            "ทำครบทุกปี เทียบกับการทายว่าฝุ่นไม่มีผลเลย"
+        ),
+        "explain_th": (
+            "ความผันผวนของแต่ละคู่จังหวัด-เดือนอยู่ที่ราว "
+            f"{zero_mae:.1f}% ขณะที่สัญญาณจากฝุ่นมีราวห้าเปอร์เซ็นต์ "
+            "สัญญาณจึงจมอยู่ในความผันผวน ตัวเลขที่แสดงด้านบนจึงเชื่อได้ในฐานะ"
+            "ค่าเฉลี่ยของกลุ่ม ไม่ใช่คำทำนายของพื้นที่ใดพื้นที่หนึ่ง "
+            "เทียบได้กับการรู้ว่าคนสูบบุหรี่เสี่ยงมะเร็งปอดสูงกว่าโดยเฉลี่ย "
+            "แต่ทำนายไม่ได้ว่าคนคนหนึ่งจะเป็นหรือไม่"
+        ),
+    }
+
+
 def _robustness(pm, chronic_share) -> dict:
     """ผลเปลี่ยนไปแค่ไหนเมื่อจัดการปี 2565 ด้วยวิธีต่างกัน
 
@@ -555,6 +664,7 @@ def _lagged(pm, cases, admitted, age_top_of: dict) -> dict:
 
     chronic = share_of(CHRONIC_DISEASES)
     robustness = _robustness(pm, chronic)
+    backtest = _backtest(pm, chronic)
     targets = [
         {
             "key": key,
@@ -577,6 +687,7 @@ def _lagged(pm, cases, admitted, age_top_of: dict) -> dict:
         "targets": targets,
         "by_disease": by_disease,
         "robustness": robustness,
+        "backtest": backtest,
         "infectious_note_th": (
             "โรคติดเชื้อทางเดินหายใจส่วนบนเฉียบพลันให้ผลกลับทางกับอีกหกโรค "
             "เพราะเป็นโรคติดต่อที่ขึ้นกับการเปิดเทอมและฤดูฝน ไม่ได้ขึ้นกับฝุ่น "

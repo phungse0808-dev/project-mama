@@ -771,6 +771,7 @@ button {
 .rain-figure strong,
 .rain-stat-value,
 .health-value,
+.ranking-value,
 .alert-count,
 .level-segment,
 .field-pct {
@@ -807,6 +808,7 @@ button {
    บนพื้นขาว สีเหลือง #ffd400 ต่างจากพื้นแค่ 1.43:1 ส่วนสีอื่นก็ไม่ถึง 3:1
    ถ้าไม่มีขอบ แถบจะไม่มีที่สิ้นสุดให้ตาจับ โดยเฉพาะช่วงที่ค่าน้อยจนแถบสั้น
    ใช้ดำโปร่งไม่ใช่สีทึบ ขอบจึงเข้มตามสีที่อยู่ข้างใต้เองโดยไม่เปลี่ยนเนื้อสี */
+.ranking-bar,
 .level-segment,
 .field-fill {
   box-shadow: inset 0 0 0 1px var(--level-edge);
@@ -1288,6 +1290,107 @@ button {
     border-top: 1px solid var(--border);
     max-height: none;
   }
+}
+
+/* ---------- อันดับจังหวัด ---------- */
+
+.ranking {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ranking-row {
+  display: grid;
+  grid-template-columns: 27px minmax(94px, 1fr) minmax(0, 2fr) 51px;
+  align-items: center;
+  gap: 9px;
+  font-size: 16.5px;
+}
+
+.ranking-no {
+  color: var(--text-soft);
+  font-size: 14px;
+  text-align: right;
+}
+
+.ranking-name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.ranking-name small {
+  color: var(--text-soft);
+  font-size: 13.5px;
+}
+
+.ranking-bar-track {
+  background: var(--border);
+  border-radius: 999px;
+  height: 9px;
+  overflow: hidden;
+}
+
+.ranking-bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s;
+  /* ไล่ความสว่างในแท่งเดียวกัน ทำให้แท่งดูนูนขึ้นเล็กน้อย
+     ใช้ทับสีเดิมที่กำหนดมาจากระดับคุณภาพอากาศ จึงไม่ทำให้สื่อความหมายผิด */
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.05));
+}
+
+.ranking-row {
+  transition: background 0.15s ease;
+  border-radius: 8px;
+  /* ดึงขอบไฮไลต์ออกด้านข้างเท่ากับ padding ที่เพิ่ม
+     พื้นที่ไฮไลต์จึงกว้างขึ้นโดยความกว้างของแท่งกราฟไม่เปลี่ยน */
+  padding: 5px 7px;
+  margin: -5px -8px;
+}
+
+.ranking-row:hover {
+  background: var(--accent-soft);
+}
+
+.ranking-value {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ชื่อสถานีในตารางอันดับเป็นปุ่ม กดแล้วเปิดรายละเอียด
+   ทำให้ดูเหมือนข้อความธรรมดา ต่างกันตอนชี้เมาส์เท่านั้น
+   เพราะถ้าทำให้เหมือนปุ่มจริงทั้งแถว ตารางจะดูรกจนอ่านตัวเลขไม่ทัน */
+.ranking-pick {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ranking-pick:hover,
+.ranking-pick:focus-visible {
+  color: var(--accent);
+}
+
+/* คำอธิบายใต้ตารางอันดับสถานี บอกว่าทำไมถึงมีอันดับสองชุดในหน้าเดียว */
+.ranking-note {
+  margin: 12px 0 0;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-soft);
+  font-size: 13.5px;
+  line-height: 1.6;
 }
 
 /* ---------- กราฟ ---------- */
@@ -3706,6 +3809,30 @@ button {
   fill: var(--text-dim);
 }
 
+/* ขอบช่วงฤดูเผา ใช้เส้นประสองข้างแทนการถมสี
+   ถมสีแล้วทับแท่งจนสีระดับคุณภาพอากาศหม่นลง และกลายเป็นแผงทึบเมื่อช่วงกว้าง */
+.dtrend-burn line {
+  stroke: #ff7e00;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.55;
+}
+
+.dtrend-burn text {
+  font-size: 9.5px;
+  fill: #ff7e00;
+  opacity: 0.75;
+}
+
+/* เส้นค่าเฉลี่ยทั้งประเทศ ใช้สีเทาและเส้นประ
+   เพื่อให้อ่านเป็นเส้นอ้างอิง ไม่ใช่อีกชุดข้อมูลที่ต้องเทียบเท่ากัน */
+.dtrend-national {
+  stroke: var(--text-dim);
+  stroke-width: 1.6;
+  stroke-dasharray: 4 3;
+  opacity: 0.75;
+}
+
 .dtrend-threshold {
   stroke-dasharray: 4 3;
   stroke-width: 1;
@@ -3947,6 +4074,62 @@ button {
   stroke: var(--text);
   stroke-width: 1.5;
   opacity: 0.75;
+}
+
+/* ---------- ผลย้อนทดสอบ ---------- */
+
+.bt {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+/* คำตัดสินอยู่บนสุดและเด่นที่สุด เพราะเป็นสิ่งเดียวที่ทุกคนต้องอ่าน
+   ตารางข้างล่างมีไว้ให้คนที่อยากเห็นตัวเลขที่คำตัดสินมาจาก */
+.bt-verdict {
+  margin: 11px 0 0;
+  padding: 10px 13px;
+  border-radius: 10px;
+  font-size: 14.5px;
+  line-height: 1.65;
+}
+
+.bt-verdict.warn {
+  background: var(--warn-soft, rgba(255, 126, 0, 0.12));
+  border: 1px solid rgba(255, 126, 0, 0.42);
+  color: var(--text);
+}
+
+.bt-verdict.ok {
+  background: rgba(0, 176, 80, 0.12);
+  border: 1px solid rgba(0, 176, 80, 0.42);
+  color: var(--text);
+}
+
+.bt-table {
+  margin-top: 12px;
+}
+
+.bt-table small {
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+/* จำนวนคู่เดือน-จังหวัดที่อยู่เบื้องหลังตัวเลขคาดการณ์
+   เล็กและจางกว่าตัวเลข เพราะเป็นข้อมูลกำกับความน่าเชื่อถือ ไม่ใช่ผลลัพธ์ */
+.dnext-sample {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+/* จำนวนตัวอย่างต่อท้ายคำอธิบายสีแต่ละอัน */
+.dchart-legend small {
+  margin-left: 5px;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
 }
 
 .dchart-legend {
@@ -4411,6 +4594,25 @@ button {
   overflow-x: auto;
 }
 
+/* ข้อความแทนตารางอันดับ เมื่อไม่มีจังหวัดใดถึงเกณฑ์ */
+.ranking-none {
+  margin: 10px 0 0;
+  padding: 22px 14px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-soft);
+  font-size: 15px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.ranking-none small {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
 /* ป้ายกำกับหน้าบรรทัดอาการ ใช้พื้นโปร่งบนกล่องสีเดิม จะได้ไม่ต้องเพิ่มสีใหม่ */
 .dadv-warning-tag {
   display: inline-block;
@@ -4660,6 +4862,67 @@ button {
 .fdemo-acc-value {
   font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+/* ความแม่นสองชุด แยกกล่องให้เห็นว่าเลขมาจากวิธีวัดต่างกัน ไม่ใช่ชุดเดียวกัน */
+.fdemo-acc-group {
+  margin-top: 13px;
+}
+
+.fdemo-acc-group.live {
+  padding: 11px 13px;
+  border: 1px solid rgba(0, 176, 80, 0.4);
+  border-radius: 10px;
+  background: rgba(0, 176, 80, 0.07);
+}
+
+.fdemo-acc-group-head {
+  margin: 0 0 7px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fdemo-acc-group-head span {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--text-soft);
+}
+
+.fdemo-acc-name small {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+/* คำอธิบายว่าควรเชื่อเลขชุดไหน ต้องอยู่ติดกับเลขทั้งสองชุด ไม่ใช่ท้ายหน้า */
+.fdemo-acc-read {
+  margin: 14px 0 0;
+  padding: 10px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-soft);
+}
+
+.fdemo-acc-read strong {
+  color: var(--text);
+}
+
+/* ขอบเขตของเลขชุดแรก เบากว่ากล่องอ่านอย่างไร เพราะเป็นข้อมูลประกอบ ไม่ใช่ข้อสรุป */
+.fdemo-acc-scope-note {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+
+.fdemo-acc-scope-note strong {
+  color: var(--text-soft);
 }
 
 .fdemo-acc-scope {

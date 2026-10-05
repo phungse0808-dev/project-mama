@@ -22,6 +22,7 @@ import type { AirTab } from "./components/NavBar";
 import { TAB_GROUPS } from "./components/NavBar";
 import { MobileNav } from "./components/MobileNav";
 import { ProvinceDustRanking } from "./components/ProvinceDustRanking";
+import { StationRanking } from "./components/StationRanking";
 import { ForecastDemo } from "./components/ForecastDemo";
 import { RainPanel } from "./components/RainPanel";
 import { SignIn } from "./components/SignIn";
@@ -486,7 +487,8 @@ export default function App() {
               {homeTab === "ranking" && (
                 <>
                   {nationalSummary && <LevelBar summary={nationalSummary} stations={stations} />}
-                  <ProvinceDustRanking />
+                  {/* ภาพรวมทั้งประเทศก่อน แล้วลงรายละเอียดรายสถานี */}
+                  <StationRanking stations={stations} onSelect={showStation} />
                 </>
               )}
 
@@ -500,8 +502,13 @@ export default function App() {
                 <RainPanel provinces={provinces} defaultProvince={user.province} />
               )}
 
+              {/* หน้านี้รวมเรื่องย้อนหลังไว้ด้วยกัน กราฟอากาศกับค่าฝุ่นรายจังหวัด
+                  ทั้งคู่ตอบคำถามว่าที่ผ่านมาเป็นอย่างไร ต่างจากหน้าอันดับซึ่งตอบว่าตอนนี้เป็นอย่างไร */}
               {homeTab === "history" && provinces.length > 0 && (
-                <WeatherPanel provinces={provinces} defaultProvince={user.province} />
+                <>
+                  <WeatherPanel provinces={provinces} defaultProvince={user.province} />
+                  <ProvinceDustRanking />
+                </>
               )}
 
 

@@ -194,21 +194,68 @@ def latest_issue(session: Session, province: str) -> dict | None:
     }
 
 
+#: ชื่อไทยของช่วงที่ทาย ใช้แสดงบนหน้าเว็บ
+TARGET_NAME_TH = {"tomorrow": "พยากรณ์พรุ่งนี้", "day_after": "พยากรณ์มะรืนนี้"}
+
+
 def scoreboard(session: Session) -> dict:
-    """สรุปความแม่นจากค่าที่ระบบออกไปจริงและมีค่าจริงมาเทียบแล้ว"""
+    """สรุปความแม่นจากค่าที่ระบบออกไปจริงและมีค่าจริงมาเทียบแล้ว
+
+    แยกตามช่วงที่ทาย เพราะมะรืนนี้คำนวณต่อจากค่าที่พยากรณ์ไว้แล้วอีกทอด
+    ความคลาดเคลื่อนจึงสะสมและสูงกว่าพรุ่งนี้เสมอ การรวมสองช่วงเป็นตัวเลขเดียว
+    จะกลบความต่างนั้นและทำให้ค่าของพรุ่งนี้ดูแย่กว่าความจริง
+
+    ต่างจากค่าในหน้าเดียวกันที่ได้จากการย้อนทดสอบ
+        ย้อนทดสอบปรับตัวคูณจากข้อมูลชุดเดียวกับที่ใช้วัดผล ตัวเลขจึงดูดีกว่าความจริง
+        ส่วนค่าในนี้มาจากคำพยากรณ์ที่ออกไปก่อนแล้วจึงรู้คำตอบ เป็นการวัดที่ตรงกว่า
+    """
     rows = session.exec(
         select(ForecastIssue).where(col(ForecastIssue.actual_pm25).is_not(None))
     ).all()
+    issued = session.exec(select(func.count()).select_from(ForecastIssue)).one()
+    # ถึงเวลาเทียบแล้วแต่ค่าวัดในช่วงนั้นไม่ครบตามเกณฑ์ จึงเติมค่าจริงไม่ได้
+    pending = session.exec(
+        select(func.count())
+        .select_from(ForecastIssue)
+        .where(
+            col(ForecastIssue.actual_pm25).is_(None),
+            ForecastIssue.window_end <= datetime.now(),
+        )
+    ).one()
     if not rows:
-        return {"available": False, "reason": "ยังไม่มีรอบที่ครบกำหนดให้เทียบ"}
+        return {
+            "available": False,
+            "reason": "ยังไม่มีรอบที่ครบกำหนดให้เทียบ",
+            "issued": issued,
+            "pending": pending,
+        }
+
+    by_target: dict[str, list[float]] = {}
+    for row in rows:
+        if row.actual_pm25 is None:
+            continue
+        by_target.setdefault(row.target, []).append(abs(row.pm25 - row.actual_pm25))
+
+    targets = [
+        {
+            "key": key,
+            "name_th": TARGET_NAME_TH.get(key, key),
+            "checked": len(errors),
+            "mae": round(sum(errors) / len(errors), 2),
+        }
+        for key, errors in sorted(by_target.items(), key=lambda item: item[0] != "tomorrow")
+    ]
 
     errors = [abs(row.pm25 - row.actual_pm25) for row in rows if row.actual_pm25 is not None]
     return {
         "available": True,
+        "issued": issued,
+        "pending": pending,
         "checked": len(errors),
         "provinces": len({row.province for row in rows}),
         "mae": round(sum(errors) / len(errors), 2),
         "days": len({row.issued_on for row in rows}),
+        "targets": targets,
     }
 
 

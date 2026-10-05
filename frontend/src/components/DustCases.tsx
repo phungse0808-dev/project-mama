@@ -60,6 +60,12 @@ function levelColor(value: number): string {
   return BUCKET_COLORS["เกินมาตรฐาน"];
 }
 
+/** แท่งแคบกว่านี้ให้ชิดกันเป็นแถบสีต่อเนื่อง ไม่เว้นช่องว่างและไม่ลบมุม
+ *
+ * ที่ความกว้างต่ำกว่าหกพิกเซล ช่องว่างกับมุมมนกินพื้นที่จนเหลือสีให้เห็นไม่ถึงครึ่งแท่ง
+ */
+const BAR_TIGHT = 6;
+
 const ALL_YEARS = "ทั้งหมด";
 
 /** ปีที่มีข้อมูลในแหล่งนั้น เรียงจากเก่าไปใหม่ */
@@ -102,9 +108,50 @@ function DustTrend({ data }: { data: DustSeries }) {
   const known = picked.filter((item): item is { label: string; value: number } => item.value != null);
   if (known.length < 2) return null;
 
-  // เลือกปีแล้วจุดเหลือน้อยพอจะเป็นแท่งได้ ดูรวมทุกปีจุดเยอะเกินไป ต้องใช้เส้น
-  const asBars = activeYear !== ALL_YEARS && known.length <= 14;
   const daily = source.granularity === "day";
+
+  /* ค่าเฉลี่ยทั้งประเทศของช่วงเดียวกัน วาดเป็นฉากหลังตอนเลือกรายจังหวัด
+   *
+   * ถ้าไม่มีเส้นนี้ คนดูจะรู้แค่ว่าจังหวัดนี้มีค่าเท่าไร แต่ไม่รู้ว่าสูงหรือต่ำกว่าที่อื่น
+   * ซึ่งเป็นคำถามแรกที่คนถามเสมอเมื่อเห็นตัวเลขของพื้นที่ตัวเอง
+   */
+  const nationalLine =
+    activePlace === "ทั้งประเทศ"
+      ? null
+      : source.labels
+          .map((label, index) => ({ label, value: source.national[index] }))
+          .filter((item) => activeYear === ALL_YEARS || String(thaiYear(item.label)) === activeYear);
+
+  /* ช่วงฤดูเผา เดือนมกราคมถึงเมษายน
+   *
+   * ยอดแหลมของกราฟตกอยู่ในช่วงนี้ซ้ำทุกปี การแรเงาไว้ทำให้คนดูเห็นเองว่า
+   * ไม่ใช่ความบังเอิญ โดยไม่ต้องเขียนอธิบายใต้กราฟ
+   * ใช้ได้ทั้งรายเดือนและรายวัน เพราะช่วงที่ติดกันถูกรวมเป็นแถบเดียว ไม่ได้แยกเป็นริ้ว
+   */
+  const burnBands: { from: number; to: number }[] = [];
+  {
+    let start: number | null = null;
+    picked.forEach((item, index) => {
+      const month = Number(item.label.slice(5, 7));
+      const inside = month >= 1 && month <= 4;
+      if (inside && start == null) start = index;
+      if (!inside && start != null) {
+        burnBands.push({ from: start, to: index - 1 });
+        start = null;
+      }
+    });
+    if (start != null) burnBands.push({ from: start, to: picked.length - 1 });
+  }
+
+  /* วาดเป็นแท่งเสมอ ไม่ว่าจะกี่จุด
+   *
+   * แท่งดีกว่าเส้นตรงที่ระบายสีตามระดับคุณภาพอากาศได้ทีละช่วง
+   * ทำให้รู้ระดับของทุกช่วงโดยไม่ต้องไล่สายตาเทียบกับเส้นมาตรฐาน
+   *
+   * พอจุดเยอะจนแท่งแคบกว่าหกพิกเซล จะให้แท่งชิดกันไม่เว้นช่อง
+   * กลายเป็นแถบสีต่อเนื่องที่อ่านการไล่ระดับตามฤดูกาลได้ดีกว่าแท่งบางเรียงห่าง ๆ
+   */
+  const asBars = true;
 
   const width = 760;
   const height = 255;
@@ -189,6 +236,24 @@ function DustTrend({ data }: { data: DustSeries }) {
       </p>
 
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`ค่าฝุ่นย้อนหลังของ${activePlace}`}>
+        {/* ช่วงฤดูเผาใช้เส้นขอบสองข้างแทนการถมสีทั้งผืน
+            เพราะพื้นที่ถมทับแท่งแล้วลดความสดของสีระดับคุณภาพอากาศลง
+            และในแหล่งที่ข้อมูลมีปีเดียว ช่วงนี้กินครึ่งกราฟจนอ่านเป็นแผงทึบ */}
+        {burnBands.map((band) => {
+          const x0 = left + band.from * slot;
+          const x1 = left + (band.to + 1) * slot;
+          return (
+            <g className="dtrend-burn" key={band.from}>
+              <line x1={x0} y1={top} x2={x0} y2={height - bottom} />
+              <line x1={x1} y1={top} x2={x1} y2={height - bottom} />
+              <text x={(x0 + x1) / 2} y={top + 9} textAnchor="middle">
+                ฤดูเผา
+              </text>
+              <title>ช่วงฤดูเผา มกราคมถึงเมษายน</title>
+            </g>
+          );
+        })}
+
         {gridlines.map((value) => (
           <g key={value}>
             <line className="dtrend-grid" x1={left} y1={y(value)} x2={width - right} y2={y(value)} />
@@ -198,30 +263,47 @@ function DustTrend({ data }: { data: DustSeries }) {
           </g>
         ))}
 
+        {nationalLine && (
+          <polyline
+            className="dtrend-national"
+            fill="none"
+            points={nationalLine
+              .map((item, index) => (item.value == null ? null : `${x(index)},${y(item.value)}`))
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <title>ค่าเฉลี่ยทั้งประเทศ</title>
+          </polyline>
+        )}
+
         {asBars
           ? picked.map((item, index) =>
               item.value == null ? null : (
                 <g key={item.label}>
                   <rect
-                    x={left + index * slot + slot * 0.18}
+                    x={left + index * slot + (slot < BAR_TIGHT ? 0 : slot * 0.18)}
                     y={y(item.value)}
-                    width={slot * 0.64}
+                    width={slot < BAR_TIGHT ? slot : slot * 0.64}
                     height={height - bottom - y(item.value)}
-                    rx="3"
+                    rx={slot < BAR_TIGHT ? 0 : 3}
                     fill={levelColor(item.value)}
                     opacity="0.9"
                   >
                     <title>{`${thaiLabel(item.label)} · ${item.value} µg/m³`}</title>
                   </rect>
-                  <text
-                    className="dtrend-barvalue"
-                    x={x(index)}
-                    y={y(item.value) - 6}
-                    textAnchor="middle"
-                    fill={levelColor(item.value)}
-                  >
-                    {item.value}
-                  </text>
+                  {/* เขียนตัวเลขบนหัวแท่งเฉพาะตอนแท่งไม่เยอะ
+                      ห้าสิบเดือนทำให้แท่งกว้างราวสิบสี่พิกเซล ตัวเลขสองหลักจะทับกันจนอ่านไม่ออก */}
+                  {picked.length <= 14 && (
+                    <text
+                      className="dtrend-barvalue"
+                      x={x(index)}
+                      y={y(item.value) - 6}
+                      textAnchor="middle"
+                      fill={levelColor(item.value)}
+                    >
+                      {item.value}
+                    </text>
+                  )}
                 </g>
               ),
             )
@@ -346,6 +428,15 @@ function NextMonthPanel({
 
   const index = levelIndex(dust);
   const level = lagged.by_disease[0]?.buckets[index];
+  /* จำนวนคู่เดือน-จังหวัดที่อยู่เบื้องหลังตัวเลขในกราฟ
+   *
+   * ทุกโรคใช้ชุดเดือนเดียวกัน จำนวนจึงเท่ากันทุกแท่ง ไม่ต้องบอกรายแท่ง
+   * แต่ต้องบอก เพราะตัวเลขที่สร้างจากร้อยกว่าเดือนกับพันกว่าเดือนมีน้ำหนักต่างกันมาก
+   * และระดับเกินมาตรฐานซึ่งเป็นระดับที่ผลชัดที่สุด กลับมีตัวอย่างน้อยที่สุด
+   */
+  const buckets0 = lagged.by_disease[0]?.buckets ?? [];
+  const sampleNow = buckets0[index]?.months;
+  const worstBucket = buckets0[buckets0.length - 1];
   const color = level ? BUCKET_COLORS[level.label_th] : "var(--text-dim)";
 
   // มุมมองความรุนแรงตัดโรคที่มีคนนอนโรงพยาบาลน้อยเกินไปออก ฐานเล็กจนตัวเลขแกว่ง
@@ -421,13 +512,19 @@ function NextMonthPanel({
           →
         </span>
         <div className="dnext-box">
-          <p className="dnext-key">{data.to_ym} · คาดการณ์</p>
+          <p className="dnext-key">{data.to_ym} · โดยเฉลี่ยของกลุ่ม</p>
           <p className="dnext-value" style={{ color }}>
             {signedPct(Math.min(...values))} ถึง {signedPct(Math.max(...values))}
           </p>
           <p className="dnext-unit">
             {severe ? "สัดส่วนผู้ป่วยในด้วยโรคจากฝุ่น" : "สัดส่วนผู้ป่วยโรคจากฝุ่น"} ต่างจากค่าปกติ
           </p>
+          {sampleNow != null && (
+            <p className="dnext-sample">
+              วัดจาก {sampleNow.toLocaleString("th-TH")} คู่เดือน-จังหวัด ที่ฝุ่นอยู่ระดับ
+              {level?.label_th}
+            </p>
+          )}
         </div>
       </div>
 
@@ -503,10 +600,64 @@ function NextMonthPanel({
       <p className="dchart-legend">
         <span className="dnext-legend-now" style={{ background: color }} aria-hidden="true" />
         คาดการณ์จากฝุ่นเดือน {data.from_ym} จริง
+        {sampleNow != null && <small>{sampleNow.toLocaleString("th-TH")} คู่</small>}
         <span className="dnext-legend-worst" aria-hidden="true" />
         ถ้าเดือนนั้นฝุ่นเกินมาตรฐาน
+        {worstBucket && <small>{worstBucket.months.toLocaleString("th-TH")} คู่</small>}
       </p>
     </>
+  );
+}
+
+/** ผลย้อนทดสอบ วางไว้ใต้กราฟเพื่อบอกว่าตัวเลขข้างบนเชื่อได้แค่ไหน
+ *
+ * ต้องอยู่ติดกับตัวเลข ไม่ใช่ซ่อนในเอกสาร
+ * เพราะคนที่เห็นตัวเลขแล้วไม่เห็นผลทดสอบ จะเข้าใจว่าใช้ทำนายได้
+ */
+function Backtest({ data }: { data: NonNullable<Lagged["backtest"]> }) {
+  return (
+    <section className="bt">
+      <h3 className="dcase-sub">
+        ผลการย้อนทดสอบ
+        <span>
+          {data.method_th} · รวม {data.pairs.toLocaleString("th-TH")} คู่จังหวัด-เดือน จาก{" "}
+          {data.years} ปี
+        </span>
+      </h3>
+
+      <p className={data.beats_baseline ? "bt-verdict ok" : "bt-verdict warn"}>
+        <strong>{data.verdict_th}</strong> สูตรให้ค่าคลาดเคลื่อนเฉลี่ย {data.model_mae} ขณะที่การทายว่า
+        ฝุ่นไม่มีผลเลยให้ {data.zero_mae} และทายทิศถูก {data.direction_pct}%
+      </p>
+
+      <table className="dcase-table bt-table">
+        <thead>
+          <tr>
+            <th>วิธีทาย</th>
+            <th>ค่าคลาดเคลื่อนเฉลี่ย</th>
+            <th>ทายทิศถูก</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>สูตรของระบบ แยกตามระดับฝุ่น</td>
+            <td className="dcase-num">{data.model_mae}</td>
+            <td className="dcase-num">{data.direction_pct}%</td>
+          </tr>
+          <tr>
+            <td>
+              ทายว่าไม่มีผลเลย <small>เกณฑ์พื้นฐาน</small>
+            </td>
+            <td className="dcase-num">{data.zero_mae}</td>
+            <td className="dcase-num">–</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p className="dcase-note">
+        <strong>แล้วตัวเลขข้างบนยังเชื่อได้ไหม</strong> {data.explain_th}
+      </p>
+    </section>
   );
 }
 
@@ -696,7 +847,7 @@ export function DustCases() {
           ค่าฝุ่น
         </button>
         <button type="button" className={tab === "cases" ? "is-on" : ""} onClick={() => setTab("cases")}>
-          เดือนหน้าจะมีผู้ป่วยจากค่าฝุ่นเท่าไหร่
+          ความสัมพันธ์ระหว่างระดับฝุ่นกับสัดส่วนผู้ป่วย
         </button>
       </div>
 
@@ -722,6 +873,7 @@ export function DustCases() {
       {tab === "cases" && data.lagged && data.next_month && (
         <NextMonthNotes data={data.next_month} lagged={data.lagged} severe={severe} />
       )}
+      {tab === "cases" && data.lagged?.backtest && <Backtest data={data.lagged.backtest} />}
 
       <p className="dcase-source">
         ที่มา {data.disease_source_th} · {data.pm25_source_th} · {data.note_th}

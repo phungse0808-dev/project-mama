@@ -577,6 +577,18 @@ export type DustCases = {
       note_th: string;
       why_th: string;
     };
+    /** ผลย้อนทดสอบว่าตัวเลขที่คำนวณได้ ใช้ทายเดือนถัดไปของจังหวัดหนึ่งได้จริงหรือไม่ */
+    backtest?: {
+      pairs: number;
+      years: number;
+      model_mae: number;
+      zero_mae: number;
+      direction_pct: number;
+      beats_baseline: boolean;
+      verdict_th: string;
+      method_th: string;
+      explain_th: string;
+    } | null;
     ipd_note_th: string;
     infectious_note_th: string;
     tried_th: string[];
@@ -633,10 +645,16 @@ export type ForecastIssue = {
   scoreboard?: {
     available: boolean;
     reason?: string;
+    /** จำนวนคำพยากรณ์ที่ออกไปแล้วทั้งหมด รวมที่ยังไม่ถึงเวลาเทียบ */
+    issued?: number;
+    /** ถึงเวลาเทียบแล้วแต่ค่าวัดในช่วงนั้นไม่ครบ จึงยังเทียบไม่ได้ */
+    pending?: number;
     checked?: number;
     provinces?: number;
     mae?: number;
     days?: number;
+    /** แยกตามช่วงที่ทาย พรุ่งนี้กับมะรืนนี้คลาดไม่เท่ากัน */
+    targets?: { key: string; name_th: string; checked: number; mae: number }[];
   };
 };
 

@@ -101,9 +101,16 @@ function DayCard({
 /** หน้าพยากรณ์ค่าฝุ่นแบบเดโม
  *
  * คำนวณจากค่าเฉลี่ย 24 ชม. สองช่วงล่าสุดกับสภาพอากาศ ตามสูตรใน backend/app/forecast_demo.py
- * ข้อมูลเป็นค่าจริง แต่สูตรยังไม่ได้ทดสอบความแม่น จึงติดป้ายเดโมทั้งหน้า
+ * ข้อมูลเป็นค่าจริง ทดสอบความแม่นแล้วแต่เฉพาะฤดูฝน จึงยังติดป้ายเดโมทั้งหน้า
  * ขั้นคำนวณแสดงแบบย่อให้อ่านง่าย ที่มา สูตรเต็ม และเอกสารอ้างอิงซ่อนไว้ กดเปิดดูได้
  */
+/** ชั่วโมงขั้นต่ำที่ต้องมีค่าวัด ถึงจะเอาหน้าต่างนั้นมาเทียบกับค่าที่ทายไว้ได้
+ *
+ * ต้องตรงกับ MIN_READINGS_FOR_ACTUAL ใน backend/app/forecast_issue.py
+ * ใช้เฉพาะในคำอธิบาย ไม่ได้ใช้คำนวณอะไร
+ */
+const MIN_READINGS_FOR_ACTUAL = 12;
+
 export function ForecastDemo({ provinces, defaultProvince }: Props) {
   const [province, setProvince] = useState(defaultProvince);
   const [data, setData] = useState<ForecastDemoData | null>(null);
@@ -149,13 +156,26 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
   const ready =
     data?.available && data.latest && data.previous && data.tomorrow && data.steps ? data : null;
 
+  // ความแม่นจากการใช้งานจริง แยกตามช่วงที่ทาย
+  const score = issue?.scoreboard?.available ? issue.scoreboard : null;
+  const scoreIssued = issue?.scoreboard?.issued;
+  const liveRows = score?.targets ?? [];
+  // ค่าของพรุ่งนี้คือเลขที่ควรใช้อ้างอิง เพราะเป็นช่วงที่ทายตรงจากค่าที่วัดได้
+  const live = liveRows.find((row) => row.key === "tomorrow") ?? liveRows[0] ?? null;
+  // ใช้สเกลเดียวกันทั้งสองชุด ถ้าแยกสเกลจะเทียบความยาวแท่งข้ามชุดไม่ได้
+  const accScale = Math.max(
+    1,
+    ...liveRows.map((row) => row.mae),
+    ...(ready?.accuracy?.rows ?? []).map((row) => row.mae),
+  );
+
   return (
     <section className="fdemo">
       <div className="fdemo-banner" role="note">
         <strong>หน้านี้ทั้งหมดเป็นเดโม ยังใช้งานจริงไม่ได้</strong>
         <span>
           ข้อมูลเป็นค่าจริง สูตรผู้จัดทำออกแบบเองเพื่อสาธิต บางส่วนมีงานวิจัยรองรับ
-          ยังไม่ได้ทดสอบความแม่น อย่าใช้ตัดสินใจ
+          ทดสอบความแม่นแล้วเฉพาะช่วงฤดูฝน ยังไม่ครอบคลุมฤดูเผาที่ค่าฝุ่นสูง อย่าใช้ตัดสินใจ
         </span>
       </div>
 
@@ -256,8 +276,12 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
                   <strong>{ready.accuracy.level_hit_pct}%</strong>
                 </div>
                 <div>
-                  <span>คลาดเฉลี่ย</span>
-                  <strong>{ready.accuracy.rows.find((row) => row.current)?.mae.toFixed(2)}</strong>
+                  <span>{live ? "คลาดเฉลี่ยจริง" : "คลาดเฉลี่ย"}</span>
+                  <strong>
+                    {live
+                      ? live.mae.toFixed(2)
+                      : ready.accuracy.rows.find((row) => row.current)?.mae.toFixed(2)}
+                  </strong>
                 </div>
                 <div>
                   <span>ถ้าเดาเฉย ๆ ได้</span>
@@ -265,9 +289,10 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
                 </div>
               </div>
               <p className="fdemo-trust-note">
-                ย้อนทดสอบ {ready.accuracy.cases.toLocaleString("th-TH")} จังหวัด-วัน จาก{" "}
-                {ready.accuracy.provinces} จังหวัด ช่วง {ready.accuracy.period_th}{" "}
-                ซึ่งเป็นฤดูฝนที่ค่าฝุ่นต่ำและนิ่ง
+                {live
+                  ? `คลาดเฉลี่ยจริงมาจากค่าที่ออกไปแล้วและเทียบได้ ${live.checked} รายการ · `
+                  : ""}
+                {`เปอร์เซ็นต์ทายระดับถูกมาจากการย้อนทดสอบ ${ready.accuracy.cases.toLocaleString("th-TH")} จังหวัด-วัน จาก ${ready.accuracy.provinces} จังหวัด ช่วง ${ready.accuracy.period_th} ซึ่งเป็นฤดูฝนที่ค่าฝุ่นต่ำและนิ่ง`}
               </p>
             </div>
           )}
@@ -282,17 +307,48 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
                 คือสูตรนี้ดีกว่าการไม่ทำอะไรหรือไม่ ตัวเลขมาจากการย้อนทดสอบกับข้อมูลที่ระบบเก็บเอง */}
             {ready.accuracy && (
               <>
-                <h3 className="fdemo-box-title">
-                  สูตรนี้แม่นแค่ไหน
-                  <span className="fdemo-acc-scope">
-                    ย้อนทดสอบ {ready.accuracy.cases.toLocaleString("th-TH")} จังหวัด-วัน ·{" "}
-                    {ready.accuracy.provinces} จังหวัด · {ready.accuracy.period_th}
-                  </span>
-                </h3>
+                <h3 className="fdemo-box-title">สูตรนี้แม่นแค่ไหน</h3>
 
-                {ready.accuracy.rows.map((row) => {
-                  const worst = Math.max(...ready.accuracy!.rows.map((item) => item.mae));
-                  return (
+                {/* ชุดแรก ค่าจากคำพยากรณ์ที่ออกไปก่อนแล้วจึงรู้คำตอบ
+                    วางไว้บนสุดเพราะเป็นการวัดที่ตรงที่สุด ไม่มีทางรู้คำตอบล่วงหน้า
+                    แยกพรุ่งนี้กับมะรืนนี้ เพราะมะรืนนี้ทายต่อจากค่าที่ทายไว้แล้วอีกทอด */}
+                {liveRows.length > 0 && (
+                  <div className="fdemo-acc-group live">
+                    <p className="fdemo-acc-group-head">
+                      วัดจากการใช้งานจริง
+                      <span>
+                        {`ออกไปแล้ว ${scoreIssued?.toLocaleString("th-TH")} รายการ · เทียบกับค่าจริงแล้ว ${score?.checked?.toLocaleString("th-TH")} รายการ จาก ${score?.provinces} จังหวัด`}
+                      </span>
+                    </p>
+                    {liveRows.map((row) => (
+                      <div className="fdemo-acc current" key={row.key}>
+                        <span className="fdemo-acc-name">
+                          {row.name_th}
+                          <small>{row.checked} คู่</small>
+                        </span>
+                        <span className="fdemo-acc-track">
+                          <span
+                            className="fdemo-acc-fill"
+                            style={{ width: `${(row.mae / accScale) * 100}%` }}
+                          />
+                        </span>
+                        <span className="fdemo-acc-value">{row.mae.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* ชุดสอง ย้อนทดสอบกับข้อมูลเก่า ใช้เทียบว่าสูตรดีกว่าการเดาหรือไม่
+                    แต่ตัวเลขดูดีกว่าความจริง เพราะปรับตัวคูณจากข้อมูลชุดเดียวกับที่วัดผล */}
+                <div className="fdemo-acc-group">
+                  <p className="fdemo-acc-group-head">
+                    ย้อนทดสอบกับข้อมูลเก่า
+                    <span>
+                      {ready.accuracy.cases.toLocaleString("th-TH")} จังหวัด-วัน ·{" "}
+                      {ready.accuracy.provinces} จังหวัด · {ready.accuracy.period_th}
+                    </span>
+                  </p>
+                  {ready.accuracy.rows.map((row) => (
                     <div
                       className={row.current ? "fdemo-acc current" : "fdemo-acc"}
                       key={row.name_th}
@@ -301,13 +357,43 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
                       <span className="fdemo-acc-track">
                         <span
                           className="fdemo-acc-fill"
-                          style={{ width: `${(row.mae / worst) * 100}%` }}
+                          style={{ width: `${(row.mae / accScale) * 100}%` }}
                         />
                       </span>
                       <span className="fdemo-acc-value">{row.mae.toFixed(2)}</span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+
+                {/* อ่านสองชุดนี้อย่างไร คนที่เห็นเลขสองชุดไม่เท่ากันแล้วไม่มีคำอธิบาย
+                    จะเลือกเชื่อเลขที่ดูดีกว่า ซึ่งเป็นเลขที่ไม่ควรใช้อ้างอิง */}
+                <p className="fdemo-acc-read">
+                  <strong>อ่านสองชุดนี้อย่างไร</strong>{" "}
+                  {live ? (
+                    <>
+                      ค่าที่ควรใช้อ้างอิงคือ <strong>{live.mae.toFixed(2)}</strong> จากการใช้งานจริง
+                      เพราะออกค่าไปก่อนแล้วจึงรู้คำตอบ ส่วนค่าย้อนทดสอบต่ำกว่านั้น
+                      เพราะปรับตัวคูณจากข้อมูลชุดเดียวกับที่ใช้วัดผล จึงดูดีกว่าความจริง ·{" "}
+                    </>
+                  ) : null}
+                  สูตรนี้ชนะการเดาด้วยค่าล่าสุดเพียงเล็กน้อย คือทายระดับถูก{" "}
+                  {ready.accuracy.level_hit_pct}% เทียบกับ {ready.accuracy.level_hit_base_pct}%
+                  ของการเดา จึงยังไม่ควรใช้แทนการพยากรณ์ของหน่วยงาน
+                </p>
+
+                {/* ขอบเขตของเลขชุดแรก ถ้าไม่บอก คนอ่านจะเข้าใจว่าวัดครบทุกจังหวัดที่ออกค่าไป
+                    ซึ่งไม่จริง เพราะส่วนใหญ่ค่าวัดในช่วงนั้นไม่ครบจนเทียบไม่ได้ */}
+                {score?.pending ? (
+                  <p className="fdemo-acc-scope-note">
+                    <strong>เลขชุดแรกวัดจากกี่จังหวัด</strong> วัดได้จาก {score.provinces} จังหวัด
+                    เท่านั้น ไม่ใช่ทุกจังหวัดที่ออกค่าไป เพราะการเทียบต้องมีค่าวัดจากสถานีอย่างน้อย{" "}
+                    {MIN_READINGS_FOR_ACTUAL} ชั่วโมงในช่วง 24 ชั่วโมงที่ทาย จังหวัดที่มีสถานีน้อย
+                    จึงเก็บได้ไม่ครบเกณฑ์ ขณะนี้มีอีก {score.pending.toLocaleString("th-TH")}{" "}
+                    รายการที่ถึงเวลาเทียบแล้วแต่เทียบไม่ได้ด้วยเหตุนี้ ค่า{" "}
+                    {live ? live.mae.toFixed(2) : "ข้างบน"} จึงเป็นค่าของจังหวัดที่มีสถานีหนาแน่น
+                    ไม่ใช่ค่าเฉลี่ยทั้งประเทศ
+                  </p>
+                ) : null}
 
                 <p className="fdemo-legend-note">{ready.accuracy.note_th}</p>
               </>
