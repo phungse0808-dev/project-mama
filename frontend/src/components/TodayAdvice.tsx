@@ -69,6 +69,9 @@ function levelTint(color: string | null | undefined): string {
 export function TodayAdvice({ summary, stationSummary, weatherNow, weatherProvince, area }: Props) {
   const [mine] = useMyDiseases();
   const [diseaseAdvice, setDiseaseAdvice] = useState<DiseaseAdvice | null>(null);
+  // ชื่อฤดูเปลี่ยนปีละสามครั้ง อ่านวันที่ครั้งเดียวตอนเปิดหน้าก็พอ
+  // ไม่อ่านตอน render เพราะได้ค่าใหม่ทุกรอบที่วาดโดยไม่จำเป็น
+  const [season] = useState(() => thaiSeason(new Date()));
 
   // ดึงคำแนะนำรายโรคเฉพาะตอนที่ผู้ใช้เลือกโรคไว้ ไม่งั้นไม่ต้องยิงคำขอเลย
   useEffect(() => {
@@ -158,7 +161,7 @@ export function TodayAdvice({ summary, stationSummary, weatherNow, weatherProvin
 
         <div className="advice-col">
           <p className="advice-col-head">
-            เรื่องสภาพอากาศ · {weatherProvince} · {thaiSeason(new Date())}
+            เรื่องสภาพอากาศ · {weatherProvince} · {season}
           </p>
           {now ? (
             <ul className="advice-list">

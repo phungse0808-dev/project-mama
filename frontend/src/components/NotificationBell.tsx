@@ -50,12 +50,19 @@ export function NotificationBell({ provinces, fallbackProvince }: Props) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notice[]>([]);
   const [digest, setDigest] = useState<Settings>(() => loadSettings());
+  // เวลาปัจจุบันที่ใช้ตัดสินว่ารายการเป็นของวันนี้หรือเมื่อวาน
+  // เก็บเป็นสถานะแทนการอ่านตอน render เพราะการอ่านตอน render ให้ค่าใหม่ทุกรอบที่วาด
+  // ทำให้ป้ายเวลาของสองรอบที่วาดติดกันไม่ตรงกันได้ ถึงจะไม่มีข้อมูลอะไรเปลี่ยน
+  const [now, setNow] = useState(() => new Date());
   const boxRef = useRef<HTMLDivElement>(null);
 
   // อ่านรายการใหม่ทุกครั้งที่เปิด และเป็นระยะขณะเปิดค้างไว้
   // เพราะรายการถูกเพิ่มจากที่อื่นในแอป ไม่ได้เพิ่มจากตัวระฆังเอง
   useEffect(() => {
-    const refresh = () => setItems(list());
+    const refresh = () => {
+      setItems(list());
+      setNow(new Date());
+    };
     refresh();
     const timer = setInterval(refresh, 60 * 1000);
     return () => clearInterval(timer);
@@ -83,7 +90,6 @@ export function NotificationBell({ provinces, fallbackProvince }: Props) {
   // คิดสีจากรายการชุดเดียวกับที่แสดงอยู่ ไม่ไปอ่านที่เก็บข้อมูลซ้ำอีกรอบ
   // ถ้าอ่านแยกกัน สีของระฆังกับรายการในแผงอาจไม่ตรงกันได้
   const worst = worstOf(items);
-  const now = new Date();
 
   // กำหนดสีตรง ๆ เสมอ ทั้งตอนมีเรื่องใหม่และตอนไม่มี
   //
