@@ -40,6 +40,8 @@ export type StationReading = {
   aqi: number | null;
   aqi_param: string | null;
   level: AqiLevel;
+  /** ระดับของฝุ่นหยาบ คิดจากเกณฑ์ของ PM10 เอง ไม่ใช่เกณฑ์ของ PM2.5 */
+  pm10_level?: AqiLevel;
 };
 
 export type Summary = {
@@ -53,7 +55,15 @@ export type Summary = {
   pm25_avg: number | null;
   pm25_max: number | null;
   pm25_min: number | null;
+  /** ฝุ่นหยาบเฉลี่ยของขอบเขตนี้ */
+  pm10: number | null;
   level: AqiLevel | null;
+  /** ระดับของฝุ่นหยาบ คิดจากเกณฑ์ของ PM10 เอง ไม่ใช่เกณฑ์ของ PM2.5 */
+  pm10_level: AqiLevel | null;
+  /** ความครอบคลุมของ PM10 สถานีราวหนึ่งในสามเท่านั้นที่มีเครื่องวัดฝุ่นหยาบ */
+  pm10_stations: number;
+  pm10_provinces: number;
+  provinces_reporting: number;
   /** วิธีป้องกันตัวของระดับที่ค่าเฉลี่ยนี้ตกอยู่ ว่างแปลว่าไม่รู้ระดับ */
   protection: { icon: string; text_th: string }[];
   level_counts: Record<string, number>;
@@ -89,7 +99,10 @@ export type StationSummary = {
   pm25: number | null;
   pm10: number | null;
   aqi: number | null;
+  aqi_param?: string | null;
   level: AqiLevel;
+  /** ระดับของฝุ่นหยาบ คิดจากเกณฑ์ของ PM10 เอง ไม่ใช่เกณฑ์ของ PM2.5 */
+  pm10_level?: AqiLevel;
   protection: { icon: string; text_th: string }[];
   pm25_min: number | null;
   pm25_max: number | null;
@@ -629,7 +642,7 @@ export type ForecastIssue = {
   issued_on?: string;
   issued_at?: string;
   issue_hour?: number;
-  targets?: Record<string, { pm25: number; start: string; end: string }>;
+  targets?: Record<string, { pm25: number; start: string; end: string; level: AqiLevel }>;
   /** ค่าที่วัดได้จริงสองช่วงก่อนหน้า ณ เวลาที่ออกค่า ใช้ให้การ์ดทั้งสี่ใบเป็นรอบเดียวกัน */
   observed?: {
     previous: { pm25: number; start: string; end: string; level: AqiLevel };

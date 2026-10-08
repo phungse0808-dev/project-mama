@@ -28,8 +28,8 @@ function thaiStamp(text?: string): string {
   return `${day} ${month} ${text.slice(11, 16)}`;
 }
 
-function timeRange(start: string, end: string): string {
-  return `${start.slice(11, 16)} – ${end.slice(11, 16)}`;
+function timeRange(_start: string, end: string): string {
+  return `ถึง ${end.slice(11, 16)} น.`;
 }
 
 type DayCardProps = {
@@ -104,13 +104,6 @@ function DayCard({
  * ข้อมูลเป็นค่าจริง ทดสอบความแม่นแล้วแต่เฉพาะฤดูฝน จึงยังติดป้ายเดโมทั้งหน้า
  * ขั้นคำนวณแสดงแบบย่อให้อ่านง่าย ที่มา สูตรเต็ม และเอกสารอ้างอิงซ่อนไว้ กดเปิดดูได้
  */
-/** ชั่วโมงขั้นต่ำที่ต้องมีค่าวัด ถึงจะเอาหน้าต่างนั้นมาเทียบกับค่าที่ทายไว้ได้
- *
- * ต้องตรงกับ MIN_READINGS_FOR_ACTUAL ใน backend/app/forecast_issue.py
- * ใช้เฉพาะในคำอธิบาย ไม่ได้ใช้คำนวณอะไร
- */
-const MIN_READINGS_FOR_ACTUAL = 12;
-
 export function ForecastDemo({ provinces, defaultProvince }: Props) {
   const [province, setProvince] = useState(defaultProvince);
   const [data, setData] = useState<ForecastDemoData | null>(null);
@@ -365,68 +358,58 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
                   ))}
                 </div>
 
-                {/* อ่านสองชุดนี้อย่างไร คนที่เห็นเลขสองชุดไม่เท่ากันแล้วไม่มีคำอธิบาย
-                    จะเลือกเชื่อเลขที่ดูดีกว่า ซึ่งเป็นเลขที่ไม่ควรใช้อ้างอิง */}
+                {/* ข้อจำกัดสามเรื่องที่คนอ่านต้องรู้ รวมไว้ย่อหน้าเดียว
+                    เดิมแยกสามย่อหน้ารวม 13 บรรทัด ซึ่งยาวจนคนเลื่อนผ่านทั้งหมด */}
                 <p className="fdemo-acc-read">
-                  <strong>อ่านสองชุดนี้อย่างไร</strong>{" "}
                   {live ? (
                     <>
-                      ค่าที่ควรใช้อ้างอิงคือ <strong>{live.mae.toFixed(2)}</strong> จากการใช้งานจริง
-                      เพราะออกค่าไปก่อนแล้วจึงรู้คำตอบ ส่วนค่าย้อนทดสอบต่ำกว่านั้น
-                      เพราะปรับตัวคูณจากข้อมูลชุดเดียวกับที่ใช้วัดผล จึงดูดีกว่าความจริง ·{" "}
+                      <strong>ใช้ {live.mae.toFixed(2)} เป็นค่าอ้างอิง</strong>{" "}
+                      เพราะออกค่าไปก่อนแล้วจึงรู้คำตอบ ส่วนค่าย้อนทดสอบต่ำกว่านั้นเพราะปรับตัวคูณ
+                      จากข้อมูลชุดเดียวกับที่ใช้วัดผล ·{" "}
                     </>
                   ) : null}
-                  สูตรนี้ชนะการเดาด้วยค่าล่าสุดเพียงเล็กน้อย คือทายระดับถูก{" "}
+                  {score?.provinces ? (
+                    <>วัดได้จาก {score.provinces} จาก 72 จังหวัด ที่มีสถานีหนาแน่นพอ · </>
+                  ) : null}
+                  ทดสอบเฉพาะฤดูฝน และชนะการเดาด้วยค่าล่าสุดเพียงเล็กน้อย คือทายระดับถูก{" "}
                   {ready.accuracy.level_hit_pct}% เทียบกับ {ready.accuracy.level_hit_base_pct}%
                   ของการเดา จึงยังไม่ควรใช้แทนการพยากรณ์ของหน่วยงาน
                 </p>
-
-                {/* ขอบเขตของเลขชุดแรก ถ้าไม่บอก คนอ่านจะเข้าใจว่าวัดครบทุกจังหวัดที่ออกค่าไป
-                    ซึ่งไม่จริง เพราะส่วนใหญ่ค่าวัดในช่วงนั้นไม่ครบจนเทียบไม่ได้ */}
-                {score?.pending ? (
-                  <p className="fdemo-acc-scope-note">
-                    <strong>เลขชุดแรกวัดจากกี่จังหวัด</strong> วัดได้จาก {score.provinces} จังหวัด
-                    เท่านั้น ไม่ใช่ทุกจังหวัดที่ออกค่าไป เพราะการเทียบต้องมีค่าวัดจากสถานีอย่างน้อย{" "}
-                    {MIN_READINGS_FOR_ACTUAL} ชั่วโมงในช่วง 24 ชั่วโมงที่ทาย จังหวัดที่มีสถานีน้อย
-                    จึงเก็บได้ไม่ครบเกณฑ์ ขณะนี้มีอีก {score.pending.toLocaleString("th-TH")}{" "}
-                    รายการที่ถึงเวลาเทียบแล้วแต่เทียบไม่ได้ด้วยเหตุนี้ ค่า{" "}
-                    {live ? live.mae.toFixed(2) : "ข้างบน"} จึงเป็นค่าของจังหวัดที่มีสถานีหนาแน่น
-                    ไม่ใช่ค่าเฉลี่ยทั้งประเทศ
-                  </p>
-                ) : null}
-
-                <p className="fdemo-legend-note">{ready.accuracy.note_th}</p>
               </>
             )}
 
             <h3 className="fdemo-box-title">หน่วยงานที่พยากรณ์ฝุ่น ใช้สูตรอะไร</h3>
 
-            <ul className="fdemo-agencies">
-              {(ready.agencies ?? []).map((agency) => (
-                <li key={agency.url}>
-                  <strong>
-                    {agency.name_th}
-                    <span className={`fdemo-use ${agency.use}`}>
-                      {agency.use === "use"
-                        ? "ระบบนี้ใช้ข้อมูล"
-                        : agency.use === "ref"
-                          ? "อ้างอิงวิธีคิด"
-                          : "ไม่ได้ใช้"}
-                    </span>
-                  </strong>
-                  <span className="fdemo-agency-system">{agency.system_th}</span>
-                  <span>{agency.method_th}</span>
-                  <code className="fdemo-agency-formula">{agency.formula}</code>
-                  {agency.formula_note_th && (
-                    <span className="fdemo-agency-system">{agency.formula_note_th}</span>
-                  )}
-                  <span className="fdemo-agency-system">{agency.use_th}</span>
-                  <a href={agency.url} target="_blank" rel="noreferrer">
-                    {agency.url.replace(/^https?:\/\//, "").split("/")[0]}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <table className="fdemo-agency-table">
+              <thead>
+                <tr>
+                  <th>หน่วยงาน</th>
+                  <th>ระบบ</th>
+                  <th>เกี่ยวข้องอย่างไร</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(ready.agencies ?? []).map((agency) => (
+                  <tr key={agency.url}>
+                    <td>
+                      <a href={agency.url} target="_blank" rel="noreferrer">
+                        {agency.name_th}
+                      </a>
+                    </td>
+                    <td>{agency.system_th}</td>
+                    <td>
+                      <span className={`fdemo-use ${agency.use}`}>
+                        {agency.use === "use"
+                          ? "ใช้ข้อมูลจริง"
+                          : agency.use === "ref"
+                            ? "อ้างอิงวิธีคิด"
+                            : "ไม่ได้ใช้"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
             {ready.our_method_th && (
               <div className="fdemo-our-method">
@@ -457,6 +440,22 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
                   <li key={line}>{line}</li>
                 ))}
               </ol>
+
+              <p className="fdemo-more-head">วิธีและสมการของแต่ละหน่วยงาน</p>
+              <ul className="fdemo-agencies">
+                {(ready.agencies ?? []).map((agency) => (
+                  <li key={agency.url}>
+                    <strong>{agency.name_th}</strong>
+                    <span className="fdemo-agency-system">{agency.system_th}</span>
+                    <span>{agency.method_th}</span>
+                    <code className="fdemo-agency-formula">{agency.formula}</code>
+                    {agency.formula_note_th && (
+                      <span className="fdemo-agency-system">{agency.formula_note_th}</span>
+                    )}
+                    <span className="fdemo-agency-system">{agency.use_th}</span>
+                  </li>
+                ))}
+              </ul>
 
               <p className="fdemo-more-head">ที่มาของข้อมูล</p>
               <p>ค่าฝุ่น: {ready.pm25_source}</p>

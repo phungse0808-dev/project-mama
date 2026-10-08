@@ -203,6 +203,9 @@ export function SummaryCards({
   // ดีกว่าปล่อยการ์ดว่างไว้ เพราะค่าของจังหวัดก็เป็นค่าจริงที่ถูกต้องอยู่แล้ว
   const picked = canPickStation && dustStation ? stationSummary : null;
   const level = picked ? picked.level : summary.level;
+  // ฝุ่นหยาบของสถานีที่เลือก หรือของขอบเขตที่ดูอยู่
+  const pm10 = picked ? picked.pm10 : summary.pm10;
+  const pm10Level = picked ? picked.pm10_level : summary.pm10_level;
 
   return (
     <section className="card-groups">
@@ -318,6 +321,34 @@ export function SummaryCards({
                 <p className="card-note">
                   {level ? `คุณภาพอากาศ${level.label_th}` : "ไม่มีข้อมูลระดับ"}
                 </p>
+
+                {/* ฝุ่นหยาบมีเกณฑ์ของตัวเองและขึ้นได้โดยที่ PM2.5 ไม่ขึ้น
+                    เช่นฝุ่นจากการก่อสร้างหรือลมหอบฝุ่น เดิมการ์ดเอาระดับของ PM10
+                    มาทาสีให้เลข PM2.5 ทำให้ค่าที่อยู่ในเกณฑ์ดีกลายเป็นสีแดง
+                    จึงแยกเป็นอีกแถวที่มีสีของตัวเอง ไม่ปนกับแถวบน */}
+                {pm10 != null && pm10Level?.key && (
+                  <div className="hero-pm10">
+                    <div className="hero-pm10-row">
+                      <span
+                        className="hero-pm10-dot"
+                        style={{ background: pm10Level.color }}
+                        aria-hidden="true"
+                      />
+                      <span className="hero-pm10-key">PM10</span>
+                      <strong className="hero-pm10-value">{pm10}</strong>
+                      <span className="hero-pm10-level" style={{ color: pm10Level.color }}>
+                        {pm10Level.label_th}
+                      </span>
+                    </div>
+                    {!picked && (
+                      <p className="hero-pm10-scope">
+                        {summary.province
+                          ? `วัดได้จาก ${summary.pm10_stations} ใน ${summary.stations_reporting} สถานีของจังหวัดนี้ สถานีส่วนใหญ่ไม่มีเครื่องวัด PM10`
+                          : `วัดได้ ${summary.pm10_provinces} จาก ${summary.provinces_reporting} จังหวัด สถานีส่วนใหญ่ไม่มีเครื่องวัด PM10`}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* บอกรัศมีวัดทุกขอบเขต ไม่ใช่เฉพาะตอนเลือกสถานีเดียว

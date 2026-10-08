@@ -2790,6 +2790,53 @@ button {
   justify-content: center;
 }
 
+/* แถวฝุ่นหยาบ มีสีของตัวเองแยกจากแถว PM2.5 ด้านบน
+   เพราะสองค่านี้ใช้เกณฑ์คนละชุดและขึ้นลงไม่พร้อมกัน */
+.hero-pm10 {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.hero-pm10-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* ความครอบคลุมของค่าเฉลี่ย PM10 ใช้สีเตือนเพราะเป็นข้อจำกัดที่ต้องรู้
+   ไม่ใช่คำอธิบายประกอบ ค่านี้คิดจากสถานีคนละชุดกับ PM2.5 ที่อยู่ข้างบน */
+.hero-pm10-scope {
+  margin: 4px 0 0 17px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-warn);
+}
+
+.hero-pm10-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--level-edge);
+  align-self: center;
+}
+
+.hero-pm10-key {
+  color: var(--text-soft);
+}
+
+.hero-pm10-value {
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-pm10-level {
+  font-size: 12.5px;
+}
+
 .hero-source-key {
   margin: 0 0 2px;
   font-size: 12.5px;
@@ -4076,6 +4123,50 @@ button {
   opacity: 0.75;
 }
 
+/* บรรทัดสรุปสามบรรทัดใต้กราฟ แทนย่อหน้าสิบบล็อกเดิมที่ยาวรวม 821px
+   จุดสีบอกว่าแต่ละข้อเป็นผลบวก ข้อควรระวัง หรือข้อจำกัด โดยไม่ต้องระบายสีทั้งกล่อง
+   ซึ่งเดิมทำให้ทุกย่อหน้าดูเป็นคำเตือนไปหมด */
+.dcase-key {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 9px;
+}
+
+.dcase-key li {
+  display: flex;
+  gap: 9px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-soft);
+}
+
+.dcase-key strong {
+  color: var(--text);
+}
+
+.dcase-key-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 8px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--level-edge);
+}
+
+.dcase-key-dot.good {
+  background: var(--ink-ok);
+}
+
+.dcase-key-dot.warn {
+  background: var(--ink-warn);
+}
+
+.dcase-key-dot.bad {
+  background: var(--ink-bad);
+}
+
 /* ---------- ผลย้อนทดสอบ ---------- */
 
 .bt {
@@ -4113,6 +4204,23 @@ button {
 .bt-table small {
   color: var(--text-dim);
   font-size: 12.5px;
+}
+
+/* บรรทัดบอกวิธีอ่านกราฟ วางเหนือกราฟเพราะคนตีความผิดตั้งแต่เห็นแท่งแรก */
+.dchart-hint {
+  margin: 4px 0 3px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-soft);
+}
+
+.dchart-hint strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.dchart-hint + .dchart-hint {
+  margin-bottom: 9px;
 }
 
 /* จำนวนคู่เดือน-จังหวัดที่อยู่เบื้องหลังตัวเลขคาดการณ์
@@ -4234,6 +4342,17 @@ button {
   font-weight: 700;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
+}
+
+/* เตือนว่าค่าบนการ์ดมาจากแบบจำลอง ต้องอยู่ติดตัวเลข
+   บรรทัดบอกที่มาอยู่ท้ายหน้า ซึ่งคนที่อ่านแค่การ์ดจะไม่เลื่อนลงไปเห็น */
+.dnext-warn {
+  margin: 8px 0 0;
+  padding-top: 7px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-warn);
 }
 
 .dnext-unit {
@@ -4865,6 +4984,71 @@ button {
 }
 
 /* ความแม่นสองชุด แยกกล่องให้เห็นว่าเลขมาจากวิธีวัดต่างกัน ไม่ใช่ชุดเดียวกัน */
+/* ตารางหน่วยงาน แทนกล่องยาวสามกล่องเดิม
+   ตอบแค่ว่าใคร ระบบอะไร เกี่ยวข้องอย่างไร ส่วนสมการอยู่ในกล่องที่มาด้านล่าง */
+.fdemo-agency-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.fdemo-agency-table th,
+.fdemo-agency-table td {
+  padding: 7px 10px 7px 0;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.fdemo-agency-table th {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.fdemo-agency-table td:last-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* บนจอแคบ ชื่อหน่วยงานยาวจนคอลัมน์แรกตัดคำทุกบรรทัด ตารางสูงกว่าสองเท่า
+   จึงเลิกเป็นตารางแล้ววางเป็นบล็อกซ้อนกันแทน ข้อมูลยังครบเท่าเดิม */
+@media (max-width: 620px) {
+  .fdemo-agency-table,
+  .fdemo-agency-table tbody,
+  .fdemo-agency-table tr,
+  .fdemo-agency-table td {
+    display: block;
+    width: auto;
+  }
+
+  .fdemo-agency-table thead {
+    display: none;
+  }
+
+  .fdemo-agency-table tr {
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .fdemo-agency-table td {
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .fdemo-agency-table td:nth-child(2) {
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: var(--text-soft);
+  }
+
+  .fdemo-agency-table td:last-child {
+    margin-top: 5px;
+  }
+}
+
 .fdemo-acc-group {
   margin-top: 13px;
 }

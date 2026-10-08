@@ -6,7 +6,14 @@ from datetime import date, datetime, timedelta
 
 from sqlmodel import Session, col, desc, func, select
 
-from app.aqi import LEVELS, describe, level_ceiling_pm25, level_from_aqi, level_from_pm25
+from app.aqi import (
+    LEVELS,
+    describe,
+    describe_pm10,
+    level_ceiling_pm25,
+    level_from_aqi,
+    level_from_pm25,
+)
 from app.health_advice import (
     RISK_GROUPS,
     THAI_STANDARD_PM25,
@@ -84,7 +91,8 @@ def station_payload(station: Station, reading: Reading) -> dict:
         "so2": reading.so2,
         "aqi": reading.aqi,
         "aqi_param": reading.aqi_param,
-        "level": describe(reading.aqi, reading.pm25),
+        "level": describe(None, reading.pm25),
+        "pm10_level": describe_pm10(reading.pm10),
     }
 
 
@@ -103,10 +111,13 @@ def national_summary(session: Session, province: str | None = None) -> dict:
         rows = [(s, r) for s, r in rows if s.province == province]
     fresh = [(s, r) for s, r in rows if not is_stale(r)]
     values = [r.pm25 for _, r in fresh if r.pm25 is not None]
+    coarse = [r.pm10 for _, r in fresh if r.pm10 is not None]
+    coarse_stations = [s for s, r in fresh if r.pm10 is not None]
+    fine_stations = [s for s, r in fresh if r.pm25 is not None]
 
     counts = {level.key: 0 for level in LEVELS}
     for _, reading in fresh:
-        level = level_from_aqi(reading.aqi) or level_from_pm25(reading.pm25)
+        level = level_from_pm25(reading.pm25)
         if level:
             counts[level.key] += 1
 
@@ -122,6 +133,13 @@ def national_summary(session: Session, province: str | None = None) -> dict:
         "stations_reporting": len(fresh),
         "stations_stale": len(rows) - len(fresh),
         "pm25_avg": round(statistics.fmean(values), 1) if values else None,
+        # ฝุ่นหยาบเฉลี่ย ส่งคู่กับระดับของตัวเอง เพราะใช้เกณฑ์คนละชุดกับ PM2.5
+        "pm10": round(statistics.fmean(coarse), 1) if coarse else None,
+        "pm10_level": describe_pm10(statistics.fmean(coarse)) if coarse else None,
+        # ความครอบคลุมของ PM10 ใช้เขียนกำกับใต้ค่าเฉลี่ยว่าคิดจากฐานแค่ไหน
+        "pm10_stations": len(coarse_stations),
+        "pm10_provinces": len({s.province for s in coarse_stations}),
+        "provinces_reporting": len({s.province for s in fine_stations}),
         # ระดับคุณภาพอากาศของค่าเฉลี่ยทั้งประเทศ ใช้ให้การ์ดสรุปเปลี่ยนสีตามระดับ
         # เพื่อให้อ่านสถานการณ์ได้จากสีก่อนอ่านตัวเลข
         "level": describe(None, statistics.fmean(values)) if values else None,
@@ -803,7 +821,7 @@ def station_summary(session: Session, station_code: str, hours: int = 24) -> dic
         )
     ).all()
 
-    level = describe(latest.aqi, latest.pm25)
+    level = describe(None, latest.pm25)
     return {
         "station_code": station.station_code,
         "name_th": station.name_th,
@@ -815,7 +833,9 @@ def station_summary(session: Session, station_code: str, hours: int = 24) -> dic
         "pm25": latest.pm25,
         "pm10": latest.pm10,
         "aqi": latest.aqi,
+        "aqi_param": latest.aqi_param,
         "level": level,
+        "pm10_level": describe_pm10(latest.pm10),
         # คำแนะนำการป้องกันของระดับที่สถานีนี้ตกอยู่
         # ส่งมาพร้อมค่าเหมือน national_summary เพราะสองอย่างนี้ต้องตรงกันเสมอ
         "protection": protection_for(level["key"]) if level else [],

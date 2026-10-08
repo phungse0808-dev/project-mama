@@ -178,6 +178,7 @@ def latest_issue(session: Session, province: str) -> dict | None:
                 "pm25": row.pm25,
                 "start": row.window_start.isoformat(timespec="minutes"),
                 "end": row.window_end.isoformat(timespec="minutes"),
+                "level": describe(None, row.pm25),
             }
             for target, row in current.items()
         },

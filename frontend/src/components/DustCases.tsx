@@ -403,7 +403,15 @@ function levelIndex(value: number): number {
   return 3;
 }
 
-/** เอาค่าฝุ่นจริงของเดือนล่าสุดมาคำนวณว่าเดือนถัดไปแต่ละโรคจะเป็นอย่างไร
+/** ค่าที่แบบจำลองต่ำกว่าสถานีตรวจวัดจริงโดยเฉลี่ย หน่วยไมโครกรัมต่อลูกบาศก์เมตร
+ *
+ * วัดเมื่อเดือนกันยายน 2569 ซึ่งมีค่าจากสถานีครบ 30 วันใน 74 จังหวัด
+ * พบว่าแบบจำลองให้ค่าต่ำกว่าสถานีจริงใน 62 จังหวัด เฉลี่ยต่ำกว่าเท่านี้
+ * วิธีวัดและผลเต็มอยู่ในบทที่ 3 ข้อ 3.4.3 เมื่อวัดใหม่ต้องมาแก้ตัวเลขนี้ด้วย
+ */
+const MODEL_UNDERSHOOT = 2.9;
+
+/** เอาค่าฝุ่นของเดือนล่าสุดมาคำนวณว่าเดือนถัดไปแต่ละโรคจะเป็นอย่างไร
  *
  * ไม่ใช่สูตรใหม่ เป็นการหยิบค่าที่วัดได้จากข้อมูลย้อนหลังของระดับฝุ่นนั้นมาตอบ
  *
@@ -499,13 +507,18 @@ function NextMonthPanel({
 
       <div className="dnext-flow">
         <div className="dnext-box">
-          <p className="dnext-key">{data.from_ym} · ค่าฝุ่นจริง</p>
+          <p className="dnext-key">{data.from_ym} · ค่าฝุ่นจากแบบจำลอง</p>
           <p className="dnext-value" style={{ color }}>
             {dust.toFixed(1)}
           </p>
           <p className="dnext-unit">
             <span className="dnext-dot" style={{ background: color }} aria-hidden="true" />
             µg/m³ · ระดับ{level?.label_th}
+          </p>
+          <p className="dnext-warn">
+            CAMS ไม่ใช่ค่าที่สถานีวัดได้
+            <br />
+            ต่ำกว่าค่าจริงเฉลี่ย {MODEL_UNDERSHOOT}
           </p>
         </div>
         <span className="dnext-arrow" aria-hidden="true">
@@ -527,6 +540,18 @@ function NextMonthPanel({
           )}
         </div>
       </div>
+
+      <p className="dchart-hint">
+        อ่านที่ <strong>ความต่างระหว่างแท่งทึบกับกรอบประ</strong> นั่นคือผลของฝุ่น
+        ไม่ใช่ตัวเลขบนแท่ง
+      </p>
+      <p className="dchart-hint">
+        ตัวเลขคือ
+        <strong>
+          สัดส่วนผู้ป่วย{severe ? "ที่ต้องนอนโรงพยาบาลด้วย" : ""}โรคนั้นต่อผู้ป่วยทุกโรค
+        </strong>{" "}
+        ต่างจากค่าปกติของเดือนเดียวกันในปีก่อน ๆ เป็นเปอร์เซ็นต์ ไม่ใช่จำนวนผู้ป่วย
+      </p>
 
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`คาดการณ์สัดส่วนผู้ป่วยเดือน ${data.to_ym}`}>
         {gridlines.map((value) => (
@@ -616,18 +641,10 @@ function NextMonthPanel({
  */
 function Backtest({ data }: { data: NonNullable<Lagged["backtest"]> }) {
   return (
-    <section className="bt">
-      <h3 className="dcase-sub">
-        ผลการย้อนทดสอบ
-        <span>
-          {data.method_th} · รวม {data.pairs.toLocaleString("th-TH")} คู่จังหวัด-เดือน จาก{" "}
-          {data.years} ปี
-        </span>
-      </h3>
-
-      <p className={data.beats_baseline ? "bt-verdict ok" : "bt-verdict warn"}>
-        <strong>{data.verdict_th}</strong> สูตรให้ค่าคลาดเคลื่อนเฉลี่ย {data.model_mae} ขณะที่การทายว่า
-        ฝุ่นไม่มีผลเลยให้ {data.zero_mae} และทายทิศถูก {data.direction_pct}%
+    <>
+      <p className="dcase-note">
+        {data.method_th} · รวม {data.pairs.toLocaleString("th-TH")} คู่จังหวัด-เดือน จาก{" "}
+        {data.years} ปี
       </p>
 
       <table className="dcase-table bt-table">
@@ -654,10 +671,10 @@ function Backtest({ data }: { data: NonNullable<Lagged["backtest"]> }) {
         </tbody>
       </table>
 
-      <p className="dcase-note">
+      <p>
         <strong>แล้วตัวเลขข้างบนยังเชื่อได้ไหม</strong> {data.explain_th}
       </p>
-    </section>
+    </>
   );
 }
 
@@ -675,8 +692,57 @@ function NextMonthNotes({
   const best = lagged.robustness.rows.find((row) => row.current);
   const last = (buckets: LaggedBucket[]) => buckets[buckets.length - 1]?.change_pct ?? 0;
 
+  // ค่าที่ระดับเกินมาตรฐานของกลุ่มโรคที่ฝุ่นกระตุ้น ใช้เขียนบรรทัดสรุปบรรทัดแรก
+  const pool = severe ? lagged.by_disease.filter((item) => item.ipd_reliable) : lagged.by_disease;
+  const worstOf = (item: (typeof pool)[number]) =>
+    last(severe ? item.ipd_buckets : item.buckets);
+  const affected = pool.filter((item) => !item.infectious).map(worstOf);
+  const infectious = pool.find((item) => item.infectious);
+
   return (
     <>
+      {/* สามบรรทัดนี้คือข้อค้นพบทั้งหมดของหน้านี้
+          เดิมเป็นย่อหน้าสิบบล็อกเรียงกันรวม 821px ซึ่งยาวจนไม่มีใครอ่านจบ
+          หลักฐานประกอบย้ายไปอยู่ในกล่องกดเปิดด้านล่าง ไม่ได้ตัดทิ้ง */}
+      <ul className="dcase-key">
+        {affected.length > 0 && (
+          <li>
+            <span className="dcase-key-dot good" aria-hidden="true" />
+            <span>
+              <strong>
+                {affected.length} โรคที่ฝุ่นกระตุ้นขึ้นพร้อมกันเมื่อฝุ่นเกินมาตรฐาน
+              </strong>{" "}
+              {signedPct(Math.min(...affected))} ถึง {signedPct(Math.max(...affected))}
+              {best ? ` · รวมกลุ่มโรคเรื้อรังได้ ${signedPct(last(best.buckets))}` : ""}
+            </span>
+          </li>
+        )}
+        {infectious && (
+          <li>
+            <span className="dcase-key-dot warn" aria-hidden="true" />
+            <span>
+              <strong>โรคติดเชื้อให้ผลกลับทาง</strong> {signedPct(worstOf(infectious))}{" "}
+              เพราะขึ้นกับการรวมกลุ่มในโรงเรียนและฤดูฝน ไม่ได้ขึ้นกับฝุ่น
+            </span>
+          </li>
+        )}
+        {lagged.backtest && (
+          <li>
+            <span
+              className={`dcase-key-dot ${lagged.backtest.beats_baseline ? "good" : "bad"}`}
+              aria-hidden="true"
+            />
+            <span>
+              <strong>{lagged.backtest.verdict_th}</strong> สูตรคลาดเฉลี่ย{" "}
+              {lagged.backtest.model_mae} ขณะที่การทายว่าฝุ่นไม่มีผลเลยคลาด{" "}
+              {lagged.backtest.zero_mae}
+            </span>
+          </li>
+        )}
+      </ul>
+
+      <details className="dcase-tried">
+        <summary>วิธีคำนวณและการควบคุมตัวแปร</summary>
       <p className="dcase-note">
         <strong>วิธีคำนวณ</strong> ดูว่าเดือน {data.from_ym} พื้นที่นั้นค่าฝุ่นอยู่ระดับไหน
         แล้วใช้ค่าที่วัดได้จากข้อมูลย้อนหลังว่าเดือนถัดจากเดือนที่ฝุ่นอยู่ระดับนั้น
@@ -696,34 +762,34 @@ function NextMonthNotes({
 
       {severe && <p className="dcase-note">{lagged.ipd_note_th}</p>}
 
-      <p className="dcase-note">
-        เดือน {data.from_ym} แยกตามระดับได้{" "}
-        {data.level_counts
-          .filter((item) => item.provinces > 0)
-          .map((item) => `${item.label_th} ${item.provinces} จังหวัด`)
-          .join(" · ")}
-      </p>
+        <p>
+          เดือน {data.from_ym} แยกตามระดับได้{" "}
+          {data.level_counts
+            .filter((item) => item.provinces > 0)
+            .map((item) => `${item.label_th} ${item.provinces} จังหวัด`)
+            .join(" · ")}
+        </p>
 
-      <p className="dcase-good">
-        <strong>รูปแบบเดียวกันทุกโรคที่ฝุ่นกระตุ้น</strong> ช่องว่างระหว่างแท่งทึบกับแท่งเส้นประ
-        คือระยะห่างจากกรณีที่ฝุ่นเกินมาตรฐาน ซึ่งกว้างใกล้เคียงกันทุกโรค
-        แปลว่าฝุ่นไม่ได้กระทบโรคใดโรคหนึ่งเป็นพิเศษ แต่กระทบทั้งกลุ่มพร้อมกัน
-        {best ? ` · ค่าของกลุ่มโรคเรื้อรังที่ระดับเกินมาตรฐานอยู่ที่ ${signedPct(last(best.buckets))}` : ""}
-      </p>
+        <p>
+          <strong>รูปแบบเดียวกันทุกโรคที่ฝุ่นกระตุ้น</strong> ช่องว่างระหว่างแท่งทึบกับแท่งเส้นประ
+          คือระยะห่างจากกรณีที่ฝุ่นเกินมาตรฐาน ซึ่งกว้างใกล้เคียงกันทุกโรค
+          แปลว่าฝุ่นไม่ได้กระทบโรคใดโรคหนึ่งเป็นพิเศษ แต่กระทบทั้งกลุ่มพร้อมกัน
+        </p>
 
-      <p className="dcase-warn">{lagged.infectious_note_th}</p>
+        <p>{lagged.infectious_note_th}</p>
+      </details>
 
-      {/* ตารางทดสอบความคงทน ต้องอยู่ติดกับตัวเลขเสมอ
+      {/* ตารางทดสอบความคงทน ต้องอยู่ใกล้ตัวเลขเสมอ
           เพราะขนาดของผลขึ้นกับวิธีจัดการปี 2565 มาก
           ถ้าโชว์ตัวเลขเดียวจะถูกอ่านว่าแน่นอนกว่าความจริง */}
-      <p className="dcase-warn">
-        <strong>ขนาดของผลยังสรุปเป็นตัวเลขเดียวไม่ได้</strong> เมื่อเปลี่ยนวิธีจัดการปี 2565
-        ค่าที่ระดับเกินมาตรฐานอยู่ในช่วง {lagged.robustness.range_th} ·{" "}
-        {lagged.robustness.note_th}
-      </p>
-
       <details className="dcase-tried">
-        <summary>ผลของแต่ละวิธีจัดการปี 2565 ({lagged.robustness.rows.length} แบบ)</summary>
+        <summary>
+          ขนาดของผลยังสรุปเป็นตัวเลขเดียวไม่ได้ · อยู่ในช่วง {lagged.robustness.range_th}
+        </summary>
+        <p>
+          เมื่อเปลี่ยนวิธีจัดการปี 2565 ค่าที่ระดับเกินมาตรฐานเปลี่ยนไปตามตารางนี้ ·{" "}
+          {lagged.robustness.note_th}
+        </p>
         <div className="dcase-table-wrap">
           <table className="dcase-table">
             <thead>
@@ -770,12 +836,16 @@ function NextMonthNotes({
         </p>
       </details>
 
-      <p className="dcase-warn">
-        <strong>ข้อจำกัด</strong> {lagged.caveat_th} · และข้อมูลผู้ป่วยจริงมีถึงเดือน{" "}
-        {/* ต้องบอกให้ชัดว่ายังตรวจคำตอบไม่ได้ ไม่งั้นจะถูกอ่านว่าเป็นค่าที่ยืนยันแล้ว */}
-        ธันวาคม 2568 จึงยังตรวจคำตอบของเดือน {data.to_ym} ไม่ได้
-        จนกว่าจะขอข้อมูลผู้ป่วยรอบใหม่
-      </p>
+      <details className="dcase-tried">
+        <summary>ข้อจำกัดและผลการย้อนทดสอบเต็ม</summary>
+        <p>
+          <strong>ข้อจำกัด</strong> {lagged.caveat_th} · และข้อมูลผู้ป่วยจริงมีถึงเดือน{" "}
+          {/* ต้องบอกให้ชัดว่ายังตรวจคำตอบไม่ได้ ไม่งั้นจะถูกอ่านว่าเป็นค่าที่ยืนยันแล้ว */}
+          ธันวาคม 2568 จึงยังตรวจคำตอบของเดือน {data.to_ym} ไม่ได้
+          จนกว่าจะขอข้อมูลผู้ป่วยรอบใหม่
+        </p>
+        {lagged.backtest && <Backtest data={lagged.backtest} />}
+      </details>
     </>
   );
 }
@@ -873,7 +943,6 @@ export function DustCases() {
       {tab === "cases" && data.lagged && data.next_month && (
         <NextMonthNotes data={data.next_month} lagged={data.lagged} severe={severe} />
       )}
-      {tab === "cases" && data.lagged?.backtest && <Backtest data={data.lagged.backtest} />}
 
       <p className="dcase-source">
         ที่มา {data.disease_source_th} · {data.pm25_source_th} · {data.note_th}

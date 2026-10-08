@@ -57,6 +57,10 @@ _AQI_UPPER = (25, 50, 100, 200)
 # ขอบบนของค่า PM2.5 เฉลี่ย 24 ชั่วโมง หน่วยไมโครกรัมต่อลูกบาศก์เมตร
 _PM25_UPPER = (15.0, 25.0, 37.5, 75.0)
 
+# ขอบบนของค่า PM10 เฉลี่ย 24 ชั่วโมง ตามเกณฑ์ดัชนีคุณภาพอากาศของกรมควบคุมมลพิษ
+# ใช้ระดับห้าขั้นชุดเดียวกับ PM2.5 แต่คนละช่วงค่า เพราะเป็นฝุ่นคนละขนาด
+_PM10_UPPER = (50.0, 80.0, 120.0, 180.0)
+
 
 def level_ceiling_pm25(level_key: str) -> float | None:
     """ค่า PM2.5 สูงสุดที่ยังอยู่ในระดับนั้น ระดับสุดท้ายไม่มีขอบบนจึงคืนค่าว่าง
@@ -80,6 +84,21 @@ def level_from_aqi(aqi: int | None) -> AqiLevel | None:
     return LEVELS[-1]
 
 
+def level_from_pm10(pm10: float | None) -> AqiLevel | None:
+    """แปลงค่าความเข้มข้น PM10 เป็นระดับคุณภาพอากาศ
+
+    ต้องมีแยกจาก PM2.5 เพราะ PM10 ขึ้นได้โดยที่ PM2.5 ไม่ขึ้น เช่นฝุ่นจากการก่อสร้าง
+    หรือลมหอบฝุ่น ซึ่งเป็นอนุภาคหยาบ การใช้เกณฑ์ของ PM2.5 มาตัดสิน PM10
+    จะทำให้ค่าที่ปกติของฝุ่นหยาบกลายเป็นระดับอันตรายทันที
+    """
+    if pm10 is None or pm10 < 0:
+        return None
+    for index, upper in enumerate(_PM10_UPPER):
+        if pm10 <= upper:
+            return LEVELS[index]
+    return LEVELS[-1]
+
+
 def level_from_pm25(pm25: float | None) -> AqiLevel | None:
     """แปลงค่าความเข้มข้น PM2.5 เป็นระดับคุณภาพอากาศ
 
@@ -91,6 +110,23 @@ def level_from_pm25(pm25: float | None) -> AqiLevel | None:
         if pm25 <= upper:
             return LEVELS[index]
     return LEVELS[-1]
+
+
+def describe_level(level: AqiLevel | None) -> dict:
+    """แปลงระดับเป็นรูปแบบที่ส่งออกทาง API"""
+    if level is None:
+        return {"key": None, "label_th": "ไม่มีข้อมูล", "color": "#9aa1ab", "advice_th": ""}
+    return {
+        "key": level.key,
+        "label_th": level.label_th,
+        "color": level.color,
+        "advice_th": level.advice_th,
+    }
+
+
+def describe_pm10(pm10: float | None) -> dict:
+    """ระดับของฝุ่นหยาบ ส่งคู่ไปกับระดับของ PM2.5 เสมอ ไม่ใช่แทนกัน"""
+    return describe_level(level_from_pm10(pm10))
 
 
 def describe(aqi: int | None, pm25: float | None) -> dict:
