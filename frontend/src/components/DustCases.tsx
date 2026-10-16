@@ -68,6 +68,60 @@ const BAR_TIGHT = 6;
 
 const ALL_YEARS = "ทั้งหมด";
 
+/** จุดในกราฟที่เกินเท่านี้ ย่อรายวันเป็นรายสัปดาห์
+ *
+ * ข้อมูลรายวันสี่ปีมีราวพันห้าร้อยจุด กว้าง 760 หน่วยแปลว่าแท่งละครึ่งหน่วย
+ * ซึ่งมองไม่เห็นรายวันอยู่ดี แต่ยังทำให้เข้าใจผิดว่าแท่งหนึ่งคือหนึ่งวัน
+ * ย่อเป็นรายสัปดาห์แล้วบอกกำกับไว้ ตรงไปตรงมากว่า
+ */
+const MAX_DAILY_POINTS = 400;
+
+type Point = { label: string; value: number | null };
+
+/** ย่อค่ารายวันเป็นค่าเฉลี่ยรายสัปดาห์ ป้ายใช้วันแรกของสัปดาห์นั้น
+ *
+ * แบ่งสัปดาห์จากวันแรกของชุดข้อมูล ไม่ได้อิงวันจันทร์
+ * เพราะต้องการแค่ย่อจำนวนจุด ไม่ได้ต้องการให้ตรงกับปฏิทินสัปดาห์
+ */
+function weekly(points: Point[]): Point[] {
+  const out: Point[] = [];
+  for (let start = 0; start < points.length; start += 7) {
+    const chunk = points.slice(start, start + 7);
+    const values = chunk
+      .map((item) => item.value)
+      .filter((value): value is number => value != null);
+    out.push({
+      label: chunk[0].label,
+      value: values.length
+        ? Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 10) / 10
+        : null,
+    });
+  }
+  return out;
+}
+
+/** ค่าเฉลี่ยทั้งประเทศกลบจังหวัดที่หนักแค่ไหน ใช้เขียนข้อความกำกับใต้กราฟ
+ *
+ * คิดสดจากข้อมูลที่ส่งมา ไม่เขียนตัวเลขตายตัวไว้ในหน้าเว็บ เพราะชุดข้อมูลถูกดึงเพิ่มเรื่อย ๆ
+ * ตัวเลขตายตัวจะค่อย ๆ กลายเป็นคำที่ไม่ตรงกับกราฟที่อยู่ข้างบนมันเอง
+ */
+function maskedByAverage(series: DustSeries) {
+  const source = series.sources.find((item) => item.key === series.default_key);
+  if (!source) return null;
+  const national = source.national.filter((value): value is number => value != null);
+  if (!national.length) return null;
+  const places = Object.values(source.provinces);
+  return {
+    unit: source.granularity === "day" ? "วัน" : "เดือน",
+    over: national.filter((value) => value > series.thai_standard).length,
+    total: national.length,
+    overProvinces: places.filter((values) =>
+      values.some((value) => value != null && value > series.thai_standard),
+    ).length,
+    provinces: places.length,
+  };
+}
+
 /** ปีที่มีข้อมูลในแหล่งนั้น เรียงจากเก่าไปใหม่ */
 function yearsOf(labels: string[]): string[] {
   return [...new Set(labels.map((label) => String(thaiYear(label))))].sort();
@@ -101,12 +155,19 @@ function DustTrend({ data }: { data: DustSeries }) {
   const activeYear = year !== ALL_YEARS && !years.includes(year) ? ALL_YEARS : year;
 
   const all = activePlace === "ทั้งประเทศ" ? source.national : source.provinces[activePlace] ?? [];
-  const picked = source.labels
+  // ชุดเต็มตามหน่วยจริงของแหล่งข้อมูล ใช้นับสถิติเสมอ
+  const full = source.labels
     .map((label, index) => ({ label, value: all[index] }))
     .filter((item) => activeYear === ALL_YEARS || String(thaiYear(item.label)) === activeYear);
 
-  const known = picked.filter((item): item is { label: string; value: number } => item.value != null);
-  if (known.length < 2) return null;
+  // ย่อเฉพาะกราฟ ไม่ย่อสถิติ เพราะมาตรฐาน 37.5 นิยามบนค่าเฉลี่ย 24 ชั่วโมง
+  // ถ้านับจำนวนวันที่เกินจากค่าเฉลี่ยรายสัปดาห์ จะได้ตัวเลขต่ำกว่าความจริงมาก
+  const rolled = source.granularity === "day" && full.length > MAX_DAILY_POINTS;
+  const picked = rolled ? weekly(full) : full;
+
+  const known = full.filter((item): item is { label: string; value: number } => item.value != null);
+  const shown = picked.filter((item): item is { label: string; value: number } => item.value != null);
+  if (known.length < 2 || shown.length < 2) return null;
 
   const daily = source.granularity === "day";
 
@@ -115,12 +176,14 @@ function DustTrend({ data }: { data: DustSeries }) {
    * ถ้าไม่มีเส้นนี้ คนดูจะรู้แค่ว่าจังหวัดนี้มีค่าเท่าไร แต่ไม่รู้ว่าสูงหรือต่ำกว่าที่อื่น
    * ซึ่งเป็นคำถามแรกที่คนถามเสมอเมื่อเห็นตัวเลขของพื้นที่ตัวเอง
    */
-  const nationalLine =
+  const nationalFull =
     activePlace === "ทั้งประเทศ"
       ? null
       : source.labels
           .map((label, index) => ({ label, value: source.national[index] }))
           .filter((item) => activeYear === ALL_YEARS || String(thaiYear(item.label)) === activeYear);
+  // ต้องย่อด้วยเกณฑ์เดียวกับกราฟ ไม่งั้นเส้นกับแท่งจะมีจำนวนจุดไม่เท่ากัน
+  const nationalLine = nationalFull && rolled ? weekly(nationalFull) : nationalFull;
 
   /* ช่วงฤดูเผา เดือนมกราคมถึงเมษายน
    *
@@ -160,9 +223,11 @@ function DustTrend({ data }: { data: DustSeries }) {
   const top = asBars ? 18 : 14;
   const bottom = 34;
 
+  // แกนตั้งอิงค่าที่วาดจริง ไม่งั้นแท่งรายสัปดาห์จะเตี้ยติดพื้นเพราะถูกยืดตามยอดรายวัน
+  const drawn = shown.map((item) => item.value);
   const values = known.map((item) => item.value);
   const highest = Math.max(...values);
-  const max = Math.max(40, Math.ceil(highest / 10) * 10);
+  const max = Math.max(40, Math.ceil(Math.max(...drawn) / 10) * 10);
   const stepGrid = max > 60 ? 20 : 10;
   const slot = (width - left - right) / picked.length;
   const x = (index: number) =>
@@ -233,6 +298,11 @@ function DustTrend({ data }: { data: DustSeries }) {
 
       <p className="dtrend-scope">
         {known.length} {unit} · {thaiLabel(known[0].label)} ถึง {thaiLabel(known[known.length - 1].label)}
+        {rolled && (
+          <span className="dtrend-rolled">
+            {` · กราฟแสดงค่าเฉลี่ยรายสัปดาห์ ${shown.length} สัปดาห์ กดเลือกปีเพื่อดูรายวัน`}
+          </span>
+        )}
       </p>
 
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`ค่าฝุ่นย้อนหลังของ${activePlace}`}>
@@ -743,11 +813,18 @@ function NextMonthNotes({
 
       <details className="dcase-tried">
         <summary>วิธีคำนวณและการควบคุมตัวแปร</summary>
+      <ol className="dcase-formula">
+        <li>
+          สัดส่วน = ผู้ป่วย{severe ? "ในของ" : ""}โรคนั้น ÷ ผู้ป่วยทุกโรค × 100
+        </li>
+        <li>ส่วนต่าง = (สัดส่วน − ค่าปกติ) ÷ ค่าปกติ × 100</li>
+        <li>ตัวเลขที่แสดง = เฉลี่ยส่วนต่างของเดือนถัดไป</li>
+      </ol>
       <p className="dcase-note">
-        <strong>วิธีคำนวณ</strong> ดูว่าเดือน {data.from_ym} พื้นที่นั้นค่าฝุ่นอยู่ระดับไหน
-        แล้วใช้ค่าที่วัดได้จากข้อมูลย้อนหลังว่าเดือนถัดจากเดือนที่ฝุ่นอยู่ระดับนั้น
-        {severe ? lagged.measure_ipd_th : lagged.measure_th}ต่างจากค่าปกติเฉลี่ยกี่เปอร์เซ็นต์
-        ไม่ใช่สูตรใหม่ · {lagged.control_th}
+        ค่าปกติ = ค่าเฉลี่ยของจังหวัดนั้นในเดือนปฏิทินเดียวกัน ต้องมีอย่างน้อย 3 ปี ·
+        เฉลี่ยเฉพาะเดือนที่ฝุ่นอยู่ระดับเดียวกับเดือน {data.from_ym} ·
+        หักแนวโน้มรายปีออกแล้ว
+        {severe && " · ตัวหารเป็นผู้ป่วยทุกโรคเสมอ แม้ตอนนับเฉพาะผู้ป่วยใน"}
       </p>
 
       {severe && asthma && (
@@ -884,6 +961,8 @@ export function DustCases() {
 
   if (!data?.available) return null;
 
+  const masked = data.dust_series ? maskedByAverage(data.dust_series) : null;
+
   return (
     <section className="dcase">
       {/* ยังติดป้ายเดโม เพราะค่าฝุ่นย้อนหลังเป็นค่าจากแบบจำลอง ไม่ใช่ค่าที่สถานีวัดได้
@@ -933,11 +1012,11 @@ export function DustCases() {
         )}
       </div>
 
-      {tab === "dust" && (
+      {tab === "dust" && masked && (
         <p className="dcase-note">
-          ค่าเฉลี่ยทั้งประเทศไม่เคยเกินมาตรฐาน 37.5 สักเดือนเดียว ทั้งที่หลายจังหวัดเกิน
-          หลายเดือนต่อปี เพราะค่าเฉลี่ยของ 77 จังหวัดกลบจังหวัดที่หนักจนหมด
-          จึงต้องเลือกดูรายจังหวัด
+          {`ค่าเฉลี่ยทั้งประเทศเกินมาตรฐาน 37.5 แค่ ${masked.over} จาก ${masked.total.toLocaleString("th-TH")} ${masked.unit} `}
+          {`ทั้งที่ ${masked.overProvinces} จาก ${masked.provinces} จังหวัดเคยเกิน `}
+          เพราะค่าเฉลี่ยของทุกจังหวัดกลบจังหวัดที่หนักจนหมด จึงต้องเลือกดูรายจังหวัด
         </p>
       )}
       {tab === "cases" && data.lagged && data.next_month && (

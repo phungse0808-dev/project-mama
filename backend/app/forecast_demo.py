@@ -190,6 +190,9 @@ OUR_METHOD_TH = (
     "ต่างจากหน่วยงานข้างบนที่คำนวณจากฟิสิกส์ของบรรยากาศทั้งก้อน ส่วนระบบนี้คำนวณจากค่าที่วัดได้ในพื้นที่"
 )
 
+# slot_th คือส่วนของสูตรที่งานชิ้นนั้นหนุน use_th คือสิ่งที่งานชิ้นนั้นให้
+# ต้องมีคู่กับรายการอ้างอิงเสมอ ไม่งั้นรายการนี้อ่านแล้วไม่รู้ว่าเอามาอ้างทำไม
+# สองชิ้นที่หนุนตัวเดียวกันจะเห็นว่าซ้ำป้ายกัน ซึ่งเป็นเรื่องที่ควรเห็น
 REFERENCES = [
     {
         "id": 1,
@@ -197,18 +200,24 @@ REFERENCES = [
         "forecasts sufficiently accurate to plan your day? Individual decision making in the face of "
         "increasing wildfire smoke. arXiv:2409.05866",
         "url": "https://arxiv.org/abs/2409.05866",
+        "slot_th": "C₀",
+        "use_th": "ที่มาของการใช้ค่าล่าสุดเป็นฐาน และการวัดผลเทียบกับการเดาด้วยค่าล่าสุด",
     },
     {
         "id": 2,
         "text": "Fujino, R., & Miyamoto, Y. (2022). PM2.5 decrease with precipitation as revealed by "
         "single-point ground-based observation. Atmospheric Science Letters.",
         "url": "https://doi.org/10.1002/asl.1088",
+        "slot_th": "f_ฝน",
+        "use_th": "ยืนยันว่าฝนทำให้ค่าฝุ่นลดลง",
     },
     {
         "id": 3,
         "text": "Lu, X., Chan, S. C., & Fung, J. C. H. (2019). To what extent can the below-cloud washout "
         "effect influence the PM2.5? A combined observational and modeling study. Environmental Pollution.",
         "url": "https://doi.org/10.1016/j.envpol.2019.04.061",
+        "slot_th": "f_ฝน",
+        "use_th": "อธิบายกลไกที่ฝนชะฝุ่นใต้ก้อนเมฆ",
     },
     {
         "id": 4,
@@ -216,6 +225,8 @@ REFERENCES = [
         "& Wang, Y. (2025). Machine learning-based quantification and separation of emissions and "
         "meteorological effects on PM2.5 in Greater Bangkok. Scientific Reports.",
         "url": "https://doi.org/10.1038/s41598-025-99094-6",
+        "slot_th": "f_ลม",
+        "use_th": "แยกผลของสภาพอากาศออกจากการปล่อยฝุ่นในกรุงเทพฯ และปริมณฑล",
     },
     {
         "id": 5,
@@ -223,6 +234,8 @@ REFERENCES = [
         "(2024). Development of meteorological criteria for classifying PM2.5 risk in a coastal industrial "
         "province in Thailand. Aerosol and Air Quality Research.",
         "url": "https://doi.org/10.4209/aaqr.230321",
+        "slot_th": "f_ชื้น · f_ร้อน",
+        "use_th": "เกณฑ์อุตุนิยมวิทยาที่ใช้จำแนกความเสี่ยงฝุ่นในจังหวัดของไทย",
     },
 ]
 

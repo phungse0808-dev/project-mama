@@ -469,6 +469,12 @@ export function ForecastDemo({ provinces, defaultProvince }: Props) {
                     <a href={ref.url} target="_blank" rel="noreferrer">
                       {ref.url.replace("https://", "")}
                     </a>
+                    {/* รายการอ้างอิงเฉย ๆ ไม่บอกว่าเอามาอ้างทำไม
+                        ป้ายโยงกลับไปหาส่วนของสูตรที่งานชิ้นนั้นหนุน */}
+                    <p className="fdemo-ref-use">
+                      <span className="fdemo-ref-slot">{ref.slot_th}</span>
+                      {ref.use_th}
+                    </p>
                   </li>
                 ))}
               </ol>

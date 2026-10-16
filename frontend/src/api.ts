@@ -432,7 +432,7 @@ export type ForecastDemo = {
   pm25_source: string;
   weather_source: string;
   formula: string[];
-  references: { id: number; text: string; url: string }[];
+  references: { id: number; text: string; url: string; slot_th: string; use_th: string }[];
   /** ผลย้อนทดสอบความแม่นของสูตร เทียบกับวิธีพื้นฐาน */
   accuracy?: {
     tested_at_th: string;

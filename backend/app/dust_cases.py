@@ -27,7 +27,7 @@
     จังหวัดในข้อมูลผู้ป่วยคือจังหวัดของหน่วยบริการ ไม่ใช่ที่อยู่ผู้ป่วย
 """
 
-import json
+import csv
 import statistics
 from collections import defaultdict
 
@@ -99,7 +99,7 @@ BURN_MONTHS = ("02", "03", "04")
 #
 # เป็นของที่ดึงไว้ตั้งแต่ตอนโปรเจคยังทำห้าจังหวัด เก็บไว้ใช้ต่อเพราะเป็นข้อมูลรายวัน
 # ชุดเดียวที่ครอบคลุมฤดูเผาเต็มรอบ ค่ารายเดือนเฉลี่ยยอดแหลมของฤดูเผาหายไปมาก
-DAILY_2023_FILE = DATA_DIR / "pm25_2023.json"
+DAILY_FILE = DATA_DIR / "pm25_daily.csv"
 
 # วันหนึ่งต้องมีกี่จังหวัดรายงานขึ้นไป จึงเอาค่าเฉลี่ยทั้งประเทศของวันนั้นมาใช้ได้
 #
@@ -269,59 +269,74 @@ def _station_daily(session: Session) -> dict | None:
     }
 
 
-def _model_daily_2023() -> dict | None:
-    """ค่าฝุ่นรายวันปี 2566 ของห้าจังหวัด จากไฟล์ที่เก็บไว้ตั้งแต่ระยะแรกของโปรเจค"""
-    if not DAILY_2023_FILE.exists():
-        return None
-    try:
-        raw = json.loads(DAILY_2023_FILE.read_text(encoding="utf-8"))
-    except (ValueError, OSError):
-        return None
-    if not raw:
+def _model_daily() -> dict | None:
+    """ค่าฝุ่นรายวันจากแบบจำลอง ครบทุกจังหวัดเท่าที่คลังข้อมูลมี
+
+    มาจาก scripts/collect_pm_daily.py ซึ่งดึงรายชั่วโมงจากคลัง CAMS ผ่าน Open-Meteo
+    แล้วเฉลี่ยเป็นรายวัน เก็บเป็น CSV เพราะเป็นข้อความ จึงเก็บเฉพาะบรรทัดที่เปลี่ยน
+    ในระบบควบคุมเวอร์ชันได้ ต่างจาก JSON ก้อนเดียวที่เปลี่ยนทีไรก็เก็บใหม่ทั้งไฟล์
+    """
+    if not DAILY_FILE.exists():
         return None
 
-    days = sorted({day for series in raw.values() for day in series})
-    values = {
-        (province, day): round(float(value), 1)
-        for province, series in raw.items()
-        for day, value in series.items()
-    }
+    values: dict[tuple[str, str], float] = {}
+    try:
+        with DAILY_FILE.open(encoding="utf-8", newline="") as handle:
+            for row in csv.DictReader(handle):
+                values[(row["province"], row["day"])] = round(float(row["pm25"]), 1)
+    except (ValueError, OSError, KeyError):
+        return None
+    if not values:
+        return None
+
+    days = sorted({day for _, day in values})
     return {
-        "key": "model_daily_2023",
-        "label_th": "แบบจำลอง รายวัน 2566",
-        "detail_th": "รายวัน · เฉพาะ 5 จังหวัดภาคเหนือตอนล่าง",
+        "key": "model_daily",
+        "label_th": "แบบจำลอง รายวัน",
+        "detail_th": f"รายวัน · ครบ {len({p for p, _ in values})} จังหวัด · ย้อนไกลสุด",
         "granularity": "day",
         **_series_of(values, days),
     }
 
 
 def _dust_sources(session: Session, pm, pm_months: list[str]) -> dict:
-    """แหล่งค่าฝุ่นย้อนหลังทุกแหล่งที่มี ส่งไปให้หน้าเว็บเลือกดูเอง
+    """แหล่งค่าฝุ่นย้อนหลังที่หน้าเว็บเลือกดูได้
 
-    สามแหล่งตอบคนละคำถาม จึงต้องมีครบ ไม่ใช่เลือกอันเดียว
-        แบบจำลองรายเดือน  ย้อนได้ไกลที่สุดและครบทุกจังหวัด ใช้ดูภาพรวมข้ามปี
-        สถานีจริงรายวัน    เป็นค่าที่วัดได้จริง ใช้ตรวจว่าแบบจำลองตรงแค่ไหน
-        แบบจำลองรายวัน 2566 ละเอียดพอจะเห็นยอดแหลมของฤดูเผาที่ค่ารายเดือนกลบไป
+    สองแหล่งตอบคนละคำถาม
+        สถานีจริงรายวัน  เป็นค่าที่วัดได้จริง ใช้ตรวจว่าแบบจำลองตรงแค่ไหน
+                          แต่ย้อนได้แค่ช่วงที่ระบบเริ่มเก็บเอง
+        แบบจำลองรายวัน   ย้อนไกลสุดและครบทุกจังหวัด ใช้ดูภาพรวมข้ามปี
+                          และละเอียดพอจะเห็นยอดแหลมของฤดูเผา
+
+    เดิมมีแหล่งรายเดือนเป็นตัวที่สาม ซึ่งถูกแทนด้วยรายวันเพราะตอบได้ทุกอย่าง
+    ที่รายเดือนตอบได้แต่ละเอียดกว่า ค่าเฉลี่ยรายเดือนกลบยอดแหลมของฤดูเผา
+    เดือนที่มีวันทะลุมาตรฐานสิบกว่าวันอาจได้ค่าเฉลี่ยทั้งเดือนไม่ถึงมาตรฐานเลย
+
+    ค่ารายเดือนยังใช้ในส่วนวิเคราะห์ฝุ่นกับผู้ป่วยเหมือนเดิม เพราะข้อมูลผู้ป่วย
+    เป็นรายเดือน จับคู่กันได้ตรงหน่วย
     """
-    monthly = {
-        "key": "model_monthly",
-        "label_th": "แบบจำลอง รายเดือน",
-        "detail_th": "รายเดือน · ครบทุกจังหวัด ย้อนไกลสุด",
-        "granularity": "month",
-        **_series_of(pm, pm_months),
-    }
-
-    sources = [monthly]
+    sources = []
     station = _station_daily(session)
     if station:
-        sources.insert(0, station)
-    daily_2023 = _model_daily_2023()
-    if daily_2023:
-        sources.append(daily_2023)
+        sources.append(station)
+
+    daily = _model_daily()
+    if daily:
+        sources.append(daily)
+
+    if not sources:
+        # ไม่มีไฟล์รายวัน ให้ถอยไปใช้รายเดือนเพื่อให้หน้าเว็บยังมีกราฟ
+        sources.append({
+            "key": "model_monthly",
+            "label_th": "แบบจำลอง รายเดือน",
+            "detail_th": "รายเดือน · ครบทุกจังหวัด ย้อนไกลสุด",
+            "granularity": "month",
+            **_series_of(pm, pm_months),
+        })
 
     return {
         "sources": sources,
-        "default_key": monthly["key"],
+        "default_key": sources[-1]["key"],
         "thai_standard": 37.5,
         "who_guideline": 15.0,
     }
