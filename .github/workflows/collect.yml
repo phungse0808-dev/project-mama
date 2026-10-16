@@ -62,6 +62,10 @@ jobs:
         working-directory: backend
         run: python -m scripts.import_hourly
 
+      - name: โหลดประวัติค่าพยากรณ์เดิมเข้าฐานข้อมูลชั่วคราว
+        working-directory: backend
+        run: python -m scripts.import_forecast_issues
+
       - name: ออกค่าพยากรณ์ประจำวันและเติมค่าจริงของรอบเก่า
         working-directory: backend
         run: python -m scripts.issue_forecast
