@@ -12,9 +12,9 @@ station_code,name_th,name_en,area_th,area_en,province,station_type,latitude,long
 106t,สวนสาธารณะหนองบึงกาฬ,Nong Bueng Kan Park,"ต.บึงกาฬ อ.เมือง, จ.บึงกาฬ ","Mueang, Bueng Kan",บึงกาฬ,GROUND,18.362008,103.65977
 107t,สวนสาธารณะแก่งดอนกลาง,KAENG DON KLANG PARK,"ต.กาฬสินธุ์ อ.เมือง, กาฬสินธ์ุ","Kalasin Subdistrict, Mueang Kalasin District, Kalasin",กาฬสินธุ์,GROUND,16.4436,103.513
 108t,สนามกีฬาเทศบาลเมืองชัยภูมิ,Mueang Chaiyaphum Municipality Stadium," ต.ในเมือง อ.เมืองชัยภูมิ, ชัยภูมิ"," Nai Mueang Subdistrict, Mueang Chaiyaphum District, Chaiyaphum",ชัยภูมิ,GROUND,15.81148,102.02281
-109t,สวนสาธารณะพญาแถน,Phaya Thaen Public Park,"ต.ในเมือง,อ.เมือง, ยโสธร","Mueang, Yasothon",ยโสธร,GROUND,15.783861,104.154639
-110t,สำนักงานเทศบาลเมืองอำนาจเจริญ,Amnat Charoen Municipality,"ต.บุ่ง, อ.เมือง, จ.อำนาจเจริญ","Bung, Mueang, Amnat Charoen",อำนาจเจริญ,GROUND,15.8758,104.6223
-111t,สถานีอุตุนิยมวิทยาสุรินทร์,Surin Meteorological Center,"ต.นอกเมือง, อ.เมือง, จ.สุรินทร์","Nok Mueang, Mueang, Surin",สุรินทร์,GROUND,14.8762222,103.4965833
+109t,สวนสาธารณะพญาแถน,Phaya Thaen Public Park,"ต.ในเมือง อ.เมือง, ยโสธร","Mueang, Yasothon",ยโสธร,GROUND,15.783861,104.154639
+110t,สำนักงานเทศบาลเมืองอำนาจเจริญ,Amnat Charoen Municipality,"ต.บุ่ง อ.เมือง, จ.อำนาจเจริญ","Bung, Mueang, Amnat Charoen",อำนาจเจริญ,GROUND,15.8758,104.6223
+111t,สถานีอุตุนิยมวิทยาสุรินทร์,Surin Meteorological Center,"ต.นอกเมือง อ.เมือง, จ.สุรินทร์","Nok Mueang, Mueang, Surin",สุรินทร์,GROUND,14.8762222,103.4965833
 112t,สถานีอุตุนิยมวิทยาศรีสะเกษ,Sisaket Meteorological Center,"ต.หนองครก อ.เมือง, ศรีสะเกษ","Nongkrog Subdistrict, Mueang District, Sisaket",ศรีสะเกษ,GROUND,15.087087,104.326787
 113t,บึงพลาญชัย,Bueng Planchai,"ต.ในเมือง อ.เมือง, ร้อยเอ็ด"," Nai Mueang Subdistrict, Mueang District, Roi Et",ร้อยเอ็ด,GROUND,16.057448,103.651056
 114t,สวนสุขภาพประมวลสุข,Pramuan Suk Health Park,"ต.ตลาด อ.เมือง, มหาสารคาม","Talat, Muang Mahasarakham, Maha Sarakham",มหาสารคาม,GROUND,16.177283,103.299824
