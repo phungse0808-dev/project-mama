@@ -82,7 +82,6 @@ station_code,name_th,name_en,area_th,area_en,province,station_type,latitude,long
 78t,ศูนย์พัฒนาเด็กเล็กเทศบาลเมืองเบตง,"child development centers, Betong","ต.เบตง อ.เบตง, ยะลา","Betong, Yala",ยะลา,GROUND,5.763873,101.067903
 79t,สถานีอุตุนิยมวิทยา จ.กาญจนบุรี,Kanchanaburi Meteorological Station,"ต.บ้านเหนือ อ.เมือง, กาญจนบุรี","Ban Nuea, Mueang, Kanchanaburi",กาญจนบุรี,GROUND,14.022376,99.536195
 80t,ศาลากลาง จ.สตูล,"City Hall, Satun","ต.พิมาน อ.เมือง, สตูล","Phiman, Mueang, Satun",สตูล,GROUND,6.624747,100.066159
-81t,อ่างเก็บน้ำประปา,Water reservoir,"ต.นครปฐม อ.เมือง, นครปฐม","Mueang, Nakhon Pathom",นครปฐม,GROUND,13.832076,100.057961
 82t,สวนสาธารณะหนองถิ่น,"Nong Thin Public Park, Nong Khai"," ต.มีชัย อ.เมือง, หนองคาย","Meechai, Meuang, Nong Khai",หนองคาย,GROUND,17.87748,102.728925
 83t,ศูนย์แสดงและจำหน่ายสินค้า OTOP จังหวัดอุบลราชธานี,"OTOP Center, Ubon Ratchathani","ต.ในเมือง อ.เมือง, อุบลราชธานี","Mueang, Ubon Ratchathani",อุบลราชธานี,GROUND,15.245413,104.846219
 84t,สำนักงานสาธารณสุขจังหวัดสมุทรสงคราม,Samut Songkhram Health Office," ต.ลาดใหญ่ อ.เมือง, สมุทรสงคราม","Mueang, Samut Songkhram",สมุทรสงคราม,GROUND,13.428581,100.024664
@@ -172,3 +171,4 @@ bkp99t,สำนักงานเขตสะพานสูง,"Saphan Sung Di
 o10,เคหะชุมชนคลองจั่น,National Housing Authority Klongchan,"แขวงคลองจั่น, เขตบางกะปิ,กรุงเทพฯ","Klong Chan, Khet Bang Kapi, Bangkok",กรุงเทพฯ,GROUND,13.779873,100.646009
 o61,สนามกีฬาเทศบาลแหลมฉบัง,Laem Chabang Municipal Stadium,"ต.ทุ่งสุขลา อ.ศรีราชา, ชลบุรี","Thung Sukhla, Si Racha, Chon buri",ชลบุรี,GROUND,13.11923333,100.91855
 o63,ค่ายสุรสิงหนาท,Khai Surasinghanat,"ต.ตะพง อ.เมือง, ระยอง","Taphong, Mueang, Rayong",ระยอง,MOBILE,12.648576,101.32245
+o69,อ่างเก็บน้ำประปา,Water reservoir,"ต.นครปฐม อ.เมือง, นครปฐม","Mueang, Nakhon Pathom",นครปฐม,GROUND,13.832076,100.057961
